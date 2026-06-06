@@ -145,8 +145,8 @@ def export_source_bundle(
             "importCompatibility": _anim_compat(skeleton_pkg),
         },
         {
-            "requestId": f"task_{component_id}.fur_texture",
-            "roleId": "fur_texture", "role": "fur_texture",
+            "requestId": f"task_{component_id}.fur_base_color",
+            "roleId": "fur_base_color", "role": "fur_base_color",
             "assetType": "texture", "desiredUnrealAssetType": "texture",
             "targetPackage": tex_pkg,
             "sourceFile": str(tex_file), "sourceFormat": "png",

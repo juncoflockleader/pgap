@@ -44,6 +44,10 @@ def main(argv: list[str] | None = None) -> int:
         "--handoff", action="store_true",
         help="also emit the M5 source-handoff bundle (SK/A/T files + v1 manifest)",
     )
+    parser.add_argument(
+        "--package-root", default="/Game/Prototype/Dogs",
+        help="Unreal package root for handoff target packages (default: /Game/Prototype/Dogs)",
+    )
     args = parser.parse_args(argv)
 
     if not Path(args.spec).is_file():
@@ -68,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.handoff:
         from .handoff import export_source_bundle
-        h = export_source_bundle(Spec.load(args.spec), args.out)
+        h = export_source_bundle(Spec.load(args.spec), args.out, package_root=args.package_root)
         print("handoff bundle:")
         print(f"  mesh       {h['mesh']}")
         print(f"  animation  {h['animation']}  (motion bone {h['tailMotionBone']})")

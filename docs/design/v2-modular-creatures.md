@@ -128,6 +128,22 @@ Build = resolve attachments (topo order), accumulate every module's placed bones
 into one `Skeleton` and every module's `geometry` into one primitive list, then
 feed the **unchanged** geometry → skin → uv → paint → texture → assemble pipeline.
 
+### 4.4 Composition & skin modes (decided)
+
+Both "guided" and "open" authoring ship, selected by a mode flag — the same
+choice applies to composition *and* to skin:
+
+| Mode | Composition | Skin |
+|---|---|---|
+| **`--strict`** (default) | Pick a **template** (preset chimera/archetype recipe) and override only its exposed params (counts, lengths, variants). Reliably recognizable; the grammar guarantees a sensible body. | One **coat per creature** from the template's palette (e.g. "golden", "deep teal"). |
+| **`--free`** | Provide a **raw module composition** — attach any module to any socket. Maximally open; recognizability is the author's responsibility. | **Per-module palette overrides** in the recipe `skin` block (teal body, violet tentacles, bone-white eyestalks). |
+
+Both modes produce the *same* `Recipe` object and run through the *same*
+grammar validator (fail-closed). `--strict` is a curated recipe + param patch;
+`--free` is the recipe authored directly. Templates are themselves just recipes,
+so a `--strict` creature can be "ejected" to `--free` for further editing. This
+resolves open questions 1 and 3.
+
 ## 5. Modular animation
 
 The one genuinely new stage. Instead of clips hardcoding bone names, each module
@@ -200,9 +216,15 @@ nothing downstream or in the proof lane changes.
 
 ## 9. Proposed milestones
 
-- **V2-M0 — Module/socket core.** `Module`, `Socket`, `assembly.py` resolver;
-  re-express quadruped/biped/prop as preset recipes. **Exit:** existing dog/biped/
-  rock regenerate from recipes with no visual regression (golden-SHA shift OK).
+- **V2-M0 — Module/socket core.** `Module`, `Socket`, `Attachment`/`Recipe`, and
+  the `assembly` resolver (mirror expansion, world placement, naming, ground
+  clamp). Proven by re-expressing the **biped** as a module recipe
+  (spine + neck + head + arm×2 + leg×2 via `mirror`) that reuses the v1
+  geometry → skin → uv → paint pipeline unchanged. Lives in an isolated `pgap/v2/`
+  package so v1 is untouched. **Exit:** the biped recipe assembles to a valid
+  skinned mesh (weights normalized, watertight-enough, within budget) and is
+  deterministic. Dog (frozen bone-name contract + part library) and radial sockets
+  land in V2-M1.
 - **V2-M1 — Module library.** spine/neck/head-variants/leg/arm/tail/tentacle/
   wing/fin/orb/eyestalk. **Exit:** each module meshes + skins in isolation.
 - **V2-M2 — Recipe schema + grammar validator + capability report.** **Exit:**
@@ -216,11 +238,11 @@ nothing downstream or in the proof lane changes.
 
 ## 10. Open questions
 
-1. Recipe authoring: how much does the LLM compose freely vs. pick from preset
-   chimera templates with parameter overrides?
+1. ~~Recipe authoring: free vs. preset templates?~~ **Resolved (§4.4):** both, via
+   `--strict` (template + param overrides) and `--free` (raw composition).
 2. Sockets as data vs. code — declare in JSON, or compute from module geometry?
-3. Region tint for chimeras: per-module palette overrides (teal body, violet
-   tentacles) in the recipe `skin` block?
+3. ~~Region tint for chimeras: per-module palette overrides?~~ **Resolved (§4.4):**
+   `--strict` = one coat per creature; `--free` = per-module overrides.
 4. Do composite creatures need per-module `triBudget` allocation, or keep the
    single global budget + back-off?
 5. Animation contract with `unreal-mcp-rx`: clip names are now composed — does the

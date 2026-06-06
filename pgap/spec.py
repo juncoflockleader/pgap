@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 
-SUPPORTED_ARCHETYPES = ("quadruped",)  # M0/M1 ship the quadruped path only
+SUPPORTED_ARCHETYPES = ("prop", "quadruped", "biped")  # M6: prop + biped added
 
 # Reference proportions; spec values multiply these (heightCm is absolute cm).
 DEFAULT_PROPORTIONS = {

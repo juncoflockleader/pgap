@@ -1,0 +1,12 @@
+{
+  "name": "SimpleBiped",
+  "archetype": "biped",
+  "species": "humanoid",
+  "style": "stylized_low_poly",
+  "seed": 3,
+  "proportions": { "bodyLength": 1.0, "legLength": 1.0, "neck": 1.0, "tail": 1.0, "heightCm": 180 },
+  "material": { "baseColor": "tan", "fur": false, "roughness": 0.7 },
+  "animations": ["idle", "walk"],
+  "triBudget": 8000,
+  "targetSkeletonName": "SKEL_SimpleBiped"
+}

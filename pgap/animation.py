@@ -130,21 +130,69 @@ def _bark_pose(skel: list[Bone]) -> AnimClip:
     return AnimClip("bark_pose", t, channels)
 
 
-_BUILDERS = {
+# --------------------------------------------------------------------------- #
+# Biped clips (M6) — target biped bone names (spine/neck/head, arms, legs).
+# --------------------------------------------------------------------------- #
+def _biped_idle(skel: list[Bone]) -> AnimClip:
+    t = _times(3.0, 31)
+    w = 2.0 * np.pi / 3.0
+    breathe = np.sin(w * t)
+    channels = [
+        _rot("spine_02", _Z, np.deg2rad(2.0) * breathe),
+        _rot("neck_01", _Z, np.deg2rad(-1.5) * breathe),
+        _rot("head", _Z, np.deg2rad(2.0) * np.sin(w * t + 0.5)),
+        _rot("upperarm_l", _Z, np.deg2rad(4.0) * np.sin(w * t)),
+        _rot("upperarm_r", _Z, np.deg2rad(4.0) * np.sin(w * t)),
+    ]
+    return AnimClip("idle", t, channels)
+
+
+def _biped_walk(skel: list[Bone]) -> AnimClip:
+    t = _times(1.0, 25)
+    w = 2.0 * np.pi / 1.0
+    amp = np.deg2rad(26.0)
+    swing = np.sin(w * t)
+    opp = np.sin(w * t + np.pi)
+    knee = np.deg2rad(18.0)
+    channels = [
+        _rot("thigh_l", _Z, amp * swing),
+        _rot("thigh_r", _Z, amp * opp),
+        _rot("shin_l", _Z, -knee * np.clip(swing, 0.0, None)),
+        _rot("shin_r", _Z, -knee * np.clip(opp, 0.0, None)),
+        _rot("upperarm_l", _Z, np.deg2rad(18.0) * opp),   # arms counter-swing the legs
+        _rot("upperarm_r", _Z, np.deg2rad(18.0) * swing),
+    ]
+    root = skel[0]
+    base = root.head.astype(np.float64)
+    bob = 0.02 * _body_scale(skel)
+    trans = np.tile(base, (t.shape[0], 1))
+    trans[:, 1] = base[1] + bob * (np.abs(np.sin(2.0 * w * t)) - 0.5)
+    channels.append(Channel("root", "translation", trans.astype(_F)))
+    return AnimClip("walk", t, channels)
+
+
+_QUAD_BUILDERS = {
     "idle": _idle,
     "walk": _walk,
     "run": _run,
     "tail_wag": _tail_wag,
     "bark_pose": _bark_pose,
 }
+_BIPED_BUILDERS = {
+    "idle": _biped_idle,
+    "walk": _biped_walk,
+}
 
 
 def animate(skel: list[Bone], spec: Spec) -> list[AnimClip]:
-    """Build the requested clips (spec.animations, default set) for this rig."""
+    """Build the requested clips for this archetype's rig. Props have none."""
+    if spec.archetype == "prop":
+        return []
+    builders = _BIPED_BUILDERS if spec.archetype == "biped" else _QUAD_BUILDERS
     requested = spec.animations or list(DEFAULT_CLIPS)
     clips: list[AnimClip] = []
     for name in requested:
-        builder = _BUILDERS.get(str(name))
+        builder = builders.get(str(name))
         if builder is not None:
             clips.append(builder(skel))
     return clips

@@ -1,0 +1,10 @@
+{
+  "name": "GraniteRock",
+  "archetype": "prop",
+  "species": "rock",
+  "style": "stylized_low_poly",
+  "seed": 7,
+  "proportions": { "heightCm": 50 },
+  "material": { "baseColor": "grey granite stone", "fur": false, "roughness": 0.85 },
+  "triBudget": 4000
+}

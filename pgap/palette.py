@@ -37,13 +37,25 @@ _CREAM = {
     "muzzle": (0.93, 0.88, 0.78), "ears": (0.74, 0.64, 0.50), "legs": (0.93, 0.88, 0.78),
     "tail": (0.92, 0.86, 0.74),
 }
+_STONE = {  # props: grey granite
+    "body": (0.46, 0.46, 0.48), "belly": (0.40, 0.40, 0.42), "head": (0.46, 0.46, 0.48),
+    "muzzle": (0.46, 0.46, 0.48), "ears": (0.38, 0.38, 0.40), "legs": (0.42, 0.42, 0.44),
+    "tail": (0.46, 0.46, 0.48),
+}
+_WOOD = {  # props: barrel wood
+    "body": (0.45, 0.30, 0.16), "belly": (0.40, 0.27, 0.14), "head": (0.45, 0.30, 0.16),
+    "muzzle": (0.45, 0.30, 0.16), "ears": (0.38, 0.25, 0.12), "legs": (0.42, 0.28, 0.15),
+    "tail": (0.45, 0.30, 0.16),
+}
 
 # Coat color keywords (NOT modifiers like "dark"/"light", which qualify regions).
 _COATS = (
     (("golden", "gold", "yellow", "tan"), _GOLDEN),
-    (("chocolate", "brown", "liver"), _BROWN),
+    (("chocolate", "liver"), _BROWN),
     (("black", "ebony"), _BLACK),
-    (("cream", "white", "ivory"), _CREAM),
+    (("cream", "ivory"), _CREAM),
+    (("stone", "granite", "grey", "gray", "rock"), _STONE),
+    (("wood", "wooden", "oak", "barrel", "brown"), _WOOD),
 )
 
 

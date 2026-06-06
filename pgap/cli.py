@@ -24,12 +24,13 @@ def run(spec_path: str, out_dir: str) -> dict:
 
     skel, mesh, clips, textures = build_bundle(spec, rng)
 
-    result = write_outputs(mesh, spec, out_dir, skel, clips, textures)
+    result = write_outputs(mesh, spec, out_dir, skel or None, clips, textures)
     result["mesh_stats"] = mesh_stats(mesh)
-    result["skin_stats"] = skin_stats(mesh)
+    result["skin_stats"] = skin_stats(mesh) if mesh.weights is not None else None
     result["tri_budget"] = spec.tri_budget
     result["bones"] = len(skel)
     result["clips"] = [c.name for c in clips]
+    result["archetype"] = spec.archetype
     return result
 
 
@@ -56,13 +57,15 @@ def main(argv: list[str] | None = None) -> int:
     r = run(args.spec, args.out)
     ms, ss = r["mesh_stats"], r["skin_stats"]
     print(f"wrote {r['gltf']}")
+    print(f"  archetype    {r['archetype']}")
     print(f"  sha1         {r['gltf_sha1']}")
     print(f"  bones        {r['bones']}")
     print(f"  vertices     {ms['vertices']}")
     print(f"  triangles    {ms['triangles']}  (budget {r['tri_budget']})")
     print(f"  boundary     {ms['boundary_edges']} edges   non-manifold {ms['nonmanifold_edges']} edges")
-    print(f"  weight err   {ss['max_weight_error']:.2e}   max influences {ss['max_influences']}")
-    print(f"  unweighted   {ss['unweighted_vertices']}   max joint idx {ss['max_joint_index']}")
+    if ss is not None:
+        print(f"  weight err   {ss['max_weight_error']:.2e}   max influences {ss['max_influences']}")
+        print(f"  unweighted   {ss['unweighted_vertices']}   max joint idx {ss['max_joint_index']}")
     print(f"  clips        {', '.join(r['clips']) if r['clips'] else '(none)'}")
     if "baseColor" in r:
         print(f"wrote {r['baseColor']}")

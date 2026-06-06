@@ -1,15 +1,15 @@
-"""Canonical quadruped rig + proportioning (DESIGN §3 skeleton builder, M1).
+"""Canonical rigs + proportioning (DESIGN §3 skeleton builder, M1 + M6).
 
-The rig is **data**: a frozen bone graph with rest positions and a scaling group
-per bone. Bone names are the contract with the M3 animation library and the
-``import.json`` sidecar — do not rename them casually.
+Rigs are **data**: a frozen bone graph with rest positions and a scaling group per
+bone. Bone names are the contract with the animation library and the import
+sidecar. ``build_skeleton`` dispatches by archetype (quadruped | biped); props
+have no skeleton.
 
 Build = take the canonical rest pose, derive each bone's attach point (projection
 of its head onto the parent segment) + lateral offset, then rebuild world
-positions in topological order applying per-group length factors from
-``spec.proportions``/``traits``. Scaling a parent therefore moves its whole
-subtree. A uniform ``heightCm`` scale and a ground-clamp finish. Fully analytic
-and deterministic — no RNG draws in M1.
+positions in topological order applying per-group length factors. Scaling a parent
+moves its whole subtree. A uniform ``heightCm`` scale + ground-clamp finish.
+Analytic and deterministic — no RNG draws.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from .spec import Spec
 from .types import Bone
 
 _F = np.float32
-REF_HEIGHT_CM = 60.0  # canonical rest pose is authored at ~0.6 m tall
+REF_HEIGHT_CM = 60.0  # canonical rest poses are authored at ~0.6 m tall
 
 
 def _v(x: float, y: float, z: float) -> np.ndarray:
@@ -38,11 +38,12 @@ class _Tmpl:
     tail: np.ndarray
     radius_head: float
     radius_tail: float
-    group: str  # spine | neck | head | snout | ear | tail | leg | none
+    group: str  # spine | neck | head | snout | ear | tail | leg | arm | none
 
 
-# Canonical rest pose. glTF Y-up, +X forward (nose), +Z = animal's left.
-# Authored by hand for a neutral quadruped at ~0.6 m tall (all proportions 1.0).
+# --------------------------------------------------------------------------- #
+# Quadruped rig (M1) — glTF Y-up, +X forward (nose), +Z = animal's left.
+# --------------------------------------------------------------------------- #
 def _front_leg(side: str, z: float) -> list[_Tmpl]:
     return [
         _Tmpl(f"thigh_f{side}", "spine_02", _v(0.22, 0.44, z), _v(0.24, 0.24, z + 0.01), 0.07, 0.05, "leg"),
@@ -59,8 +60,7 @@ def _hind_leg(side: str, z: float) -> list[_Tmpl]:
     ]
 
 
-_RIG: list[_Tmpl] = [
-    # axial chain (root first, topologically sorted)
+_QUAD_RIG: list[_Tmpl] = [
     _Tmpl("root", None, _v(-0.35, 0.46, 0.0), _v(-0.10, 0.47, 0.0), 0.15, 0.15, "spine"),
     _Tmpl("spine_01", "root", _v(-0.10, 0.47, 0.0), _v(0.20, 0.46, 0.0), 0.15, 0.14, "spine"),
     _Tmpl("spine_02", "spine_01", _v(0.20, 0.46, 0.0), _v(0.40, 0.50, 0.0), 0.14, 0.11, "spine"),
@@ -73,22 +73,50 @@ _RIG: list[_Tmpl] = [
     _Tmpl("tail_02", "tail_01", _v(-0.48, 0.50, 0.0), _v(-0.58, 0.54, 0.0), 0.04, 0.03, "tail"),
     _Tmpl("tail_03", "tail_02", _v(-0.58, 0.54, 0.0), _v(-0.68, 0.57, 0.0), 0.03, 0.02, "tail"),
 ]
-_RIG += _front_leg("l", 0.12) + _front_leg("r", -0.12)
-_RIG += _hind_leg("l", 0.12) + _hind_leg("r", -0.12)
-
-CANONICAL_BONE_NAMES: tuple[str, ...] = tuple(t.name for t in _RIG)
+_QUAD_RIG += _front_leg("l", 0.12) + _front_leg("r", -0.12)
+_QUAD_RIG += _hind_leg("l", 0.12) + _hind_leg("r", -0.12)
 
 
-# Ear styles: canonical-space tail offset from the ear head + flap radii.
-# floppy = fat flap drooping beside the cheek (golden retriever); pointy = upright.
+# --------------------------------------------------------------------------- #
+# Biped rig (M6) — upright, ~0.6 m canonical; +X forward, +Y up, +Z = left.
+# --------------------------------------------------------------------------- #
+def _arm(side: str, z: float) -> list[_Tmpl]:
+    return [
+        _Tmpl(f"upperarm_{side}", "spine_02", _v(0.0, 0.53, z), _v(0.0, 0.42, z + 0.05), 0.032, 0.026, "arm"),
+        _Tmpl(f"forearm_{side}", f"upperarm_{side}", _v(0.0, 0.42, z + 0.05), _v(0.0, 0.30, z + 0.07), 0.026, 0.020, "arm"),
+        _Tmpl(f"hand_{side}", f"forearm_{side}", _v(0.0, 0.30, z + 0.07), _v(0.0, 0.25, z + 0.075), 0.022, 0.018, "arm"),
+    ]
+
+
+def _leg(side: str, z: float) -> list[_Tmpl]:
+    return [
+        _Tmpl(f"thigh_{side}", "root", _v(0.0, 0.32, z), _v(0.0, 0.17, z + 0.005), 0.038, 0.030, "leg"),
+        _Tmpl(f"shin_{side}", f"thigh_{side}", _v(0.0, 0.17, z + 0.005), _v(0.0, 0.04, z + 0.01), 0.030, 0.022, "leg"),
+        _Tmpl(f"foot_{side}", f"shin_{side}", _v(0.0, 0.04, z + 0.01), _v(0.07, 0.0, z + 0.01), 0.028, 0.022, "leg"),
+    ]
+
+
+_BIPED_RIG: list[_Tmpl] = [
+    _Tmpl("root", None, _v(0.0, 0.32, 0.0), _v(0.0, 0.40, 0.0), 0.075, 0.070, "spine"),
+    _Tmpl("spine_01", "root", _v(0.0, 0.40, 0.0), _v(0.0, 0.48, 0.0), 0.070, 0.062, "spine"),
+    _Tmpl("spine_02", "spine_01", _v(0.0, 0.48, 0.0), _v(0.0, 0.54, 0.0), 0.066, 0.050, "spine"),
+    _Tmpl("neck_01", "spine_02", _v(0.0, 0.54, 0.0), _v(0.0, 0.575, 0.0), 0.026, 0.024, "neck"),
+    _Tmpl("head", "neck_01", _v(0.0, 0.575, 0.0), _v(0.0, 0.63, 0.0), 0.052, 0.050, "head"),
+]
+_BIPED_RIG += _arm("l", 0.075) + _arm("r", -0.075)
+_BIPED_RIG += _leg("l", 0.045) + _leg("r", -0.045)
+
+
+CANONICAL_BONE_NAMES: tuple[str, ...] = tuple(t.name for t in _QUAD_RIG)
+BIPED_BONE_NAMES: tuple[str, ...] = tuple(t.name for t in _BIPED_RIG)
+
+_RIGS = {"quadruped": _QUAD_RIG, "biped": _BIPED_RIG}
+
+# Ear styles (quadruped): canonical-space tail offset from the ear head + radii.
 _EAR_STYLES = {
     "floppy": {"offset": np.array([0.01, -0.22, 0.07]), "rh": 0.06, "rt": 0.038},
     "pointy": {"offset": np.array([-0.02, 0.13, 0.02]), "rh": 0.03, "rt": 0.012},
 }
-
-
-def _ear_style(spec: Spec) -> dict:
-    return _EAR_STYLES.get(str(spec.traits.get("ears", "floppy")), _EAR_STYLES["floppy"])
 
 
 def _group_factors(spec: Spec) -> dict[str, float]:
@@ -99,21 +127,18 @@ def _group_factors(spec: Spec) -> dict[str, float]:
         "neck": float(prop["neck"]),
         "tail": float(prop["tail"]),
         "leg": float(prop["legLength"]),
+        "arm": float(prop.get("arm", prop["legLength"])),
         "snout": snout_map.get(str(spec.traits.get("snout", "medium")), 1.0),
-        "head": 1.0,
-        "ear": 1.0,
-        "none": 1.0,
+        "head": 1.0, "ear": 1.0, "none": 1.0,
     }
 
 
-def build_skeleton(spec: Spec, rng: Rng) -> list[Bone]:
-    """Canonical rig proportioned per the spec. ``rng`` unused (analytic in M1)."""
+def _assemble_bones(templates: list[_Tmpl], spec: Spec, ear: dict | None) -> list[Bone]:
     factors = _group_factors(spec)
-    ear = _ear_style(spec)
-    canon = {t.name: (t.head, t.tail) for t in _RIG}
+    canon = {t.name: (t.head, t.tail) for t in templates}
     built: dict[str, tuple[np.ndarray, np.ndarray]] = {}
 
-    for t in _RIG:
+    for t in templates:
         vec = (t.tail - t.head) * factors.get(t.group, 1.0)
         if t.parent is None:
             head = t.head.copy()
@@ -125,8 +150,7 @@ def build_skeleton(spec: Spec, rng: Rng) -> list[Bone]:
             lateral = t.head - (p_head_c + attach * seg)
             bp_head, bp_tail = built[t.parent]
             head = bp_head + attach * (bp_tail - bp_head) + lateral
-        if t.group == "ear":
-            # Override the ear direction by style; sign the lateral axis per side.
+        if t.group == "ear" and ear is not None:
             side = 1.0 if t.head[2] >= 0.0 else -1.0
             off = ear["offset"].copy()
             off[2] *= side
@@ -135,32 +159,39 @@ def build_skeleton(spec: Spec, rng: Rng) -> list[Bone]:
             built[t.name] = (head, head + vec)
 
     global_scale = float(spec.proportions["heightCm"]) / REF_HEIGHT_CM
-
-    # Ground-clamp: shift so the lowest point (paw bottom) rests at y = 0.
     min_y = min(
         min(built[t.name][0][1] - t.radius_head, built[t.name][1][1] - t.radius_tail)
-        for t in _RIG
+        for t in templates
     ) * global_scale
 
     bones: list[Bone] = []
-    for t in _RIG:
+    for t in templates:
         head, tail = built[t.name]
         head = head * global_scale
         tail = tail * global_scale
         head[1] -= min_y
         tail[1] -= min_y
-        if t.group == "ear":
+        if t.group == "ear" and ear is not None:
             r_head, r_tail = ear["rh"], ear["rt"]
         else:
             r_head, r_tail = t.radius_head, t.radius_tail
         bones.append(
             Bone(
-                name=t.name,
-                parent=t.parent,
-                head=head.astype(_F),
-                tail=tail.astype(_F),
+                name=t.name, parent=t.parent,
+                head=head.astype(_F), tail=tail.astype(_F),
                 radius_head=float(r_head * global_scale),
                 radius_tail=float(r_tail * global_scale),
             )
         )
     return bones
+
+
+def build_skeleton(spec: Spec, rng: Rng) -> list[Bone]:
+    """Canonical rig for the spec's archetype. Props have no skeleton ([])."""
+    if spec.archetype == "prop":
+        return []
+    templates = _RIGS.get(spec.archetype)
+    if templates is None:
+        raise ValueError(f"no rig for archetype {spec.archetype!r}")
+    ear = _EAR_STYLES.get(str(spec.traits.get("ears", "floppy"))) if spec.archetype == "quadruped" else None
+    return _assemble_bones(templates, spec, ear)

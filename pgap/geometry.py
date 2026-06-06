@@ -97,7 +97,9 @@ def _grid_bounds(blobs: list[_Blob]) -> tuple[np.ndarray, np.ndarray]:
 
 def _resolution(spec: Spec, extent: np.ndarray) -> np.ndarray:
     """Per-axis cell counts. Longest axis gets ``n_max`` cells (from triBudget)."""
-    n_max = int(np.clip(round((spec.tri_budget ** 0.5) * 0.7), 24, 96))
+    # Factor tuned so even compact (high surface/volume) shapes stay within
+    # budget — true decimation is deferred (M0), so resolution is the lever.
+    n_max = int(np.clip(round((spec.tri_budget ** 0.5) * 0.63), 24, 96))
     cell = float(extent.max()) / n_max
     counts = np.maximum(4, np.ceil(extent / cell).astype(int) + 1)
     return counts

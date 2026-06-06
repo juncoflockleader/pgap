@@ -10,6 +10,7 @@ and the tests.
 from __future__ import annotations
 
 from .animation import animate
+from .archetypes import prop
 from .geometry import build_geometry
 from .paint import paint_colors
 from .parts import build_parts
@@ -23,7 +24,14 @@ from .uv import layout_uvs
 
 
 def build_actor(spec: Spec, rng: Rng) -> tuple[list[Bone], Mesh]:
-    """Geometry path only (no RNG draws): rig + skinned, uv'd, painted mesh."""
+    """Archetype-routed mesh build. Props are rigless static meshes; quadruped
+    and biped run the full skeleton-first path (skin + uv + paint)."""
+    if spec.archetype == "prop":
+        parts = prop.build(spec, rng)
+        mesh = build_geometry([], spec, rng, tuple(parts))
+        mesh = layout_uvs(mesh, [], spec)
+        return [], mesh
+
     skel = build_skeleton(spec, rng)
     parts = build_parts(skel, spec)
     mesh = build_geometry(skel, spec, rng, tuple(parts))

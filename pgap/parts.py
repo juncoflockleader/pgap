@@ -15,6 +15,7 @@ from .types import Bone, Primitive
 _BUILDERS = {
     "dog": dog.build,
 }
+KNOWN_SPECIES = tuple(_BUILDERS)  # species with a dedicated part library
 
 
 def build_parts(skel: list[Bone], spec: Spec) -> list[Primitive]:

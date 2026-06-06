@@ -117,6 +117,7 @@ _EAR_STYLES = {
     "floppy": {"offset": np.array([0.01, -0.22, 0.07]), "rh": 0.06, "rt": 0.038},
     "pointy": {"offset": np.array([-0.02, 0.13, 0.02]), "rh": 0.03, "rt": 0.012},
 }
+EAR_STYLE_NAMES = tuple(_EAR_STYLES)  # public capability surface
 
 
 def _group_factors(spec: Spec) -> dict[str, float]:

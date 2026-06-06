@@ -59,6 +59,9 @@ _COATS = (
 )
 
 
+COAT_KEYWORDS = tuple(k for kws, _ in _COATS for k in kws)  # public capability surface
+
+
 def coat_palette(material: dict) -> dict:
     """Pick the coat from ``material.baseColor`` by the *earliest* color keyword.
 

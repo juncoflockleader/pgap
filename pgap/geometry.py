@@ -95,20 +95,22 @@ def _grid_bounds(blobs: list[_Blob]) -> tuple[np.ndarray, np.ndarray]:
     return lo, hi
 
 
-def _resolution(spec: Spec, extent: np.ndarray) -> np.ndarray:
-    """Per-axis cell counts. Longest axis gets ``n_max`` cells (from triBudget)."""
-    # Factor tuned so even compact (high surface/volume) shapes stay within
-    # budget — true decimation is deferred (M0), so resolution is the lever.
-    n_max = int(np.clip(round((spec.tri_budget ** 0.5) * 0.63), 24, 96))
+def _resolution(spec: Spec, extent: np.ndarray, res_scale: float = 1.0) -> np.ndarray:
+    """Per-axis cell counts. Longest axis gets ``n_max`` cells (from triBudget).
+
+    ``res_scale`` < 1 coarsens the grid — used by the build's budget back-off so
+    ``triBudget`` is a true cap even for compact shapes (decimation deferred).
+    """
+    n_max = int(np.clip(round((spec.tri_budget ** 0.5) * 0.63 * res_scale), 16, 128))
     cell = float(extent.max()) / n_max
     counts = np.maximum(4, np.ceil(extent / cell).astype(int) + 1)
     return counts
 
 
-def _sample_field(blobs: list[_Blob], spec: Spec):
+def _sample_field(blobs: list[_Blob], spec: Spec, res_scale: float = 1.0):
     lo, hi = _grid_bounds(blobs)
     extent = hi - lo
-    counts = _resolution(spec, extent)  # (nx,ny,nz) sample counts
+    counts = _resolution(spec, extent, res_scale)  # (nx,ny,nz) sample counts
     nx, ny, nz = (int(counts[0]), int(counts[1]), int(counts[2]))
     xs = np.linspace(lo[0], hi[0], nx)
     ys = np.linspace(lo[1], hi[1], ny)
@@ -285,10 +287,20 @@ def build_geometry(
     they are blended into the same SDF as the bone capsules.
     """
     blobs = _blobs(skel, tuple(parts))
-    field, origin, spacing = _sample_field(blobs, spec)
-    verts, faces = _marching_cubes(field, origin, spacing)
-    verts, faces = _weld(verts, faces)
-    verts, faces = _largest_component(verts, faces)
+    # Budget back-off: re-mesh at coarser resolution until within triBudget.
+    # Deterministic (no RNG); typically 1 pass, at most a few.
+    res_scale = 1.0
+    verts = faces = None
+    for _ in range(4):
+        field, origin, spacing = _sample_field(blobs, spec, res_scale)
+        verts, faces = _marching_cubes(field, origin, spacing)
+        verts, faces = _weld(verts, faces)
+        verts, faces = _largest_component(verts, faces)
+        tris = faces.shape[0]
+        if tris <= spec.tri_budget or tris == 0:
+            break
+        res_scale *= (spec.tri_budget / tris) ** 0.5 * 0.95
+
     normals = _vertex_normals(verts, faces)
     return Mesh(
         positions=verts.astype(_F),

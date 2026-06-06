@@ -183,6 +183,13 @@ _BIPED_BUILDERS = {
     "walk": _biped_walk,
 }
 
+# Public capability surface: which clips each archetype supports (FR7).
+ARCHETYPE_CLIPS = {
+    "prop": (),
+    "quadruped": tuple(_QUAD_BUILDERS),
+    "biped": tuple(_BIPED_BUILDERS),
+}
+
 
 def animate(skel: list[Bone], spec: Spec) -> list[AnimClip]:
     """Build the requested clips for this archetype's rig. Props have none."""

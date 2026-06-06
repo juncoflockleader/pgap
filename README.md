@@ -29,4 +29,5 @@ import-metadata sidecar. The `unreal-mcp-rx` MCP server provides the "last mile"
 which is already built and reused unchanged.
 
 See [PRD.md](PRD.md) for the architecture, spec schema, milestones, and quality
-bar.
+bar, and [DESIGN.md](DESIGN.md) for the lightweight technical design (module
+interfaces, per-stage algorithms, and key decisions).

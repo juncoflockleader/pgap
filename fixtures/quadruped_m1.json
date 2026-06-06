@@ -1,0 +1,12 @@
+{
+  "name": "GoldenRetriever",
+  "archetype": "quadruped",
+  "species": "dog",
+  "style": "stylized_low_poly",
+  "seed": 12345,
+  "proportions": { "bodyLength": 1.0, "legLength": 1.0, "neck": 0.9, "tail": 1.2, "heightCm": 60 },
+  "traits": { "ears": "floppy", "snout": "medium", "tail": "feathered" },
+  "triBudget": 8000,
+  "targetSkeletonName": "SKEL_GoldenRetriever",
+  "tailBone": "tail_01"
+}

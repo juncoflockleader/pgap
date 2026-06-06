@@ -16,6 +16,9 @@ venv/
 /artifacts/
 *.tmp
 
+# Local MCP server wiring (machine-specific absolute paths)
+/.mcp.json
+
 # OS / editor
 .DS_Store
 .idea/

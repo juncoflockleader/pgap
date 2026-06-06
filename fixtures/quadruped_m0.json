@@ -1,0 +1,7 @@
+{
+  "name": "GoldenRetriever",
+  "archetype": "quadruped",
+  "species": "dog",
+  "seed": 12345,
+  "triBudget": 8000
+}

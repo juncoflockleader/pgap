@@ -212,6 +212,74 @@ def assemble_gltf(
     return json.dumps(doc, separators=(",", ":"), sort_keys=True).encode("utf-8")
 
 
+def assemble_anim_gltf(name: str, skel: list[Bone], clips: list) -> bytes:
+    """Animation-only glTF: the joint-node skeleton + animation channels, no mesh.
+
+    For the M5 source-handoff `A_<Name>_TailWiggle.gltf` role — imports as an
+    AnimSequence binding to the skeleton created from the mesh (matching bone
+    names). Same joint hierarchy/local-translation convention as the skinned mesh
+    so rotations rotate about each joint's head.
+    """
+    buf = _BufferBuilder()
+    buffer_views: list[dict] = []
+    accessors: list[dict] = []
+
+    def add_accessor(raw, component_type, count, atype, lo=None, hi=None):
+        off, length = buf.add(raw)
+        buffer_views.append({"buffer": 0, "byteOffset": off, "byteLength": length})
+        accessors.append({"bufferView": len(buffer_views) - 1, "componentType": component_type,
+                          "count": count, "type": atype, **({"min": lo} if lo else {}), **({"max": hi} if hi else {})})
+        return len(accessors) - 1
+
+    name_to_idx = {b.name: i for i, b in enumerate(skel)}
+    head_of = {b.name: b.head for b in skel}
+    children: dict[int, list[int]] = {i: [] for i in range(len(skel))}
+    for i, b in enumerate(skel):
+        if b.parent is not None and b.parent in name_to_idx:
+            children[name_to_idx[b.parent]].append(i)
+    nodes = []
+    for i, b in enumerate(skel):
+        local = (np.asarray(b.head) - np.asarray(head_of[b.parent])) if (b.parent in head_of) else np.asarray(b.head)
+        node = {"name": b.name, "translation": [float(x) for x in local]}
+        if children[i]:
+            node["children"] = children[i]
+        nodes.append(node)
+
+    animations_doc = []
+    for clip in clips:
+        times = np.ascontiguousarray(clip.times, dtype="<f4")
+        if times.size == 0 or not clip.channels:
+            continue
+        t_acc = add_accessor(times.tobytes(), _F32, int(times.shape[0]), "SCALAR",
+                             lo=[float(times.min())], hi=[float(times.max())])
+        samplers, channels = [], []
+        for ch in clip.channels:
+            node = name_to_idx.get(ch.bone)
+            if node is None:
+                continue
+            vals = np.ascontiguousarray(ch.values, dtype="<f4")
+            atype = "VEC4" if ch.path == "rotation" else "VEC3"
+            v_acc = add_accessor(vals.tobytes(), _F32, int(vals.shape[0]), atype)
+            samplers.append({"input": t_acc, "output": v_acc, "interpolation": "LINEAR"})
+            channels.append({"sampler": len(samplers) - 1, "target": {"node": node, "path": ch.path}})
+        if channels:
+            animations_doc.append({"name": clip.name, "samplers": samplers, "channels": channels})
+
+    buffer = buf.bytes()
+    uri = "data:application/octet-stream;base64," + base64.b64encode(buffer).decode("ascii")
+    doc = {
+        "asset": {"version": "2.0", "generator": f"pgap {__version__}"},
+        "scene": 0,
+        "scenes": [{"nodes": [0]}],
+        "nodes": nodes,
+        "animations": animations_doc,
+        "buffers": [{"byteLength": len(buffer), "uri": uri}],
+        "bufferViews": buffer_views,
+        "accessors": accessors,
+    }
+    return json.dumps(doc, separators=(",", ":"), sort_keys=True).encode("utf-8")
+
+
 def _sha1(data: bytes) -> str:
     return hashlib.sha1(data).hexdigest()
 

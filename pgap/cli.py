@@ -40,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--spec", required=True, help="path to the actor spec JSON")
     parser.add_argument("--out", default="out", help="output directory (default: ./out)")
+    parser.add_argument(
+        "--handoff", action="store_true",
+        help="also emit the M5 source-handoff bundle (SK/A/T files + v1 manifest)",
+    )
     args = parser.parse_args(argv)
 
     if not Path(args.spec).is_file():
@@ -61,6 +65,15 @@ def main(argv: list[str] | None = None) -> int:
     if "import" in r:
         print(f"wrote {r['import']}")
     print(f"wrote {r['manifest']}")
+
+    if args.handoff:
+        from .handoff import export_source_bundle
+        h = export_source_bundle(Spec.load(args.spec), args.out)
+        print("handoff bundle:")
+        print(f"  mesh       {h['mesh']}")
+        print(f"  animation  {h['animation']}  (motion bone {h['tailMotionBone']})")
+        print(f"  texture    {h['texture']}")
+        print(f"  manifest   {h['manifest']}")
     return 0
 
 

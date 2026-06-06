@@ -9,9 +9,8 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from pgap.animation import animate
 from pgap.assemble import assemble_gltf
-from pgap.pipeline import build_actor
+from pgap.pipeline import build_bundle
 from pgap.rng import make_rng
 from pgap.spec import Spec
 
@@ -21,9 +20,8 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "dog_golden_retriev
 def _build_gltf_bytes() -> bytes:
     spec = Spec.load(FIXTURE)
     rng = make_rng(spec.seed)
-    skel, mesh = build_actor(spec, rng)
-    clips = animate(skel, spec)
-    return assemble_gltf(mesh, spec.name, skel, clips)
+    skel, mesh, clips, textures = build_bundle(spec, rng)
+    return assemble_gltf(mesh, spec.name, skel, clips, textures)
 
 
 def test_gltf_bytes_identical_across_runs():

@@ -10,10 +10,9 @@ import argparse
 import sys
 from pathlib import Path
 
-from .animation import animate
 from .assemble import write_outputs
 from .geometry import mesh_stats
-from .pipeline import build_actor
+from .pipeline import build_bundle
 from .rng import make_rng
 from .skinning import skin_stats
 from .spec import Spec
@@ -23,10 +22,9 @@ def run(spec_path: str, out_dir: str) -> dict:
     spec = Spec.load(spec_path)
     rng = make_rng(spec.seed)  # the single generator for the whole run
 
-    skel, mesh = build_actor(spec, rng)
-    clips = animate(skel, spec)
+    skel, mesh, clips, textures = build_bundle(spec, rng)
 
-    result = write_outputs(mesh, spec, out_dir, skel, clips)
+    result = write_outputs(mesh, spec, out_dir, skel, clips, textures)
     result["mesh_stats"] = mesh_stats(mesh)
     result["skin_stats"] = skin_stats(mesh)
     result["tri_budget"] = spec.tri_budget
@@ -58,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  weight err   {ss['max_weight_error']:.2e}   max influences {ss['max_influences']}")
     print(f"  unweighted   {ss['unweighted_vertices']}   max joint idx {ss['max_joint_index']}")
     print(f"  clips        {', '.join(r['clips']) if r['clips'] else '(none)'}")
+    if "baseColor" in r:
+        print(f"wrote {r['baseColor']}")
     if "import" in r:
         print(f"wrote {r['import']}")
     print(f"wrote {r['manifest']}")

@@ -59,6 +59,7 @@ class Mesh:
     uvs: Optional[np.ndarray] = None  # f32[N,2]
     joints: Optional[np.ndarray] = None  # u16[N,4]
     weights: Optional[np.ndarray] = None  # f32[N,4]
+    colors: Optional[np.ndarray] = None  # f32[N,4] vertex color (COLOR_0)
 
     @property
     def num_vertices(self) -> int:

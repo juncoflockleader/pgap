@@ -30,6 +30,11 @@ DEFAULT_TRAITS = {
     "tail": "feathered",
 }
 DEFAULT_ANIMATIONS = ("idle", "walk", "tail_wag", "bark_pose")
+DEFAULT_MATERIAL = {
+    "baseColor": "warm golden",
+    "fur": True,
+    "roughness": 0.9,
+}
 
 
 @dataclass(frozen=True)
@@ -46,6 +51,7 @@ class Spec:
     target_skeleton: str
     tail_bone: str
     animations: list
+    material: dict
     extra: dict = field(default_factory=dict)
 
     @staticmethod
@@ -83,9 +89,12 @@ class Spec:
         elif not isinstance(animations, list) or not all(isinstance(a, str) for a in animations):
             raise ValueError("spec.animations must be a list of clip-name strings")
 
+        material = {**DEFAULT_MATERIAL, **(data.get("material") or {})}
+
         known = {
             "archetype", "species", "seed", "triBudget", "name",
             "proportions", "traits", "targetSkeletonName", "tailBone", "animations",
+            "material",
         }
         extra = {k: v for k, v in data.items() if k not in known}
 
@@ -100,6 +109,7 @@ class Spec:
             target_skeleton=str(data.get("targetSkeletonName", f"SKEL_{name}")),
             tail_bone=str(data.get("tailBone", "tail_01")),
             animations=animations,
+            material=material,
             extra=extra,
         )
 

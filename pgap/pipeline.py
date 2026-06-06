@@ -1,24 +1,44 @@
-"""The pgap generation pipeline as one function (DESIGN §1).
+"""The pgap generation pipeline (DESIGN §1).
 
 ``build_actor`` threads the seeded RNG through skeleton → parts → geometry → skin
-and returns the rig + finished mesh. Shared by the CLI and the tests so there is a
-single source of truth for stage ordering.
+→ uv → paint and returns the rig + finished mesh (positions, normals, skin, uvs,
+vertex colors). ``build_bundle`` adds the texture synth + animation clips in one
+fixed, deterministic order. Both are the single source of truth shared by the CLI
+and the tests.
 """
 
 from __future__ import annotations
 
+from .animation import animate
 from .geometry import build_geometry
+from .paint import paint_colors
 from .parts import build_parts
 from .rng import Rng
 from .skeleton import build_skeleton
 from .skinning import skin
 from .spec import Spec
+from .texture import synth_textures
 from .types import Bone, Mesh
+from .uv import layout_uvs
 
 
 def build_actor(spec: Spec, rng: Rng) -> tuple[list[Bone], Mesh]:
+    """Geometry path only (no RNG draws): rig + skinned, uv'd, painted mesh."""
     skel = build_skeleton(spec, rng)
     parts = build_parts(skel, spec)
     mesh = build_geometry(skel, spec, rng, tuple(parts))
     mesh = skin(mesh, skel)
+    mesh = layout_uvs(mesh, skel, spec)
+    mesh = paint_colors(mesh, skel, spec)
     return skel, mesh
+
+
+def build_bundle(spec: Spec, rng: Rng):
+    """Everything needed to assemble: (skel, mesh, clips, textures).
+
+    Fixed order so the seeded RNG (used only by texture synth) is deterministic.
+    """
+    skel, mesh = build_actor(spec, rng)   # no RNG draws
+    textures = synth_textures(spec, rng)  # RNG draws here
+    clips = animate(skel, spec)           # no RNG draws
+    return skel, mesh, clips, textures

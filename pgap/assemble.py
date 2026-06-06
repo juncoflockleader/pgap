@@ -69,39 +69,32 @@ def assemble_gltf(
     name: str,
     skel: list[Bone] | None = None,
     anims: list | None = None,
+    textures: dict | None = None,
 ) -> bytes:
-    """Build a glTF 2.0 document (skinned + animated if inputs present)."""
+    """Build a glTF 2.0 document (skinned + animated + textured if inputs present)."""
     skinned = skel is not None and mesh.joints is not None and mesh.weights is not None
 
     positions = np.ascontiguousarray(mesh.positions, dtype="<f4")
     normals = np.ascontiguousarray(mesh.normals, dtype="<f4")
     indices = np.ascontiguousarray(mesh.indices, dtype="<u4")
-
-    buf = _BufferBuilder()
-    idx_off, idx_len = buf.add(indices.tobytes())
-    pos_off, pos_len = buf.add(positions.tobytes())
-    nrm_off, nrm_len = buf.add(normals.tobytes())
-
     pos_min = positions.reshape(-1, 3).min(axis=0).astype(float).tolist()
     pos_max = positions.reshape(-1, 3).max(axis=0).astype(float).tolist()
 
-    buffer_views = [
-        {"buffer": 0, "byteOffset": idx_off, "byteLength": idx_len, "target": _ELEMENT_ARRAY_BUFFER},
-        {"buffer": 0, "byteOffset": pos_off, "byteLength": pos_len, "target": _ARRAY_BUFFER},
-        {"buffer": 0, "byteOffset": nrm_off, "byteLength": nrm_len, "target": _ARRAY_BUFFER},
-    ]
-    accessors = [
-        {"bufferView": 0, "componentType": _U32, "count": int(indices.shape[0]), "type": "SCALAR"},
-        {"bufferView": 1, "componentType": _F32, "count": int(positions.shape[0]), "type": "VEC3", "min": pos_min, "max": pos_max},
-        {"bufferView": 2, "componentType": _F32, "count": int(normals.shape[0]), "type": "VEC3"},
-    ]
-    attributes = {"POSITION": 1, "NORMAL": 2}
+    buf = _BufferBuilder()
+    buffer_views: list[dict] = []
+    accessors: list[dict] = []
 
-    def add_accessor(raw, component_type, count, atype, lo=None, hi=None):
+    def add_view(raw, target=None):
         off, length = buf.add(raw)
-        buffer_views.append({"buffer": 0, "byteOffset": off, "byteLength": length})
-        acc = {"bufferView": len(buffer_views) - 1, "componentType": component_type,
-               "count": count, "type": atype}
+        bv = {"buffer": 0, "byteOffset": off, "byteLength": length}
+        if target is not None:
+            bv["target"] = target
+        buffer_views.append(bv)
+        return len(buffer_views) - 1
+
+    def add_accessor(raw, component_type, count, atype, lo=None, hi=None, target=None):
+        bv = add_view(raw, target)
+        acc = {"bufferView": bv, "componentType": component_type, "count": count, "type": atype}
         if lo is not None:
             acc["min"] = lo
         if hi is not None:
@@ -109,36 +102,55 @@ def assemble_gltf(
         accessors.append(acc)
         return len(accessors) - 1
 
+    # Core geometry attributes.
+    idx_acc = add_accessor(indices.tobytes(), _U32, int(indices.shape[0]), "SCALAR", target=_ELEMENT_ARRAY_BUFFER)
+    attributes = {
+        "POSITION": add_accessor(positions.tobytes(), _F32, int(positions.shape[0]), "VEC3", lo=pos_min, hi=pos_max, target=_ARRAY_BUFFER),
+        "NORMAL": add_accessor(normals.tobytes(), _F32, int(normals.shape[0]), "VEC3", target=_ARRAY_BUFFER),
+    }
+    if mesh.uvs is not None:
+        uvs = np.ascontiguousarray(mesh.uvs, dtype="<f4")
+        attributes["TEXCOORD_0"] = add_accessor(uvs.tobytes(), _F32, int(uvs.shape[0]), "VEC2", target=_ARRAY_BUFFER)
+    if mesh.colors is not None:
+        cols = np.ascontiguousarray(mesh.colors, dtype="<f4")
+        attributes["COLOR_0"] = add_accessor(cols.tobytes(), _F32, int(cols.shape[0]), "VEC4", target=_ARRAY_BUFFER)
+
+    if skinned:
+        joints = np.ascontiguousarray(mesh.joints, dtype="<u2")
+        weights = np.ascontiguousarray(mesh.weights, dtype="<f4")
+        attributes["JOINTS_0"] = add_accessor(joints.tobytes(), _U16, int(joints.shape[0]), "VEC4", target=_ARRAY_BUFFER)
+        attributes["WEIGHTS_0"] = add_accessor(weights.tobytes(), _F32, int(weights.shape[0]), "VEC4", target=_ARRAY_BUFFER)
+        ibm = np.array([_ibm_columns(b.head) for b in skel], dtype="<f4").reshape(-1)
+        ibm_acc = add_accessor(ibm.tobytes(), _F32, len(skel), "MAT4")
+
+    primitive = {"attributes": attributes, "indices": idx_acc, "mode": 4}
+
     doc: dict = {
         "asset": {"version": "2.0", "generator": f"pgap {__version__}"},
         "scene": 0,
     }
 
+    # Material + embedded base-color texture.
+    if textures and textures.get("baseColor"):
+        img_bv = add_view(textures["baseColor"])
+        doc["images"] = [{"bufferView": img_bv, "mimeType": "image/png"}]
+        doc["samplers"] = [{"wrapS": 10497, "wrapT": 10497}]  # REPEAT
+        doc["textures"] = [{"source": 0, "sampler": 0}]
+        doc["materials"] = [{
+            "name": f"{name}_Mat",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [1.0, 1.0, 1.0, 1.0],
+                "baseColorTexture": {"index": 0, "texCoord": 0},
+                "metallicFactor": float(textures.get("metallicFactor", 0.0)),
+                "roughnessFactor": float(textures.get("roughnessFactor", 0.9)),
+            },
+            "doubleSided": True,
+        }]
+        primitive["material"] = 0
+
+    doc["meshes"] = [{"name": name, "primitives": [primitive]}]
+
     if skinned:
-        joints = np.ascontiguousarray(mesh.joints, dtype="<u2")
-        weights = np.ascontiguousarray(mesh.weights, dtype="<f4")
-        ibm = np.array(
-            [_ibm_columns(b.head) for b in skel], dtype="<f4"
-        ).reshape(-1)
-
-        jnt_off, jnt_len = buf.add(joints.tobytes())
-        wgt_off, wgt_len = buf.add(weights.tobytes())
-        ibm_off, ibm_len = buf.add(ibm.tobytes())
-
-        buffer_views += [
-            {"buffer": 0, "byteOffset": jnt_off, "byteLength": jnt_len, "target": _ARRAY_BUFFER},
-            {"buffer": 0, "byteOffset": wgt_off, "byteLength": wgt_len, "target": _ARRAY_BUFFER},
-            {"buffer": 0, "byteOffset": ibm_off, "byteLength": ibm_len},
-        ]
-        accessors += [
-            {"bufferView": 3, "componentType": _U16, "count": int(joints.shape[0]), "type": "VEC4"},
-            {"bufferView": 4, "componentType": _F32, "count": int(weights.shape[0]), "type": "VEC4"},
-            {"bufferView": 5, "componentType": _F32, "count": len(skel), "type": "MAT4"},
-        ]
-        attributes["JOINTS_0"] = 3
-        attributes["WEIGHTS_0"] = 4
-
-        # Joint nodes (indices 0..B-1), hierarchy via local translations.
         name_to_idx = {b.name: i for i, b in enumerate(skel)}
         head_of = {b.name: b.head for b in skel}
         children: dict[int, list[int]] = {i: [] for i in range(len(skel))}
@@ -149,7 +161,7 @@ def assemble_gltf(
         nodes = []
         for i, b in enumerate(skel):
             if b.parent is not None and b.parent in head_of:
-                local = (np.asarray(b.head) - np.asarray(head_of[b.parent]))
+                local = np.asarray(b.head) - np.asarray(head_of[b.parent])
             else:
                 local = np.asarray(b.head)
             node = {"name": b.name, "translation": [float(x) for x in local]}
@@ -159,11 +171,9 @@ def assemble_gltf(
 
         mesh_node_idx = len(skel)
         nodes.append({"name": name, "mesh": 0, "skin": 0})
-
         doc["nodes"] = nodes
         doc["scenes"] = [{"nodes": [0, mesh_node_idx]}]
-        doc["skins"] = [{"joints": list(range(len(skel))), "inverseBindMatrices": 5, "skeleton": 0}]
-        doc["meshes"] = [{"name": name, "primitives": [{"attributes": attributes, "indices": 0, "mode": 4}]}]
+        doc["skins"] = [{"joints": list(range(len(skel))), "inverseBindMatrices": ibm_acc, "skeleton": 0}]
 
         if anims:
             animations_doc = []
@@ -192,7 +202,6 @@ def assemble_gltf(
     else:
         doc["nodes"] = [{"mesh": 0, "name": name}]
         doc["scenes"] = [{"nodes": [0]}]
-        doc["meshes"] = [{"name": name, "primitives": [{"attributes": attributes, "indices": 0, "mode": 4}]}]
 
     buffer = buf.bytes()
     uri = "data:application/octet-stream;base64," + base64.b64encode(buffer).decode("ascii")
@@ -217,6 +226,7 @@ def _spec_hash(spec: Spec) -> str:
             "name": spec.name,
             "proportions": spec.proportions,
             "traits": spec.traits,
+            "material": spec.material,
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -242,16 +252,23 @@ def write_outputs(
     out_dir: str | Path,
     skel: list[Bone] | None = None,
     anims: list | None = None,
+    textures: dict | None = None,
 ) -> dict:
-    """Write glTF (+ import.json if skinned) + manifest; return paths and SHAs."""
+    """Write glTF (+ textures + import.json if skinned) + manifest; return paths/SHAs."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    gltf_bytes = assemble_gltf(mesh, spec.name, skel, anims)
+    gltf_bytes = assemble_gltf(mesh, spec.name, skel, anims, textures)
     gltf_path = out / f"{spec.name}.gltf"
     gltf_path.write_bytes(gltf_bytes)
     files = {gltf_path.name: _sha1(gltf_bytes)}
     result = {"gltf": str(gltf_path), "gltf_sha1": files[gltf_path.name]}
+
+    if textures and textures.get("baseColor"):
+        png_path = out / f"{spec.name}_BaseColor.png"
+        png_path.write_bytes(textures["baseColor"])
+        files[png_path.name] = _sha1(textures["baseColor"])
+        result["baseColor"] = str(png_path)
 
     if skel is not None:
         sidecar_bytes = _import_sidecar_bytes(spec, skel, anims)

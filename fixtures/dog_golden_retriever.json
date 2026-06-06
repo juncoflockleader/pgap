@@ -6,6 +6,7 @@
   "seed": 12345,
   "proportions": { "bodyLength": 1.05, "legLength": 1.0, "neck": 0.95, "tail": 1.15, "heightCm": 58 },
   "traits": { "ears": "floppy", "snout": "medium", "tail": "feathered" },
+  "material": { "baseColor": "warm golden, darker ears, cream chest", "fur": true, "roughness": 0.9 },
   "triBudget": 9000,
   "targetSkeletonName": "SKEL_GoldenRetriever",
   "tailBone": "tail_01"

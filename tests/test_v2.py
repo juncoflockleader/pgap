@@ -13,8 +13,9 @@ from pgap.skinning import skin_stats
 from pgap.spec import Spec
 from pgap.v2.assembly import assemble_recipe, build_actor
 from pgap.v2.library import (
-    Attachment, beholder_recipe, biped_recipe, kraken_recipe, orb_module,
-    tentacle_module,
+    Attachment, beholder_recipe, biped_recipe, fin_module, kraken_recipe,
+    merfolk_recipe, octopus_dragon_recipe, orb_module, sphinx_recipe,
+    tentacle_module, wing_module,
 )
 from pgap.v2.types import Recipe
 
@@ -133,3 +134,31 @@ def test_chimera_deterministic():
         return hashlib.sha1(assemble_gltf(mesh, spec.name, skel)).hexdigest()
 
     assert sha() == sha()
+
+
+# --- V2-M1 (cont.): wing/fin/head-variant chimeras ------------------------- #
+def test_wing_and_fin_modules_build_in_isolation():
+    for rec in (Recipe("WingOnly", [Attachment("w", wing_module())]),
+                Recipe("FinOnly", [Attachment("f", fin_module())])):
+        spec = _creature_spec(rec.name, budget=6000)
+        _, mesh = build_actor(rec, spec, make_rng(spec.seed))
+        assert mesh.num_triangles > 0
+        assert np.allclose(mesh.weights.sum(axis=1), 1.0, atol=1e-5)
+
+
+def test_full_chimera_recipes_are_valid():
+    recipes = {
+        "OctopusDragon": (octopus_dragon_recipe(), 130),
+        "Sphinx": (sphinx_recipe(), 120),
+        "Merfolk": (merfolk_recipe(), 175),
+    }
+    for name, (rec, h) in recipes.items():
+        spec = _creature_spec(name, height=h, budget=10000)
+        skel, mesh = build_actor(rec, spec, make_rng(spec.seed))
+        st = mesh_stats(mesh)
+        assert st["finite"] and st["triangles"] > 0, name
+        assert mesh.num_triangles <= spec.tri_budget, name
+        assert st["boundary_edges"] < 0.02 * st["triangles"] * 3, name
+        assert skin_stats(mesh)["unweighted_vertices"] == 0, name
+        # composite creatures pull in many module types
+        assert len(skel) >= 20, name

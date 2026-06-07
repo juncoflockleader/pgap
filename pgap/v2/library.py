@@ -24,6 +24,7 @@ def spine_module() -> Module:
             "neck": Socket("neck", v(0, 0.22, 0), "spine_02"),
             "shoulder": Socket("shoulder", v(0, 0.20, 0.07), "spine_02", mirror=True),
             "hip": Socket("hip", v(0, 0.005, 0.045), "root", mirror=True),
+            "base": Socket("base", v(0, -0.005, 0), "root"),  # centered (mermaid tail)
         },
     )
 
@@ -145,6 +146,144 @@ def kraken_recipe(arms: int = 8) -> Recipe:
             Attachment("mantle", orb_module(radius=0.18, arm_ring=arms)),
             Attachment("eye", eyeball_module(0.06), parent="mantle", parent_socket="front"),
             Attachment("arms", tentacle_module(), parent="mantle", parent_socket="arms_ring"),
+        ],
+    )
+
+
+# --------------------------------------------------------------------------- #
+# V2-M1 (cont.): horizontal body, dragon neck/head, wing, fin, serpent tail.
+# --------------------------------------------------------------------------- #
+def body_module() -> Module:
+    """A horizontal quadruped/dragon torso (+X forward). Sockets for neck, wings
+    (top), fore/hind legs (underside), a rear ring (tail/tentacles), and a base."""
+    return Module(
+        kind="body",
+        bones=[
+            BoneSpec("spine0", None, v(0, 0, 0), v(0.25, 0.02, 0), 0.13, 0.13, "spine"),
+            BoneSpec("spine1", "spine0", v(0.25, 0.02, 0), v(0.50, 0.0, 0), 0.13, 0.11, "spine"),
+            BoneSpec("spine2", "spine1", v(0.50, 0.0, 0), v(0.70, 0.05, 0), 0.11, 0.09, "spine"),
+        ],
+        sockets={
+            "neck": Socket("neck", v(0.70, 0.05, 0), "spine2"),
+            "wings": Socket("wings", v(0.46, 0.12, 0.05), "spine1", mirror=True),
+            "shoulder": Socket("shoulder", v(0.58, -0.06, 0.10), "spine2", mirror=True),
+            "hip": Socket("hip", v(0.06, -0.06, 0.10), "spine0", mirror=True),
+            "rear_ring": Socket("rear_ring", v(-0.02, -0.03, 0), "spine0", ring=6, ring_radius=0.07),
+            "tail": Socket("tail", v(-0.02, 0.02, 0), "spine0"),
+        },
+    )
+
+
+def dragon_neck_module() -> Module:
+    return Module(
+        kind="neck",
+        bones=[
+            BoneSpec("neck_0", None, v(0, 0, 0), v(0.08, 0.09, 0), 0.075, 0.060, "neck"),
+            BoneSpec("neck_1", "neck_0", v(0.08, 0.09, 0), v(0.16, 0.17, 0), 0.060, 0.050, "neck"),
+        ],
+        sockets={"top": Socket("top", v(0.16, 0.17, 0), "neck_1")},
+    )
+
+
+def draconic_head_module() -> Module:
+    return Module(
+        kind="head",
+        bones=[
+            BoneSpec("skull", None, v(0, 0, 0), v(0.10, 0.0, 0), 0.075, 0.065, "head"),
+            BoneSpec("snout", "skull", v(0.10, 0.0, 0), v(0.24, -0.03, 0), 0.055, 0.030, "snout"),
+            BoneSpec("horn_l", "skull", v(0.01, 0.05, 0.03), v(-0.06, 0.13, 0.05), 0.018, 0.006, "head"),
+            BoneSpec("horn_r", "skull", v(0.01, 0.05, -0.03), v(-0.06, 0.13, -0.05), 0.018, 0.006, "head"),
+        ],
+        sockets={},
+    )
+
+
+def wing_module() -> Module:
+    """Stylized bat wing: an arm + 3 splayed fingers + webbing, pointing +Z out."""
+    elbow = v(0, 0.06, 0.18)
+    t1, t2, t3 = v(-0.12, 0.04, 0.30), v(0.0, 0.0, 0.38), v(0.13, 0.02, 0.30)
+    return Module(
+        kind="wing",
+        bones=[
+            BoneSpec("arm", None, v(0, 0, 0), elbow, 0.022, 0.016, "wing"),
+            BoneSpec("f1", "arm", elbow, t1, 0.014, 0.005, "wing"),
+            BoneSpec("f2", "arm", elbow, t2, 0.014, 0.005, "wing"),
+            BoneSpec("f3", "arm", elbow, t3, 0.014, 0.005, "wing"),
+            BoneSpec("web1", "f1", t1, t2, 0.006, 0.006, "wing"),
+            BoneSpec("web2", "f2", t2, t3, 0.006, 0.006, "wing"),
+        ],
+        sockets={},
+    )
+
+
+def fin_module() -> Module:
+    """A flat tail fluke (fan in the X/Z plane), pointing back/down from the tip."""
+    base = v(0, 0, 0)
+    a, b, c = v(-0.10, -0.04, 0.10), v(-0.14, -0.06, 0.0), v(-0.10, -0.04, -0.10)
+    return Module(
+        kind="fin",
+        bones=[
+            BoneSpec("lobe_l", None, base, a, 0.02, 0.006, "fin"),
+            BoneSpec("mid", None, base, b, 0.02, 0.006, "fin"),
+            BoneSpec("lobe_r", None, base, c, 0.02, 0.006, "fin"),
+            BoneSpec("web_l", "lobe_l", a, b, 0.006, 0.006, "fin"),
+            BoneSpec("web_r", "mid", b, c, 0.006, 0.006, "fin"),
+        ],
+        sockets={},
+    )
+
+
+def serpent_tail_module() -> Module:
+    """A long tapering chain dropping down/back, with a fin socket at the tip."""
+    pts = [v(0, 0, 0), v(-0.03, -0.12, 0), v(-0.04, -0.24, 0), v(-0.02, -0.35, 0),
+           v(0.02, -0.45, 0), v(0.06, -0.53, 0)]
+    radii = [0.085, 0.072, 0.058, 0.044, 0.030, 0.020]
+    bones = [
+        BoneSpec(f"seg_{i}", (f"seg_{i-1}" if i else None), pts[i], pts[i + 1],
+                 radii[i], radii[i + 1], "tail")
+        for i in range(len(pts) - 1)
+    ]
+    return Module(kind="tail", bones=bones, sockets={"tip": Socket("tip", pts[-1], f"seg_{len(pts)-2}")})
+
+
+def octopus_dragon_recipe() -> Recipe:
+    return Recipe(
+        name="OctopusDragon",
+        attachments=[
+            Attachment("body", body_module()),
+            Attachment("neck", dragon_neck_module(), parent="body", parent_socket="neck"),
+            Attachment("head", draconic_head_module(), parent="neck", parent_socket="top"),
+            Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
+            Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+            Attachment("arms", tentacle_module(), parent="body", parent_socket="rear_ring"),
+        ],
+    )
+
+
+def sphinx_recipe() -> Recipe:
+    return Recipe(
+        name="Sphinx",
+        attachments=[
+            Attachment("body", body_module()),
+            Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+            Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
+            Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+            Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        ],
+    )
+
+
+def merfolk_recipe() -> Recipe:
+    return Recipe(
+        name="Merfolk",
+        attachments=[
+            Attachment("spine", spine_module()),
+            Attachment("neck", neck_module(), parent="spine", parent_socket="neck"),
+            Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
+            Attachment("tail", serpent_tail_module(), parent="spine", parent_socket="base"),
+            Attachment("fin", fin_module(), parent="tail", parent_socket="tip"),
         ],
     )
 

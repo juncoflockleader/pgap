@@ -231,9 +231,16 @@ nothing downstream or in the proof lane changes.
   non-bilateral creatures now assemble from recipes and import into UE 5.7: a
   **beholder** (orb + central eye + eyestalk×8 ring) and a **kraken** (orb mantle
   + tentacle-chain×8 ring). **Exit (met):** modules mesh + skin in isolation; ring
-  expansion + rotation verified. **Still to add:** `wing`/`fin` (flat membranes),
-  draconic/lion `head` variants, and a serpent/fish `tail`+fin — the parts the
-  dragon/mermaid/sphinx halves need.
+  expansion + rotation verified.
+  *(continuation shipped)* Added a horizontal `body`, `dragon_neck`,
+  `draconic_head` (skull + snout + horns), `wing` (bone-fan + webbing), `fin`
+  (fluke fan), and `serpent_tail` modules. Three more chimeras assemble + import:
+  **octopus-dragon** (body + dragon neck/head + wings×2 + forelegs×2 + tentacle
+  ring — the PRD's canonical example, 63 bones), **sphinx** (body + 4 legs + neck
+  + humanoid head + wings), and **merfolk** (biped torso + serpent tail + fin).
+  Four of the five reference creatures now generate. **Remaining polish:** spread
+  the folded wings, a `lion`/`cthulhu` head variant, and per-creature proportion
+  tuning (art budget, not new machinery).
 - **V2-M2 — Recipe schema + grammar validator + capability report.** **Exit:**
   fail-closed recipe validation; LLM-readable module/socket contract.
 - **V2-M3 — Modular animation.** Per-module clip contributions composed. **Exit:**

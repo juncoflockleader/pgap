@@ -68,6 +68,87 @@ def leg_module() -> Module:
     )
 
 
+# --------------------------------------------------------------------------- #
+# V2-M1 modules: chain (tail/tentacle), orb body, eyeball, eyestalk.
+# --------------------------------------------------------------------------- #
+def _chain(kind: str, points, radii, group: str) -> Module:
+    """A segment chain through ``points`` (local), radii per node. seg0 is root."""
+    bones = []
+    for i in range(len(points) - 1):
+        bones.append(BoneSpec(
+            f"seg_{i}", (f"seg_{i-1}" if i > 0 else None),
+            points[i], points[i + 1], radii[i], radii[i + 1], group,
+        ))
+    return Module(kind=kind, bones=bones, sockets={})
+
+
+def tentacle_module() -> Module:
+    # Pointing outward (+X) and down (-Y), curling toward the tip.
+    pts = [v(0, 0, 0), v(0.04, -0.06, 0), v(0.08, -0.13, 0), v(0.10, -0.20, 0),
+           v(0.10, -0.27, 0), v(0.08, -0.33, 0), v(0.05, -0.38, 0)]
+    radii = [0.030, 0.027, 0.023, 0.019, 0.015, 0.011, 0.008]
+    return _chain("tentacle", pts, radii, "tentacle")
+
+
+def orb_module(radius: float = 0.24, eye_ring: int = 8, arm_ring: int = 8) -> Module:
+    """A near-spherical body (capsule with head≈tail, big radius) with a top
+    ring (eyestalks), a front socket (central eye), and a bottom ring (arms)."""
+    return Module(
+        kind="orb",
+        bones=[BoneSpec("orb", None, v(0, 0, 0), v(0, 0.004, 0), radius, radius, "body")],
+        sockets={
+            "eyes_ring": Socket("eyes_ring", v(0, radius * 0.62, 0), "orb",
+                                ring=eye_ring, ring_radius=radius * 0.35),
+            "front": Socket("front", v(radius * 0.85, 0, 0), "orb"),
+            "arms_ring": Socket("arms_ring", v(0, -radius * 0.5, 0), "orb",
+                                ring=arm_ring, ring_radius=radius * 0.55),
+        },
+    )
+
+
+def eyeball_module(radius: float = 0.11) -> Module:
+    return Module(
+        kind="eye",
+        bones=[BoneSpec("eye", None, v(0, 0, 0), v(0.004, 0, 0), radius, radius, "eye")],
+        sockets={},
+    )
+
+
+def eyestalk_module(eye_radius: float = 0.05) -> Module:
+    # Authored pointing outward (+X) and up (+Y); ring yaw aims it radially.
+    return Module(
+        kind="eyestalk",
+        bones=[
+            BoneSpec("stem1", None, v(0, 0, 0), v(0.05, 0.09, 0), 0.015, 0.012, "eyestalk"),
+            BoneSpec("stem2", "stem1", v(0.05, 0.09, 0), v(0.09, 0.17, 0), 0.012, 0.010, "eyestalk"),
+            BoneSpec("eye", "stem2", v(0.09, 0.17, 0), v(0.095, 0.175, 0), eye_radius, eye_radius, "eye"),
+        ],
+        sockets={},
+    )
+
+
+def beholder_recipe(eyes: int = 8) -> Recipe:
+    return Recipe(
+        name="Beholder",
+        attachments=[
+            Attachment("orb", orb_module(radius=0.24, eye_ring=eyes)),
+            Attachment("eye", eyeball_module(0.11), parent="orb", parent_socket="front"),
+            Attachment("stalk", eyestalk_module(), parent="orb", parent_socket="eyes_ring"),
+        ],
+    )
+
+
+def kraken_recipe(arms: int = 8) -> Recipe:
+    return Recipe(
+        name="Kraken",
+        attachments=[
+            Attachment("mantle", orb_module(radius=0.18, arm_ring=arms)),
+            Attachment("eye", eyeball_module(0.06), parent="mantle", parent_socket="front"),
+            Attachment("arms", tentacle_module(), parent="mantle", parent_socket="arms_ring"),
+        ],
+    )
+
+
 def biped_recipe() -> Recipe:
     return Recipe(
         name="ModularBiped",

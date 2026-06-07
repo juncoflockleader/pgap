@@ -42,7 +42,8 @@ class Socket:
     position: np.ndarray  # local
     host_bone: str        # the module bone this socket sits on (for parenting)
     mirror: bool = False  # informational; mirroring is driven by the Attachment
-    ring: Optional[int] = None  # radial copies (V2-M1)
+    ring: Optional[int] = None  # radial copies around the socket (V2-M1)
+    ring_radius: float = 0.0    # circle radius for ring placement
 
 
 @dataclass(frozen=True)

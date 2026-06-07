@@ -225,8 +225,15 @@ nothing downstream or in the proof lane changes.
   skinned mesh (weights normalized, watertight-enough, within budget) and is
   deterministic. Dog (frozen bone-name contract + part library) and radial sockets
   land in V2-M1.
-- **V2-M1 — Module library.** spine/neck/head-variants/leg/arm/tail/tentacle/
-  wing/fin/orb/eyestalk. **Exit:** each module meshes + skins in isolation.
+- **V2-M1 — Module library + radial sockets.** *(first pass shipped.)* Added
+  **module rotation** + **ring (radial) socket** expansion to the resolver, plus
+  the `chain`/`tentacle`, `orb`, `eyeball`, `eyestalk` modules. Two novel,
+  non-bilateral creatures now assemble from recipes and import into UE 5.7: a
+  **beholder** (orb + central eye + eyestalk×8 ring) and a **kraken** (orb mantle
+  + tentacle-chain×8 ring). **Exit (met):** modules mesh + skin in isolation; ring
+  expansion + rotation verified. **Still to add:** `wing`/`fin` (flat membranes),
+  draconic/lion `head` variants, and a serpent/fish `tail`+fin — the parts the
+  dragon/mermaid/sphinx halves need.
 - **V2-M2 — Recipe schema + grammar validator + capability report.** **Exit:**
   fail-closed recipe validation; LLM-readable module/socket contract.
 - **V2-M3 — Modular animation.** Per-module clip contributions composed. **Exit:**

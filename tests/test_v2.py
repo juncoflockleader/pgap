@@ -12,7 +12,11 @@ from pgap.rng import make_rng
 from pgap.skinning import skin_stats
 from pgap.spec import Spec
 from pgap.v2.assembly import assemble_recipe, build_actor
-from pgap.v2.library import biped_recipe
+from pgap.v2.library import (
+    Attachment, beholder_recipe, biped_recipe, kraken_recipe, orb_module,
+    tentacle_module,
+)
+from pgap.v2.types import Recipe
 
 
 def _spec():
@@ -66,6 +70,66 @@ def test_v2_deterministic():
 
     def sha():
         skel, mesh = build_actor(biped_recipe(), spec, make_rng(spec.seed))
+        return hashlib.sha1(assemble_gltf(mesh, spec.name, skel)).hexdigest()
+
+    assert sha() == sha()
+
+
+# --- V2-M1: chain modules + radial (ring) sockets -------------------------- #
+def _creature_spec(name, height=80, budget=9000):
+    return Spec.from_dict({
+        "name": name, "archetype": "biped", "species": name.lower(), "seed": 5,
+        "triBudget": budget, "proportions": {"heightCm": height},
+        "material": {"baseColor": "purple"},
+    })
+
+
+def test_ring_expands_to_n_instances():
+    skel = assemble_recipe(beholder_recipe(eyes=8), _creature_spec("Beholder"))
+    names = [b.name for b in skel]
+    # orb(1) + central eye(1) + 8 eyestalks x 3 bones = 26
+    assert len(skel) == 26
+    stalk_eyes = [n for n in names if n.startswith("stalk_") and n.endswith("_eye")]
+    assert len(stalk_eyes) == 8  # one eyeball per ring instance
+
+
+def test_ring_instances_are_rotated_around_the_circle():
+    skel = {b.name: b for b in assemble_recipe(beholder_recipe(eyes=8), _creature_spec("Beholder"))}
+    import numpy as np
+    # Eyestalk tips fan out radially → distinct XZ positions, all off-axis.
+    p0 = skel["stalk_0_eye"].head
+    p2 = skel["stalk_2_eye"].head
+    assert not np.allclose(p0[[0, 2]], p2[[0, 2]])
+    radii = [np.hypot(skel[f"stalk_{k}_eye"].head[0], skel[f"stalk_{k}_eye"].head[2]) for k in range(8)]
+    assert min(radii) > 0.05  # genuinely splayed out, not stacked on the axis
+
+
+def test_single_modules_build_in_isolation():
+    # V2-M1 exit: each module meshes + skins on its own.
+    for rec in (Recipe("OrbOnly", [Attachment("orb", orb_module())]),
+                Recipe("TentacleOnly", [Attachment("t", tentacle_module())])):
+        spec = _creature_spec(rec.name, budget=6000)
+        skel, mesh = build_actor(rec, spec, make_rng(spec.seed))
+        assert mesh.num_triangles > 0 and mesh.weights is not None
+        assert np.allclose(mesh.weights.sum(axis=1), 1.0, atol=1e-5)
+
+
+def test_chimera_recipes_are_valid():
+    for rec, h in ((beholder_recipe(), 80), (kraken_recipe(), 70)):
+        spec = _creature_spec(rec.name, height=h)
+        skel, mesh = build_actor(rec, spec, make_rng(spec.seed))
+        st = mesh_stats(mesh)
+        assert st["finite"] and st["triangles"] > 0
+        assert mesh.num_triangles <= spec.tri_budget
+        assert st["boundary_edges"] < 0.02 * st["triangles"] * 3
+        assert skin_stats(mesh)["unweighted_vertices"] == 0
+
+
+def test_chimera_deterministic():
+    spec = _creature_spec("Beholder")
+
+    def sha():
+        skel, mesh = build_actor(beholder_recipe(), spec, make_rng(spec.seed))
         return hashlib.sha1(assemble_gltf(mesh, spec.name, skel)).hexdigest()
 
     assert sha() == sha()

@@ -112,6 +112,7 @@ pgap output is plain glTF, so the bridge is swappable per engine.
 | [docs/milestones/](docs/milestones/) | M0–M7 implementation plans + exit criteria |
 | [docs/design/v2-modular-creatures.md](docs/design/v2-modular-creatures.md) | Composable chimeras |
 | [docs/design/v3-part-variants.md](docs/design/v3-part-variants.md) | Part variants & library |
+| [docs/roadmap/](docs/roadmap/) | Where it grows next: surfaces → library/bestiary → v4 faces |
 
 ## Status
 

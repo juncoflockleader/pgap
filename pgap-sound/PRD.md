@@ -167,6 +167,11 @@ like the 3D side's `--creature` / `--describe`.
 
 ## 10. Milestones (phased)
 
+> These M0–M5 are the **thematic** v1 scope. The **authoritative build order** for
+> the first usable version is in **[MVP.md](MVP.md)** (S0–S5), which front-loads
+> end-to-end value — SFX → render polish → validation → vocals → NL → Unreal proof —
+> and sequences impacts (M1) and ambient (M2) as the first fast-follows.
+
 - **M0 — SFX core & determinism.** The `sfxr`-style one-shot path: oscillator +
   sweep + ADSR + filter + noise mix, render → PCM16 WAV, seeded RNG, WAV writer,
   determinism test. **Exit:** a laser/coin/jump that imports and clearly beats

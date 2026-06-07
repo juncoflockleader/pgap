@@ -4,12 +4,13 @@
 import numpy as np
 
 from psap import render_spec
+from psap.ambient import AMBIENT_PRESETS
 from psap.impact import IMPACT_PRESETS
 from psap.nl import spec_from_preset
 from psap.sfx import SFX_PRESETS
 from psap.vocal import VOCAL_PRESETS
 
-ALL_PRESETS = sorted({*SFX_PRESETS, *VOCAL_PRESETS, *IMPACT_PRESETS})
+ALL_PRESETS = sorted({*SFX_PRESETS, *VOCAL_PRESETS, *IMPACT_PRESETS, *AMBIENT_PRESETS})
 
 
 def test_every_preset_every_seed_is_healthy():

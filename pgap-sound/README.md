@@ -31,6 +31,7 @@ a `SoundWave` import sidecar) — the dog's bark, generated rather than placehol
 - **UI** — `blip`
 - **Vocals** — `bark`, `growl`, `roar`, `chirp`, `squeak`
 - **Impacts** (modal synthesis) — `wood`, `metal`, `glass`, `stone`
+- **Ambient loops** (seamless) — `wind`, `rain`, `fire`, `water`, `hum`, `drone`
 
 Drive them by name with `--describe` (keyword inference: size words scale pitch,
 "retro/8-bit" adds bitcrush), or author a full `SoundSpec` JSON for exact control.
@@ -57,10 +58,11 @@ Architecture B for audio: don't ask a model to *make* the sound — **synthesize
 with classic DSP. A `SoundSpec` → one seeded `PCG64` RNG → category router
 (SFX = oscillator + sweep/arpeggio + envelope + filter + noise + bitcrush; vocals =
 FM + pitch contour + growl AM + noise rasp; impacts = a bank of decaying resonant
-modes + a noise contact transient, mode ratios encoding the material) → render
-(DC-removal, soft-limit, fades, peak-normalize) → hand-written PCM16 WAV + manifest.
-Pure Python + numpy, no ML framework, no network. **Same (spec, seed) →
-byte-identical WAV.**
+modes + a noise contact transient, mode ratios encoding the material; ambient =
+filtered/granular noise + slow LFO, made **seamlessly loopable** by an equal-power
+crossfade of the tail back over the head) → render (DC-removal, soft-limit, fades,
+peak-normalize) → hand-written PCM16 WAV + manifest. Pure Python + numpy, no ML
+framework, no network. **Same (spec, seed) → byte-identical WAV.**
 
-The deliberate trade is **synthesized, not recorded** (stylized, not foley).
-Seamless ambient loops are the next fast-follow — see [MVP.md](MVP.md).
+The deliberate trade is **synthesized, not recorded** (stylized, not foley). Next:
+a recipe grammar + effects (reverb/delay) and more presets — see [MVP.md](MVP.md).

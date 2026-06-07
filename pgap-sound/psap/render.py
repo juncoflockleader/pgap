@@ -28,8 +28,9 @@ def finalize(buf, sample_rate: int, peak_dbfs: float = -1.0,
     if saturate and saturate > 0:
         x = np.tanh(saturate * x) / np.tanh(saturate)
 
-    # Short fade in/out to kill start/end clicks.
-    f = min(max(1, int(round(sample_rate * fade_ms / 1000.0))), x.size // 2)
+    # Short fade in/out to kill start/end clicks (skipped entirely when fade_ms<=0,
+    # e.g. for seamless loops where an edge fade would re-introduce a seam click).
+    f = min(int(round(sample_rate * fade_ms / 1000.0)), x.size // 2)
     if f > 0:
         ramp = np.linspace(0.0, 1.0, f, dtype=np.float64)
         x[:f] *= ramp

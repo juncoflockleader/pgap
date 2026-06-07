@@ -4,13 +4,14 @@ validation. Unsupported requests return errors — the generator never guesses.
 
 from __future__ import annotations
 
+from .ambient import AMBIENT_PRESETS
 from .dsp import WAVES
 from .impact import MATERIAL_PRESETS
 from .sfx import SFX_PRESETS
 from .vocal import VOCAL_PRESETS
 
 SCHEMA_VERSION = "psap.capabilities.v1"
-CATEGORIES = ("sfx", "ui", "vocal", "impact")
+CATEGORIES = ("sfx", "ui", "vocal", "impact", "ambient")
 FX = ("bitcrush",)
 SAMPLE_RATES = (22050, 44100, 48000)
 MAX_DURATION_MS = 10000.0
@@ -28,6 +29,7 @@ def capability_report() -> dict:
         "sfxPresets": sorted(SFX_PRESETS),
         "vocalPresets": sorted(VOCAL_PRESETS),
         "impactMaterials": sorted(MATERIAL_PRESETS),
+        "ambientPresets": sorted(AMBIENT_PRESETS),
         "limits": {
             "gainDbfs": {"min": -60.0, "max": 0.0},
             "durationMs": {"min": 1.0, "max": MAX_DURATION_MS},
@@ -80,10 +82,10 @@ def validate_spec(d: dict) -> tuple[bool, list[str]]:
     if wave is not None and wave not in WAVES:
         errors.append(f"graph.wave {wave!r} not in {list(WAVES)}")
 
-    for k in ("freq", "f0", "f1", "fpeak", "sweep", "base_freq"):
+    for k in ("freq", "f0", "f1", "fpeak", "sweep", "base_freq", "lowpass", "highpass"):
         if k in g and g[k] is not None and not _num(g[k]):
             errors.append(f"graph.{k} must be numeric")
-    for k in ("freq", "f0", "f1", "fpeak", "base_freq"):
+    for k in ("freq", "f0", "f1", "fpeak", "base_freq", "lowpass", "highpass"):
         if k in g and _num(g[k]) and g[k] <= 0:
             errors.append(f"graph.{k} must be > 0")
 
@@ -91,6 +93,10 @@ def validate_spec(d: dict) -> tuple[bool, list[str]]:
         mat = g.get("material")
         if mat is not None and mat not in MATERIAL_PRESETS:
             errors.append(f"graph.material {mat!r} not in {sorted(MATERIAL_PRESETS)}")
+
+    tone = g.get("tone")
+    if tone is not None and not (isinstance(tone, list) and all(_num(x) and x > 0 for x in tone)):
+        errors.append("graph.tone must be a list of positive frequencies")
 
     arp = g.get("arpeggio")
     if arp is not None and not (isinstance(arp, list) and all(_num(x) for x in arp)):

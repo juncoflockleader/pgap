@@ -1,0 +1,16 @@
+{
+  "name": "WindLoop",
+  "category": "ambient",
+  "seed": 2,
+  "duration_ms": 2500,
+  "sample_rate": 44100,
+  "gain_dbfs": -1.5,
+  "graph": {
+    "highpass": 140,
+    "lowpass": 900,
+    "noise": 1.0,
+    "lfo_hz": 0.3,
+    "lfo_depth": 0.6,
+    "xfade_ms": 250
+  }
+}

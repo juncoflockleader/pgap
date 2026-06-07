@@ -76,22 +76,8 @@ def envelope(n: int, sr: int, attack_ms: float = 2.0, decay_ms: float = 120.0,
     return env
 
 
-def biquad_lowpass(x, sr: int, cutoff: float, q: float = 0.707):
-    """RBJ-cookbook lowpass, applied as a Direct-Form-I recurrence (deterministic)."""
-    cutoff = float(np.clip(cutoff, 20.0, sr * 0.45))
-    q = max(1e-3, float(q))
-    w0 = TWO_PI * cutoff / sr
-    cw, sw = np.cos(w0), np.sin(w0)
-    alpha = sw / (2.0 * q)
-
-    b0 = (1.0 - cw) / 2.0
-    b1 = 1.0 - cw
-    b2 = (1.0 - cw) / 2.0
-    a0 = 1.0 + alpha
-    a1 = -2.0 * cw
-    a2 = 1.0 - alpha
-    b0, b1, b2, a1, a2 = b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0
-
+def _biquad(x, b0, b1, b2, a1, a2):
+    """Direct-Form-I recurrence (deterministic, no scipy)."""
     xs = np.asarray(x, dtype=np.float64).tolist()
     out = [0.0] * len(xs)
     x1 = x2 = y1 = y2 = 0.0
@@ -101,6 +87,38 @@ def biquad_lowpass(x, sr: int, cutoff: float, q: float = 0.707):
         x2, x1 = x1, xi
         y2, y1 = y1, yi
     return np.asarray(out, dtype=np.float64)
+
+
+def biquad_lowpass(x, sr: int, cutoff: float, q: float = 0.707):
+    """RBJ-cookbook lowpass."""
+    cutoff = float(np.clip(cutoff, 20.0, sr * 0.45))
+    q = max(1e-3, float(q))
+    w0 = TWO_PI * cutoff / sr
+    cw, sw = np.cos(w0), np.sin(w0)
+    alpha = sw / (2.0 * q)
+    a0 = 1.0 + alpha
+    b0 = (1.0 - cw) / 2.0 / a0
+    b1 = (1.0 - cw) / a0
+    b2 = b0
+    a1 = (-2.0 * cw) / a0
+    a2 = (1.0 - alpha) / a0
+    return _biquad(x, b0, b1, b2, a1, a2)
+
+
+def biquad_highpass(x, sr: int, cutoff: float, q: float = 0.707):
+    """RBJ-cookbook highpass."""
+    cutoff = float(np.clip(cutoff, 20.0, sr * 0.45))
+    q = max(1e-3, float(q))
+    w0 = TWO_PI * cutoff / sr
+    cw, sw = np.cos(w0), np.sin(w0)
+    alpha = sw / (2.0 * q)
+    a0 = 1.0 + alpha
+    b0 = (1.0 + cw) / 2.0 / a0
+    b1 = -(1.0 + cw) / a0
+    b2 = b0
+    a1 = (-2.0 * cw) / a0
+    a2 = (1.0 - alpha) / a0
+    return _biquad(x, b0, b1, b2, a1, a2)
 
 
 def bitcrush(x, bits: int = 6, downsample: int = 2):

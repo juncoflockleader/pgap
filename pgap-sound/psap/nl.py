@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 
+from .ambient import AMBIENT_PRESETS
 from .impact import IMPACT_PRESETS
 from .sfx import SFX_PRESETS
 from .spec import SoundSpec
@@ -37,6 +38,13 @@ KEYWORDS: list[tuple[str, str]] = [
     ("metal", "metal"), ("metallic", "metal"), ("clang", "metal"), ("clank", "metal"),
     ("glass", "glass"), ("smash", "glass"), ("shatter", "glass"),
     ("stone", "stone"), ("rock", "stone"), ("thud", "stone"),
+    # ambient loops
+    ("wind", "wind"), ("breeze", "wind"), ("gale", "wind"),
+    ("rain", "rain"), ("drizzle", "rain"),
+    ("fire", "fire"), ("campfire", "fire"), ("flame", "fire"), ("crackle", "fire"),
+    ("water", "water"), ("stream", "water"), ("river", "water"), ("bubbl", "water"),
+    ("hum", "hum"),
+    ("drone", "drone"), ("ambience", "drone"), ("ambient", "drone"), ("rumble", "drone"),
 ]
 
 _BIGGER = ("big", "large", "deep", "low", "heavy", "huge", "giant")
@@ -51,6 +59,8 @@ def _preset_def(preset: str):
         return VOCAL_PRESETS[preset]
     if preset in IMPACT_PRESETS:
         return IMPACT_PRESETS[preset]
+    if preset in AMBIENT_PRESETS:
+        return AMBIENT_PRESETS[preset]
     raise KeyError(preset)
 
 

@@ -12,6 +12,8 @@ from .rng import make_rng
 from .spec import SoundSpec
 from .synth import synthesize
 
+LOOP_CATEGORIES = frozenset({"ambient"})
+
 
 def render_spec(spec: SoundSpec) -> np.ndarray:
     """Deterministically render a spec to a final, loudness-safe float buffer.
@@ -23,7 +25,9 @@ def render_spec(spec: SoundSpec) -> np.ndarray:
     rng = make_rng(spec.seed)
     graph = apply_variance(spec.graph, spec.variance, rng)
     raw = synthesize(replace(spec, graph=graph), rng)
-    return finalize(raw, spec.sample_rate, peak_dbfs=spec.gain_dbfs)
+    # Loops must not get edge fades — they would re-introduce a click at the seam.
+    fade_ms = 0.0 if spec.category in LOOP_CATEGORIES else 3.0
+    return finalize(raw, spec.sample_rate, peak_dbfs=spec.gain_dbfs, fade_ms=fade_ms)
 
 
 def generate(spec: SoundSpec, out_dir, handoff: bool = False, package_root=None):

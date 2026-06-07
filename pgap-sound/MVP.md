@@ -135,11 +135,14 @@ playable Unreal audio.
    metal / glass / stone) + a noise contact transient. Live-verified: `S_MetalClang`
    and `S_WoodKnock` imported into UE 5.7.4 as `SoundWave`. Category `impact`,
    NL keywords (clang/knock/shatter/thud), seeded variance on pitch.
-2. **Ambient loops** *(next)* — filtered/granular noise + slow envelopes; **seamless
-   looping** (zero-crossing + crossfade; FR3).
-3. **Recipe grammar + variants + effects** — compose oscillator/filter/fx chains;
-   reverb/delay/chorus/distortion; variant keywords in NL (mirrors the 3D recipe
-   system).
+2. ✅ **Ambient loops** — filtered/granular noise + slow LFO; **seamless looping**
+   via an equal-power tail-over-head crossfade (drone seam discontinuity 0.296 →
+   0.001). Category `ambient` (wind/rain/fire/water/hum/drone), NL keywords,
+   loop-aware render (no edge fades), handoff sidecar marks `looping: true`.
+   Live-verified: `S_WindLoop` imported into UE 5.7.4 as `SoundWave`.
+3. **Recipe grammar + variants + effects** *(next)* — compose oscillator/filter/fx
+   chains; reverb/delay/chorus/distortion; variant keywords in NL (mirrors the 3D
+   recipe system).
 4. **Formats** — OGG export (isolated optional dep); stereo ambience.
 5. **Corpus + golden set** — N seeds × every category read as themselves; no
    silent/clipped/degenerate output.

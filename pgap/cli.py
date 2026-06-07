@@ -46,6 +46,7 @@ def run(spec_path: str, out_dir: str) -> dict:
 def generate_v2(recipe, *, name: str, seed: int, height: float, material: dict,
                 tri_budget: int, out_dir: str) -> dict:
     """Build + write a v2 modular creature from a recipe."""
+    from .v2.animate import animate_recipe
     from .v2.assembly import build_actor as v2_build_actor
 
     spec = Spec.from_dict({
@@ -55,12 +56,13 @@ def generate_v2(recipe, *, name: str, seed: int, height: float, material: dict,
     rng = make_rng(spec.seed)
     skel, mesh = v2_build_actor(recipe, spec, rng)  # no RNG draws here
     textures = synth_textures(spec, rng)
-    result = write_outputs(mesh, spec, out_dir, skel or None, [], textures)
+    clips = animate_recipe(recipe, spec)
+    result = write_outputs(mesh, spec, out_dir, skel or None, clips, textures)
     result["mesh_stats"] = mesh_stats(mesh)
     result["skin_stats"] = skin_stats(mesh) if mesh.weights is not None else None
     result["tri_budget"] = tri_budget
     result["bones"] = len(skel)
-    result["clips"] = []
+    result["clips"] = [c.name for c in clips]
     result["archetype"] = f"v2:{name}"
     return result
 

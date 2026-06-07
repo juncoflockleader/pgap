@@ -45,17 +45,20 @@ class _Placed:
         self.module = module
 
 
-def assemble_recipe(recipe: Recipe, spec: Spec) -> list[Bone]:
+def assemble_with_meta(recipe: Recipe, spec: Spec):
+    """Return (bones, instance_meta). ``instance_meta`` lists one dict per placed
+    module instance: {id, kind, local_bones, phase} — consumed by the animator."""
     mirrored = {a.id for a in recipe.attachments if a.mirror}
     placed: dict[str, _Placed] = {}
     raw: list[tuple] = []  # (name, parent, head, tail, rh, rt, group)
+    meta: list[dict] = []
 
     for att in recipe.attachments:
-        # (instance_id, origin, rot, mirror_flag, cross_parent_bone)
+        # (instance_id, origin, rot, mirror_flag, cross_parent_bone, phase)
         instances: list[tuple] = []
 
         if att.parent is None:
-            instances.append((att.id, np.zeros(3), _I3, False, None))
+            instances.append((att.id, np.zeros(3), _I3, False, None, 0))
         else:
             rep = att.parent if att.parent not in mirrored else f"{att.parent}_l"
             sock = placed[rep].module.sockets[att.parent_socket]
@@ -68,7 +71,7 @@ def assemble_recipe(recipe: Recipe, spec: Spec) -> list[Bone]:
                     offset = rk @ np.array([sock.ring_radius, 0.0, 0.0])
                     origin = p.origin + p.rot @ (base + offset)
                     cross = f"{att.parent}_{sock.host_bone}"
-                    instances.append((f"{att.id}_{k}", origin, p.rot @ rk, False, cross))
+                    instances.append((f"{att.id}_{k}", origin, p.rot @ rk, False, cross, k))
             elif att.mirror:
                 for suffix, mir in (("_l", False), ("_r", True)):
                     parent_inst = att.parent if att.parent not in mirrored else f"{att.parent}_{'r' if mir else 'l'}"
@@ -78,15 +81,17 @@ def assemble_recipe(recipe: Recipe, spec: Spec) -> list[Bone]:
                         sp[2] *= -1.0
                     origin = p.origin + p.rot @ sp
                     cross = f"{parent_inst}_{sock.host_bone}"
-                    instances.append((f"{att.id}{suffix}", origin, p.rot, mir, cross))
+                    instances.append((f"{att.id}{suffix}", origin, p.rot, mir, cross, 0))
             else:
                 p = placed[att.parent]
                 origin = p.origin + p.rot @ base
                 cross = f"{att.parent}_{sock.host_bone}"
-                instances.append((att.id, origin, p.rot, False, cross))
+                instances.append((att.id, origin, p.rot, False, cross, 0))
 
-        for inst_id, origin, rot, mir, cross in instances:
+        for inst_id, origin, rot, mir, cross, phase in instances:
             placed[inst_id] = _Placed(origin, rot, mir, att.module)
+            meta.append({"id": inst_id, "kind": att.module.kind,
+                         "local_bones": [b.name for b in att.module.bones], "phase": phase})
             for b in att.module.bones:
                 head = b.head.astype(np.float64).copy()
                 tail = b.tail.astype(np.float64).copy()
@@ -113,7 +118,11 @@ def assemble_recipe(recipe: Recipe, spec: Spec) -> list[Bone]:
             Bone(name=name, parent=parent, head=head.astype(_F), tail=tail.astype(_F),
                  radius_head=float(rh * g), radius_tail=float(rt * g))
         )
-    return bones
+    return bones, meta
+
+
+def assemble_recipe(recipe: Recipe, spec: Spec) -> list[Bone]:
+    return assemble_with_meta(recipe, spec)[0]
 
 
 def build_actor(recipe: Recipe, spec: Spec, rng: Rng) -> tuple[list[Bone], Mesh]:

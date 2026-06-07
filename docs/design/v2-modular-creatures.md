@@ -249,8 +249,15 @@ nothing downstream or in the proof lane changes.
   unknown module kind / missing socket / dangling parent / bad root-count /
   duplicate id all fail closed; unknown params warn; the capability report lists
   every module's sockets + params + templates. 10 new tests.
-- **V2-M3 — Modular animation.** Per-module clip contributions composed. **Exit:**
-  tentacle wiggle + wing flap + leg gait on one creature.
+- **V2-M3 — Modular animation.** *(shipped.)* `v2/animate.py`: each module *kind*
+  contributes joint-rotation tracks for its own bones (tentacle/tail
+  travelling-wave, eyestalk sway, wing flap, spine breathe); a clip is the sum.
+  `assembly.assemble_with_meta` exposes per-instance metadata (kind, local bones,
+  ring phase) so radial copies are de-phased. Integer cycle-counts over a 3 s
+  window → loop-seamless. Wired into `generate_v2` (the `--creature`/`--recipe`
+  CLI now emits an `idle` clip). **Exit (met):** the kraken's 8 tentacles (48
+  tracks) undulate, the beholder's eyestalks sway — verified as a valid UE
+  AnimSequence (3 s, 0 issues) on the generated skeleton. 6 new tests.
 - **V2-M4 — Reference chimeras.** The five targets as recipes + variance corpus.
   **Exit:** all five generate valid, importable, recognizable-as-described meshes.
 - **V2-M5 — NL → recipe.** Prompt → composition inference, fail-closed grammar.

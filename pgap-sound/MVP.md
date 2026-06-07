@@ -63,10 +63,10 @@ Pure Python + numpy; WAV written by hand (44-byte header + PCM). Optional
 ## Milestones
 
 **Status — all implemented (23 tests green):** S0 ✅ · S1 ✅ · S2 ✅ · S3 ✅ ·
-S4 ✅ · S5 ✅ code + bundle (the *live* UE import is environment-gated on the
-editor being open, identical to the 3D M5 capstone; the bark WAV is OS-verified
-PCM16 and the import is the same `editor_asset_import` call already proven for the
-dog).
+S4 ✅ · S5 ✅ **live-verified** — the bark and roar imported into UE 5.7.4 as
+`SoundWave` assets (`/Game/Audio/PGAP/S_DogBark`, `S_DragonRoar`) via
+`editor_asset_import`. The MVP is complete end to end: prompt → synthesized WAV →
+playable Unreal audio.
 
 ### S0 — SFX core + determinism + WAV  *(the heart)* ✅
 - `rng.py`, `dsp.py` (sine/square/saw/tri/noise oscillators; ADSR + exp-decay

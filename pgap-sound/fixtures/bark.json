@@ -1,0 +1,16 @@
+{
+  "name": "DogBark",
+  "category": "vocal",
+  "seed": 3,
+  "duration_ms": 260,
+  "sample_rate": 44100,
+  "gain_dbfs": -1.0,
+  "graph": {
+    "preset": "bark",
+    "f0": 280, "fpeak": 430, "f1": 170,
+    "mod_ratio": 1.5, "mod_index": 4,
+    "growl": 0.3, "growl_hz": 45,
+    "noise": 0.25, "noise_cut": 3500,
+    "env": {"attack": 3, "hold": 40, "decay": 180}
+  }
+}

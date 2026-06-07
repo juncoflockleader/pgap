@@ -16,7 +16,7 @@ python pgap.py <mode> [args...]
 | Mode | Use it for | Status | Deep guide |
 |---|---|---|---|
 | `3d-actor` | a creature / character / prop (rigged, animated, textured glTF) | ready | [pgap-3d-actor/AGENTS.md](pgap-3d-actor/AGENTS.md) |
-| `sound` | a sound effect / impact / ambient loop / stylized creature vocal | planned | pgap-sound/PRD.md |
+| `sound` | a sound effect / UI blip / stylized creature vocal (WAV) | ready (MVP) | [pgap-sound/README.md](pgap-sound/README.md) · `pgap.py sound --capabilities` |
 | `gear` | a weapon / apparel / armor / accessory | planned | — |
 
 `python pgap.py --help` lists modes; an unready mode prints a pointer to its PRD.

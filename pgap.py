@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parent
 PIPELINES: dict[str, dict] = {
     "3d-actor": {"dir": "pgap-3d-actor", "module": "pgap.cli", "ready": True,
                  "desc": "rigged / skinned / animated / textured creatures"},
-    "sound":    {"dir": "pgap-sound", "module": "psap.cli", "ready": False,
+    "sound":    {"dir": "pgap-sound", "module": "psap.cli", "ready": True,
                  "desc": "SFX / impacts / ambient / stylized creature vocals"},
     "gear":     {"dir": "pgap-gear", "module": "pgear.cli", "ready": False,
                  "desc": "weapons / apparel / armor / accessories"},

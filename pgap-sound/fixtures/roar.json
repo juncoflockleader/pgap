@@ -1,0 +1,15 @@
+{
+  "name": "DragonRoar",
+  "category": "vocal",
+  "seed": 9,
+  "duration_ms": 1200,
+  "sample_rate": 44100,
+  "gain_dbfs": -1.0,
+  "graph": {
+    "f0": 120, "fpeak": 95, "f1": 70,
+    "mod_ratio": 1.0, "mod_index": 5,
+    "growl": 0.6, "growl_hz": 28,
+    "noise": 0.45, "noise_cut": 2200,
+    "env": {"attack": 40, "hold": 700, "decay": 460}
+  }
+}

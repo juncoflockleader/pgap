@@ -16,7 +16,7 @@ engine handoff), and a single wrapper CLI.
 | Mode | Folder | What it generates | Status |
 |---|---|---|---|
 | **`3d-actor`** | [pgap-3d-actor/](pgap-3d-actor/) | rigged / skinned / animated / textured creatures (glTF) | **Implemented** (v1+v2+v3, live-verified in UE 5.7) |
-| **`sound`** | [pgap-sound/](pgap-sound/) | SFX / impacts / ambient / stylized creature vocals (WAV) — *not music, not voice* | Planned — [PRD](pgap-sound/PRD.md) |
+| **`sound`** | [pgap-sound/](pgap-sound/) | SFX / UI / stylized creature vocals (WAV) — *not music, not voice* | **MVP implemented** (S0–S5; impacts/ambient are fast-follows) |
 | **`gear`** | [pgap-gear/](pgap-gear/) | weapons / apparel / armor / accessories | Planned |
 
 ## Usage
@@ -27,8 +27,10 @@ One wrapper routes a mode to its sub-pipeline; all other args pass through:
 python pgap.py 3d-actor --creature dragon --color crimson --out out
 python pgap.py 3d-actor --describe "a deer-antlered dragon with feathered wings and tusks" --mode free
 python pgap.py 3d-actor --v2-capabilities      # the machine-readable contract an LLM reads
+python pgap.py sound --describe "a retro coin pickup"
+python pgap.py sound --describe "a small dragon growl" --seed 4
+python pgap.py sound --spec pgap-sound/fixtures/bark.json --handoff
 python pgap.py --help                          # list modes
-python pgap.py sound --help                    # (planned) -> points at the PRD
 ```
 
 Each sub-pipeline is self-contained (its own package, CLI, tests, and docs); the

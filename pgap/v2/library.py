@@ -217,6 +217,52 @@ def wing_module() -> Module:
     )
 
 
+def wing_feathered_module() -> Module:
+    """Swan/angel wing: an arm + a fan of separated feather capsules (gaps so
+    smooth-min keeps them distinct), swept up and out. No webbing."""
+    elbow = v(0, 0.13, 0.15)
+    tips = [v(-0.16, 0.20, 0.20), v(-0.07, 0.24, 0.29), v(0.03, 0.21, 0.37),
+            v(0.12, 0.16, 0.34), v(0.19, 0.10, 0.25)]
+    bones = [BoneSpec("arm", None, v(0, 0, 0), elbow, 0.022, 0.016, "wing")]
+    for i, t in enumerate(tips):
+        bones.append(BoneSpec(f"feather_{i}", "arm", elbow, t, 0.011, 0.004, "wing"))
+    return Module(kind="wing", bones=bones, sockets={})
+
+
+def wing_membrane_module() -> Module:
+    """Glider/membrane wing: a stiff near-flat delta — leading edge + struts +
+    trailing edge, thin, pointing out (+Z)."""
+    le_tip = v(0, 0.06, 0.42)        # long straight leading edge, out + slight up
+    inner = v(-0.14, -0.02, 0.10)    # trailing edge near the body
+    mid = v(-0.16, 0.0, 0.26)        # trailing mid
+    return Module(
+        kind="wing",
+        bones=[
+            BoneSpec("le", None, v(0, 0, 0), le_tip, 0.020, 0.008, "wing"),
+            BoneSpec("trail_in", "le", v(0, 0, 0), inner, 0.013, 0.008, "wing"),
+            BoneSpec("trail_mid", "le", v(0, 0.03, 0.22), mid, 0.010, 0.007, "wing"),
+            BoneSpec("tip", "le", le_tip, mid, 0.008, 0.006, "wing"),  # leading tip → trailing mid
+            BoneSpec("web", "trail_mid", mid, inner, 0.008, 0.008, "wing"),
+        ],
+        sockets={},
+    )
+
+
+def wing_insect_module() -> Module:
+    """Insect/fairy wing: two long thin lobes from a short arm, leaf-like."""
+    base = v(0, 0.04, 0.14)
+    return Module(
+        kind="wing",
+        bones=[
+            BoneSpec("arm", None, v(0, 0, 0), base, 0.014, 0.010, "wing"),
+            BoneSpec("upper", "arm", base, v(-0.05, 0.12, 0.42), 0.011, 0.004, "wing"),
+            BoneSpec("lower", "arm", base, v(-0.03, -0.05, 0.36), 0.010, 0.004, "wing"),
+            BoneSpec("vein", "arm", base, v(-0.04, 0.04, 0.40), 0.006, 0.004, "wing"),
+        ],
+        sockets={},
+    )
+
+
 def fin_module() -> Module:
     """A flat tail fluke (fan in the X/Z plane), pointing back/down from the tip."""
     base = v(0, 0, 0)

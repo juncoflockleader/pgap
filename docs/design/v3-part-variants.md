@@ -96,11 +96,14 @@ just authored per form. Examples:
   cap at a leg tip. **claw** = a few small splayed capsules. **mane** = a ridge of
   capsules along the neck.
 
-**Fidelity note / optional enhancement:** truly thin features (feathers,
-membranes, fins) read as "rounded" under capsule-SDF. A future **flat/quad
-primitive** (an oriented thin box or a triangle-soup insert that bypasses the SDF
-blend for that part) would sharpen feathers/wings/fins. v3 ships stylized capsule
-variants first; the flat primitive is a tracked enhancement, not a blocker.
+**Fidelity note — DECIDED: stay stylized (capsule-SDF only).** Thin features
+(feathers, membranes, fins) read as "rounded" under capsule-SDF. A flat/quad
+primitive would sharpen them but would break the single-watertight-mesh model
+(two geometry paths, relaxed manifold gate, special-cased skin/UV/normals) — too
+heavy for a deliberately lightweight project. **We keep one unified SDF mesh and
+author variants to lean into it** (separated feathers with gaps, thin-ish fans,
+lower blend-`k`), accepting a charming low-poly chunkiness as on-style. The flat
+primitive stays parked unless a future need justifies the complexity.
 
 ## 5. Library enrichment (the curated set)
 
@@ -165,8 +168,15 @@ kind.
   aliases; `wing` re-expressed as `wing/bat`. **Exit (met):** variants round-trip,
   validate fail-closed (incl. variant-only sockets like `head.face`), v2
   recipes/templates unchanged. 11 new tests (109 total).
-- **V3-M1 — Wing variants.** bat / feathered / membrane / insect. **Exit:** a
-  feathered-winged creature imports and reads distinctly from a bat-winged one.
+- **V3-M1 — Wing variants.** *(shipped.)* `wing` now has four variants —
+  **bat** (webbed fingers), **feathered** (a fan of separated quill capsules —
+  gapped so smooth-min keeps them distinct), **membrane** (a stiff glider delta),
+  **insect** (thin twin lobes) — all stylized capsule-SDF per decision A. NL maps
+  feather/swan/angel → feathered, insect/fairy/dragonfly → insect,
+  glider/membrane/leathery → membrane. **Exit (met):** each variant builds
+  watertight + within budget; feathered and membrane verified live in UE 5.7 and
+  read distinctly from bat. 6 new tests (114 total). Stylized chunkiness is on the
+  membrane (broad delta reads a touch paddle-y) — accepted as on-style.
 - **V3-M2 — Horn variants + the `horn` slot.** unicorn / antler / ram / bull /
   rhino, with a `head.horns` socket. **Exit:** a unicorn, a stag, and a ram-horned
   beast generate.
@@ -183,8 +193,8 @@ kind.
    only named variants? (Propose: named variant + a few continuous params.)
 2. Should some "variants" actually be separate `kind`s (e.g. `antler` vs `horn`)?
    (Propose: keep one `horn` kind with variants; reduces socket sprawl.)
-3. The flat/membrane primitive — worth it for feather/fin fidelity, or stay
-   stylized? (Track; decide after V3-M1 visual review.)
+3. ~~The flat/membrane primitive — worth it?~~ **Resolved: no — stay stylized
+   (§4).** Lightweight project; keep one unified SDF mesh.
 4. Per-variant animation — when does a feathered wing need its own flap?
 5. Texture per part/variant — feathers vs scales vs fur as a `skin` hint per
    module (ties back to v2's `--free` per-module skin)?

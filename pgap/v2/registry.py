@@ -61,7 +61,12 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
     "eyestalk": ModuleKind(default="default",
                            variants={"default": lambda p: L.eyestalk_module(eye_radius=float(p.get("eye_radius", 0.05)))},
                            params=("eye_radius",)),
-    "wing": ModuleKind(default="bat", variants={"bat": lambda p: L.wing_module()}),
+    "wing": ModuleKind(default="bat", variants={
+        "bat": lambda p: L.wing_module(),
+        "feathered": lambda p: L.wing_feathered_module(),
+        "membrane": lambda p: L.wing_membrane_module(),
+        "insect": lambda p: L.wing_insect_module(),
+    }),
     "fin": _single(lambda p: L.fin_module()),
     "serpent_tail": _single(lambda p: L.serpent_tail_module()),
 }

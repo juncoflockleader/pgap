@@ -111,7 +111,15 @@ def _compose_free(text: str, name: str) -> dict:
             modules.append({"id": "arms", "kind": "tentacle", "attach": "body.rear_ring"})
 
     if "wing" in text and base in ("body", "spine"):
-        modules.append({"id": "wing", "kind": "wing", "attach": f"{base}.wings", "mirror": True})
+        wing_variant = "bat"
+        if any(k in text for k in ("feather", "swan", "angel", "bird", "eagle")):
+            wing_variant = "feathered"
+        elif any(k in text for k in ("insect", "fairy", "dragonfly", "butterfly")):
+            wing_variant = "insect"
+        elif any(k in text for k in ("glider", "membrane", "leathery")):
+            wing_variant = "membrane"
+        modules.append({"id": "wing", "kind": "wing", "variant": wing_variant,
+                        "attach": f"{base}.wings", "mirror": True})
 
     if base == "body":
         modules.append({"id": "foreleg", "kind": "leg", "attach": "body.shoulder", "mirror": True})

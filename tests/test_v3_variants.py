@@ -12,7 +12,7 @@ from pgap.v2.registry import build_module, load_template, TEMPLATE_REGISTRY, var
 
 def test_head_kind_has_three_variants():
     assert variant_names("head") == ["humanoid", "draconic", "cephalopod"]
-    assert variant_names("wing") == ["bat"]
+    assert variant_names("wing")[0] == "bat"  # bat is the default; more added in V3-M1
 
 
 def test_variants_emit_different_bones():
@@ -94,3 +94,55 @@ def test_nl_free_uses_head_variant():
 def test_no_regression_templates_still_load():
     for name in TEMPLATE_REGISTRY:
         assert len(load_template(name).attachments) >= 1
+
+
+# --- V3-M1: wing variants -------------------------------------------------- #
+def test_wing_has_four_variants():
+    assert variant_names("wing") == ["bat", "feathered", "membrane", "insect"]
+
+
+def test_wing_variants_emit_distinct_bones():
+    sets = {v: {b.name for b in build_module("wing", v).bones}
+            for v in ("bat", "feathered", "membrane", "insect")}
+    assert "web1" in sets["bat"]                       # webbed fingers
+    assert any(n.startswith("feather_") for n in sets["feathered"])
+    assert "le" in sets["membrane"]                    # leading-edge delta
+    assert {"upper", "lower"} <= sets["insect"]
+    # all four are different
+    assert len({frozenset(s) for s in sets.values()}) == 4
+
+
+def _winged(variant):
+    return {"name": f"W{variant}", "modules": [
+        {"id": "body", "kind": "body"},
+        {"id": "wing", "kind": "wing", "variant": variant, "attach": "body.wings", "mirror": True}]}
+
+
+def test_each_wing_variant_builds_valid():
+    spec = Spec.from_dict({"name": "W", "archetype": "biped", "species": "x", "seed": 5,
+                           "triBudget": 10000, "proportions": {"heightCm": 130},
+                           "material": {"baseColor": "teal"}})
+    for variant in ("bat", "feathered", "membrane", "insect"):
+        recipe = recipe_from_dict(_winged(variant))
+        _, mesh = build_actor(recipe, spec, make_rng(spec.seed))
+        assert mesh.num_triangles > 0
+        import numpy as np
+        assert np.allclose(mesh.weights.sum(axis=1), 1.0, atol=1e-5)
+
+
+def test_nl_infers_wing_variant():
+    assert _wing_variant_of("a dragon with feathered wings") == "feathered"
+    assert _wing_variant_of("a fairy with insect wings") == "insect"
+    assert _wing_variant_of("a beast with leathery glider wings") == "membrane"
+    assert _wing_variant_of("a dragon with wings") == "bat"  # default
+
+
+def _wing_variant_of(prompt):
+    res = prompt_to_recipe(prompt, mode="free")
+    wing = next(m for m in res["recipe_dict"]["modules"] if m["kind"] == "wing")
+    return wing.get("variant", "bat")
+
+
+def test_capability_report_lists_wing_variants():
+    rep = capability_report()
+    assert rep["modules"]["wing"]["variants"] == ["bat", "feathered", "membrane", "insect"]

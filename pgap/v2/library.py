@@ -42,7 +42,7 @@ def head_module() -> Module:
     return Module(
         kind="head",
         bones=[BoneSpec("head", None, v(0, 0, 0), v(0, 0.055, 0), 0.052, 0.050, "head")],
-        sockets={},
+        sockets={"horns": Socket("horns", v(0, 0.05, 0), "head")},
     )
 
 
@@ -195,7 +195,7 @@ def draconic_head_module() -> Module:
             BoneSpec("horn_l", "skull", v(0.01, 0.05, 0.03), v(-0.06, 0.13, 0.05), 0.018, 0.006, "head"),
             BoneSpec("horn_r", "skull", v(0.01, 0.05, -0.03), v(-0.06, 0.13, -0.05), 0.018, 0.006, "head"),
         ],
-        sockets={},
+        sockets={"horns": Socket("horns", v(0.02, 0.06, 0), "skull")},
     )
 
 
@@ -335,12 +335,93 @@ def merfolk_recipe() -> Recipe:
     )
 
 
+# --------------------------------------------------------------------------- #
+# V3-M2: horn slot — variants attach at head.horns, pointing up (+Y).
+# --------------------------------------------------------------------------- #
+def _bilateral(segments) -> list:
+    """Author a left side (z>=0); emit it (_l) plus a Z-mirrored twin (_r)."""
+    out = []
+    for side, sign in (("l", 1.0), ("r", -1.0)):
+        for nm, par, h, t, rh, rt in segments:
+            hh, tt = h.copy(), t.copy()
+            hh[2] *= sign
+            tt[2] *= sign
+            out.append(BoneSpec(f"{nm}_{side}", (f"{par}_{side}" if par else None),
+                                hh, tt, rh, rt, "horn"))
+    return out
+
+
+def horn_unicorn_module() -> Module:
+    return Module("horn", [BoneSpec("horn", None, v(0, 0, 0), v(0.05, 0.26, 0), 0.024, 0.003, "horn")], {})
+
+
+def horn_rhino_module() -> Module:
+    return Module("horn", [BoneSpec("horn", None, v(0, 0, 0), v(0.16, 0.13, 0), 0.036, 0.006, "horn")], {})
+
+
+def horn_antler_module() -> Module:
+    seg = [
+        ("beam", None, v(0, 0, 0.02), v(-0.03, 0.17, 0.08), 0.016, 0.008),
+        ("tine1", "beam", v(-0.03, 0.17, 0.08), v(-0.10, 0.25, 0.05), 0.009, 0.003),
+        ("tine2", "beam", v(-0.03, 0.17, 0.08), v(0.0, 0.24, 0.14), 0.009, 0.003),
+    ]
+    return Module("horn", _bilateral(seg), {})
+
+
+def horn_ram_module() -> Module:
+    seg = [
+        ("c0", None, v(0, 0, 0.02), v(-0.05, 0.11, 0.07), 0.020, 0.014),
+        ("c1", "c0", v(-0.05, 0.11, 0.07), v(-0.03, 0.16, 0.15), 0.014, 0.009),
+        ("c2", "c1", v(-0.03, 0.16, 0.15), v(0.03, 0.09, 0.20), 0.009, 0.005),
+    ]
+    return Module("horn", _bilateral(seg), {})
+
+
+def horn_bull_module() -> Module:
+    seg = [
+        ("b0", None, v(0, 0.02, 0.02), v(-0.10, 0.05, 0.12), 0.022, 0.012),
+        ("b1", "b0", v(-0.10, 0.05, 0.12), v(-0.11, 0.19, 0.10), 0.012, 0.005),
+    ]
+    return Module("horn", _bilateral(seg), {})
+
+
+def unicorn_recipe() -> Recipe:
+    return Recipe(
+        name="Unicorn",
+        attachments=[
+            Attachment("body", body_module()),
+            Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+            Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            Attachment("horn", horn_unicorn_module(), parent="head", parent_socket="horns"),
+            Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+            Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        ],
+    )
+
+
+def stag_recipe() -> Recipe:
+    return Recipe(
+        name="Stag",
+        attachments=[
+            Attachment("body", body_module()),
+            Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+            Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            Attachment("antlers", horn_antler_module(), parent="head", parent_socket="horns"),
+            Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+            Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        ],
+    )
+
+
 def cephalopod_head_module() -> Module:
     """A rounded skull with a downward-front ring of face tentacles (cthulhu)."""
     return Module(
         kind="head",
         bones=[BoneSpec("skull", None, v(0, 0, 0), v(0.05, 0.0, 0), 0.065, 0.060, "head")],
-        sockets={"face": Socket("face", v(0.05, -0.02, 0), "skull", ring=6, ring_radius=0.025)},
+        sockets={
+            "face": Socket("face", v(0.05, -0.02, 0), "skull", ring=6, ring_radius=0.025),
+            "horns": Socket("horns", v(0.0, 0.05, 0), "skull"),
+        },
     )
 
 

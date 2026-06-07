@@ -69,6 +69,13 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
     }),
     "fin": _single(lambda p: L.fin_module()),
     "serpent_tail": _single(lambda p: L.serpent_tail_module()),
+    "horn": ModuleKind(default="unicorn", variants={
+        "unicorn": lambda p: L.horn_unicorn_module(),
+        "antler": lambda p: L.horn_antler_module(),
+        "ram": lambda p: L.horn_ram_module(),
+        "bull": lambda p: L.horn_bull_module(),
+        "rhino": lambda p: L.horn_rhino_module(),
+    }),
 }
 
 # Legacy kind name -> (canonical kind, forced variant). Keeps old JSON valid.
@@ -85,11 +92,14 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "sphinx": lambda **o: L.sphinx_recipe(),
     "merfolk": lambda **o: L.merfolk_recipe(),
     "cthulhu": lambda **o: L.cthulhu_recipe(),
+    "unicorn": lambda **o: L.unicorn_recipe(),
+    "stag": lambda **o: L.stag_recipe(),
 }
 
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "biped": 180, "beholder": 80, "kraken": 70,
     "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
+    "unicorn": 160, "stag": 150,
 }
 
 

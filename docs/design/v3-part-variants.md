@@ -177,9 +177,15 @@ kind.
   watertight + within budget; feathered and membrane verified live in UE 5.7 and
   read distinctly from bat. 6 new tests (114 total). Stylized chunkiness is on the
   membrane (broad delta reads a touch paddle-y) — accepted as on-style.
-- **V3-M2 — Horn variants + the `horn` slot.** unicorn / antler / ram / bull /
-  rhino, with a `head.horns` socket. **Exit:** a unicorn, a stag, and a ram-horned
-  beast generate.
+- **V3-M2 — Horn variants + the `horn` slot.** *(shipped.)* New `horn` kind with
+  five variants — **unicorn** / **rhino** (single) and **antler** (branching
+  beam+tines, bilateral) / **ram** (curled) / **bull** (swept) — attached via a
+  new `head.horns` socket added to all three head variants. `unicorn` + `stag`
+  templates registered; NL maps unicorn/antler/deer/ram/bull/rhino keywords to the
+  horn variant (and "horn" no longer mis-triggers a draconic head — horns are
+  their own slot). **Exit (met):** unicorn (single horn, verified live in UE) and
+  stag (antlers) generate watertight; each horn variant builds. 6 new tests
+  (119 total).
 - **V3-M3 — Tusks, hooves, claws, manes, ears.** New slots + variants. **Exit:** a
   boar (tusks), a horse (hooves + mane), a feline (claws) generate.
 - **V3-M4 — NL variant keywords + presets.** "a deer-antlered, feather-winged

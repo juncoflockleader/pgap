@@ -146,3 +146,48 @@ def _wing_variant_of(prompt):
 def test_capability_report_lists_wing_variants():
     rep = capability_report()
     assert rep["modules"]["wing"]["variants"] == ["bat", "feathered", "membrane", "insect"]
+
+
+# --- V3-M2: horn slot + variants ------------------------------------------- #
+def test_horn_slot_has_five_variants():
+    assert set(variant_names("horn")) == {"unicorn", "antler", "ram", "bull", "rhino"}
+    rep = capability_report()
+    assert "horn" in rep["modules"]
+    assert "horns" in rep["modules"]["head"]["sockets"]  # head.horns socket
+
+
+def test_horn_variants_emit_distinct_bones():
+    counts = {v: len(build_module("horn", v).bones) for v in variant_names("horn")}
+    assert counts["unicorn"] == 1 and counts["rhino"] == 1  # single horns
+    assert counts["antler"] == 6  # branching pair (beam + 2 tines, bilateral)
+    assert counts["ram"] == 6 and counts["bull"] == 4
+
+
+def test_each_horn_variant_builds():
+    spec = Spec.from_dict({"name": "H", "archetype": "biped", "species": "x", "seed": 5,
+                           "triBudget": 8000, "proportions": {"heightCm": 60},
+                           "material": {"baseColor": "white"}})
+    for v in variant_names("horn"):
+        recipe = recipe_from_dict({"name": "H", "modules": [{"id": "h", "kind": "horn", "variant": v}]})
+        _, mesh = build_actor(recipe, spec, make_rng(spec.seed))
+        assert mesh.num_triangles > 0
+
+
+def test_unicorn_and_stag_templates_build():
+    for name in ("unicorn", "stag"):
+        recipe = load_template(name)
+        spec = Spec.from_dict({"name": name, "archetype": "biped", "species": name, "seed": 5,
+                               "triBudget": 11000, "proportions": {"heightCm": 150},
+                               "material": {"baseColor": "white"}})
+        skel, mesh = build_actor(recipe, spec, make_rng(spec.seed))
+        names = {b.name for b in skel}
+        assert any("horn" in n or "beam" in n for n in names)  # the horn slot is present
+        assert mesh.num_triangles > 0
+
+
+def test_nl_unicorn_and_horns():
+    assert prompt_to_recipe("a unicorn")["template"] == "unicorn"
+    assert prompt_to_recipe("a deer with antlers")["template"] == "stag"
+    # free: a horned beast composes a horn module
+    res = prompt_to_recipe("a four-legged beast with a unicorn horn", mode="free")
+    assert any(m["kind"] == "horn" for m in res["recipe_dict"]["modules"])

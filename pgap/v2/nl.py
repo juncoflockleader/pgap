@@ -28,6 +28,8 @@ _TEMPLATE_KEYWORDS = {
     "merfolk": ["mermaid", "merfolk", "merman", "merperson", "siren", "fish tail", "fish-tailed"],
     "cthulhu": ["cthulhu", "great old one", "tentacle face", "tentacled face", "facial tentacle"],
     "sphinx": ["sphinx", "winged lion", "manticore"],
+    "unicorn": ["unicorn"],
+    "stag": ["stag", "deer", "elk", "antlered"],
     "biped": ["humanoid", "human ", "person", "robot", "android", "warrior", "knight"],
 }
 
@@ -93,11 +95,26 @@ def _compose_free(text: str, name: str) -> dict:
         neck_kind = "dragon_neck" if base == "body" else "neck"
         modules.append({"id": "neck", "kind": neck_kind, "attach": f"{base}.neck"})
         head_variant = "humanoid"
-        if any(k in text for k in ("dragon", "draconic", "horn", "horned")):
+        if any(k in text for k in ("dragon", "draconic")):  # horns are their own slot now
             head_variant = "draconic"
         if "cthulhu" in text or ("tentacle" in text and ("face" in text or "mouth" in text)):
             head_variant = "cephalopod"
         modules.append({"id": "head", "kind": "head", "variant": head_variant, "attach": "neck.top"})
+        horn_variant = None
+        if "unicorn" in text or "spiral horn" in text:
+            horn_variant = "unicorn"
+        elif any(k in text for k in ("antler", "deer", "stag", "elk", "moose")):
+            horn_variant = "antler"
+        elif any(k in text for k in ("ram ", "curled horn")):
+            horn_variant = "ram"
+        elif any(k in text for k in ("bull", "buffalo", "minotaur", "ox ")):
+            horn_variant = "bull"
+        elif "rhino" in text:
+            horn_variant = "rhino"
+        elif "horn" in text:
+            horn_variant = "unicorn"
+        if horn_variant and head_variant == "humanoid":  # plain head takes a horn slot
+            modules.append({"id": "horn", "kind": "horn", "variant": horn_variant, "attach": "head.horns"})
 
     if base == "orb" and any(k in text for k in ("eyestalk", "eye stalk", "many eyes", "beholder")):
         modules.append({"id": "stalk", "kind": "eyestalk", "attach": "orb.eyes_ring"})

@@ -13,6 +13,8 @@ import json
 import sys
 from pathlib import Path
 
+import json as _json
+
 from .assemble import write_outputs
 from .capabilities import capability_report, validate_spec
 from .geometry import mesh_stats
@@ -21,6 +23,7 @@ from .pipeline import build_bundle
 from .rng import make_rng
 from .skinning import skin_stats
 from .spec import Spec
+from .texture import synth_textures
 
 
 def generate(spec: Spec, out_dir: str) -> dict:
@@ -38,6 +41,28 @@ def generate(spec: Spec, out_dir: str) -> dict:
 
 def run(spec_path: str, out_dir: str) -> dict:
     return generate(Spec.load(spec_path), out_dir)
+
+
+def generate_v2(recipe, *, name: str, seed: int, height: float, material: dict,
+                tri_budget: int, out_dir: str) -> dict:
+    """Build + write a v2 modular creature from a recipe."""
+    from .v2.assembly import build_actor as v2_build_actor
+
+    spec = Spec.from_dict({
+        "name": name, "archetype": "biped", "species": name.lower(), "seed": seed,
+        "triBudget": tri_budget, "proportions": {"heightCm": height}, "material": material,
+    })
+    rng = make_rng(spec.seed)
+    skel, mesh = v2_build_actor(recipe, spec, rng)  # no RNG draws here
+    textures = synth_textures(spec, rng)
+    result = write_outputs(mesh, spec, out_dir, skel or None, [], textures)
+    result["mesh_stats"] = mesh_stats(mesh)
+    result["skin_stats"] = skin_stats(mesh) if mesh.weights is not None else None
+    result["tri_budget"] = tri_budget
+    result["bones"] = len(skel)
+    result["clips"] = []
+    result["archetype"] = f"v2:{name}"
+    return result
 
 
 def _print_result(r: dict) -> None:
@@ -69,13 +94,61 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--prompt", help="natural-language prompt to infer a spec from")
     parser.add_argument("--seed", type=int, help="seed override (default 12345 for --prompt)")
     parser.add_argument("--out", default="out", help="output directory (default: ./out)")
-    parser.add_argument("--capabilities", action="store_true", help="print the capability report and exit")
+    parser.add_argument("--capabilities", action="store_true", help="print the v1 capability report and exit")
+    parser.add_argument("--v2-capabilities", action="store_true", help="print the v2 module/socket capability report and exit")
+    parser.add_argument("--creature", help="build a v2 creature template (strict): beholder, kraken, octopus_dragon, sphinx, merfolk, biped")
+    parser.add_argument("--recipe", help="build a v2 creature from a recipe JSON file (free mode)")
+    parser.add_argument("--color", help="coat baseColor for --creature (default: stone)")
     parser.add_argument("--handoff", action="store_true", help="also emit the M5 source-handoff bundle")
     parser.add_argument("--package-root", default="/Game/Prototype/Dogs", help="Unreal package root for handoff")
     args = parser.parse_args(argv)
 
     if args.capabilities:
         print(json.dumps(capability_report(), indent=2))
+        return 0
+
+    if args.v2_capabilities:
+        from .v2.recipe import capability_report as v2_capability_report
+        print(json.dumps(v2_capability_report(), indent=2))
+        return 0
+
+    if args.creature:
+        from .v2.registry import TEMPLATE_HEIGHT_CM, TEMPLATE_REGISTRY, load_template
+        if args.creature not in TEMPLATE_REGISTRY:
+            parser.error(f"unknown creature {args.creature!r}; choices: {sorted(TEMPLATE_REGISTRY)}")
+        recipe = load_template(args.creature)
+        name = "".join(w.capitalize() for w in args.creature.split("_"))
+        r = generate_v2(
+            recipe, name=name, seed=args.seed if args.seed is not None else 5,
+            height=TEMPLATE_HEIGHT_CM.get(args.creature, 100.0),
+            material={"baseColor": args.color or "stone"}, tri_budget=10000, out_dir=args.out,
+        )
+        print(f"creature → {args.creature} (strict)")
+        _print_result(r)
+        return 0
+
+    if args.recipe:
+        from .v2.recipe import recipe_from_dict, validate_recipe
+        if not Path(args.recipe).is_file():
+            parser.error(f"recipe not found: {args.recipe}")
+        data = _json.loads(Path(args.recipe).read_text())
+        report = validate_recipe(data)
+        for w in report["warnings"]:
+            print(f"  warning: {w}", file=sys.stderr)
+        if not report["ok"]:
+            for e in report["errors"]:
+                print(f"  error: {e}", file=sys.stderr)
+            return 2
+        recipe = recipe_from_dict(data)
+        r = generate_v2(
+            recipe, name=str(data.get("name", "Creature")),
+            seed=int(data.get("seed", args.seed if args.seed is not None else 5)),
+            height=float(data.get("heightCm", 100.0)),
+            material=data.get("material") or {"baseColor": "stone"},
+            tri_budget=int(data.get("triBudget", 10000)), out_dir=args.out,
+        )
+        print(f"recipe → {r['archetype']} (free)")
+        _print_result(r)
         return 0
 
     if args.prompt:

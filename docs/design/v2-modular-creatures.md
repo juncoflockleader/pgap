@@ -241,8 +241,14 @@ nothing downstream or in the proof lane changes.
   Four of the five reference creatures now generate. **Remaining polish:** spread
   the folded wings, a `lion`/`cthulhu` head variant, and per-creature proportion
   tuning (art budget, not new machinery).
-- **V2-M2 — Recipe schema + grammar validator + capability report.** **Exit:**
-  fail-closed recipe validation; LLM-readable module/socket contract.
+- **V2-M2 — Recipe schema + grammar validator + capability report.** *(shipped.)*
+  `v2/registry.py` (module + template registries), `v2/recipe.py`
+  (`validate_recipe` fail-closed grammar, `recipe_from_dict` JSON loader,
+  `capability_report`). CLI: `--v2-capabilities`, `--creature <template>`
+  (**strict**), `--recipe <file.json>` (**free**), `--color`. **Exit (met):**
+  unknown module kind / missing socket / dangling parent / bad root-count /
+  duplicate id all fail closed; unknown params warn; the capability report lists
+  every module's sockets + params + templates. 10 new tests.
 - **V2-M3 — Modular animation.** Per-module clip contributions composed. **Exit:**
   tentacle wiggle + wing flap + leg gait on one creature.
 - **V2-M4 — Reference chimeras.** The five targets as recipes + variance corpus.

@@ -166,5 +166,7 @@ principle, not an accident.
 - [PRD.md](../PRD.md) — product requirements, milestones M0–M7.
 - [DESIGN.md](../DESIGN.md) — per-stage algorithms and data structures.
 - [docs/milestones/](milestones/) — M0–M7 implementation plans + exit criteria.
-- [docs/design/v2-modular-creatures.md](design/v2-modular-creatures.md) — proposal
-  to extend beyond fixed archetypes to composable, chimeric creatures.
+- [docs/design/v2-modular-creatures.md](design/v2-modular-creatures.md) — composable,
+  chimeric creatures from socketed modules (implemented: `pgap/v2/`).
+- [docs/design/v3-part-variants.md](design/v3-part-variants.md) — part variants
+  (bat vs swan wing; unicorn vs antler horn) + library enrichment (proposal).

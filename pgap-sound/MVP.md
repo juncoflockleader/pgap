@@ -140,10 +140,13 @@ playable Unreal audio.
    0.001). Category `ambient` (wind/rain/fire/water/hum/drone), NL keywords,
    loop-aware render (no edge fades), handoff sidecar marks `looping: true`.
    Live-verified: `S_WindLoop` imported into UE 5.7.4 as `SoundWave`.
-3. **Recipe grammar + variants + effects** *(next)* — compose oscillator/filter/fx
-   chains; reverb/delay/chorus/distortion; variant keywords in NL (mirrors the 3D
-   recipe system).
-4. **Formats** — OGG export (isolated optional dep); stereo ambience.
+3. ✅ **Recipe grammar + variants + effects** — a shared effects bus (reverb /
+   delay / chorus / distortion) as an ordered `spec.effects` chain on any category;
+   reverb/delay loop-safe (circular). NL variant adjectives (bright/dark/metallic/
+   warm/echoey/reverberant/distorted/lush) select effects + tweak timbre, and
+   reverb/echo auto-extend one-shot duration for the tail. Live-verified:
+   `S_RoarVerb` (reverberant roar) imported into UE 5.7.4 as `SoundWave`.
+4. **Formats** *(next)* — OGG export (isolated optional dep); stereo ambience.
 5. **Corpus + golden set** — N seeds × every category read as themselves; no
    silent/clipped/degenerate output.
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from .ambient import AMBIENT_PRESETS
 from .dsp import WAVES
+from .effects import EFFECT_NAMES
 from .impact import MATERIAL_PRESETS
 from .sfx import SFX_PRESETS
 from .vocal import VOCAL_PRESETS
@@ -30,6 +31,9 @@ def capability_report() -> dict:
         "vocalPresets": sorted(VOCAL_PRESETS),
         "impactMaterials": sorted(MATERIAL_PRESETS),
         "ambientPresets": sorted(AMBIENT_PRESETS),
+        "effects": list(EFFECT_NAMES),
+        "adjectives": ["bright", "dark", "metallic", "warm", "echoey", "reverberant",
+                       "distorted", "lush"],
         "limits": {
             "gainDbfs": {"min": -60.0, "max": 0.0},
             "durationMs": {"min": 1.0, "max": MAX_DURATION_MS},
@@ -109,5 +113,13 @@ def validate_spec(d: dict) -> tuple[bool, list[str]]:
     noise = g.get("noise")
     if noise is not None and (not _num(noise) or not (0.0 <= noise <= 1.0)):
         errors.append("graph.noise must be in [0, 1]")
+
+    effects = d.get("effects", [])
+    if not isinstance(effects, list):
+        errors.append("effects must be a list")
+    else:
+        for e in effects:
+            if not isinstance(e, dict) or e.get("type") not in EFFECT_NAMES:
+                errors.append(f"effect type must be one of {list(EFFECT_NAMES)}: {e!r}")
 
     return (len(errors) == 0, errors)

@@ -37,6 +37,25 @@ Drive them by name with `--describe` (keyword inference: size words scale pitch,
 "retro/8-bit" adds bitcrush), or author a full `SoundSpec` JSON for exact control.
 Unsupported requests **fail closed** (see `--capabilities`).
 
+### Effects & variant adjectives
+
+A shared **effects bus** runs on any category as an ordered chain
+(`spec.effects`): `reverb`, `delay`, `chorus`, `distortion`. Reverb/delay are
+**loop-safe** (circular) so they don't break ambient seams. In `--describe`,
+**adjectives** select them and tweak timbre: *bright/dark* (cutoff), *metallic*
+(FM index + verb), *echoey* (delay), *reverberant/cavernous* (reverb), *gritty/
+distorted/warm* (distortion), *lush* (chorus).
+
+```bash
+python pgap.py sound --describe "a cavernous dragon roar"
+python pgap.py sound --describe "an echoey retro laser"
+python pgap.py sound --describe "a bright metallic clang"
+```
+```jsonc
+// or compose an explicit chain in a SoundSpec:
+"effects": [ {"type": "distortion", "drive": 3}, {"type": "reverb", "decay": 0.6, "wet": 0.35} ]
+```
+
 ### Variation vs. determinism
 
 Output is **deterministic** (same `spec`+`seed` → byte-identical WAV) but **not
@@ -60,9 +79,10 @@ with classic DSP. A `SoundSpec` → one seeded `PCG64` RNG → category router
 FM + pitch contour + growl AM + noise rasp; impacts = a bank of decaying resonant
 modes + a noise contact transient, mode ratios encoding the material; ambient =
 filtered/granular noise + slow LFO, made **seamlessly loopable** by an equal-power
-crossfade of the tail back over the head) → render (DC-removal, soft-limit, fades,
-peak-normalize) → hand-written PCM16 WAV + manifest. Pure Python + numpy, no ML
-framework, no network. **Same (spec, seed) → byte-identical WAV.**
+crossfade of the tail back over the head) → an optional **effects chain** (reverb/
+delay/chorus/distortion) → render (DC-removal, soft-limit, fades, peak-normalize) →
+hand-written PCM16 WAV + manifest. Pure Python + numpy, no ML framework, no
+network. **Same (spec, seed) → byte-identical WAV.**
 
 The deliberate trade is **synthesized, not recorded** (stylized, not foley). Next:
-a recipe grammar + effects (reverb/delay) and more presets — see [MVP.md](MVP.md).
+OGG/stereo output, more presets, and a golden render corpus — see [MVP.md](MVP.md).

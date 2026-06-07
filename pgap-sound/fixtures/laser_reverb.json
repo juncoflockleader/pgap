@@ -1,0 +1,19 @@
+{
+  "name": "LaserReverb",
+  "category": "sfx",
+  "seed": 11,
+  "duration_ms": 900,
+  "sample_rate": 44100,
+  "gain_dbfs": -1.0,
+  "graph": {
+    "wave": "square",
+    "freq": 1200,
+    "sweep": -900,
+    "env": {"attack": 1, "decay": 300},
+    "filter": {"cutoff": 5000, "q": 0.7}
+  },
+  "effects": [
+    {"type": "distortion", "drive": 3.0, "wet": 0.4},
+    {"type": "reverb", "decay": 0.6, "wet": 0.35}
+  ]
+}

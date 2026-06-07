@@ -121,6 +121,52 @@ def prompt_to_spec(prompt: str, seed: int = 0, name: str | None = None,
             fx.append("bitcrush")
         g["fx"] = fx
 
+    _apply_adjectives(p, spec)
+
     if name is None:
         spec.name = "".join(w.capitalize() for w in preset.split("_"))
     return spec
+
+
+def _scale_cutoffs(g: dict, factor: float) -> None:
+    """Brighten/darken: scale any cutoff-like field in the graph."""
+    filt = g.get("filter")
+    if isinstance(filt, dict) and isinstance(filt.get("cutoff"), (int, float)):
+        filt["cutoff"] = round(filt["cutoff"] * factor, 1)
+    for k in ("lowpass", "noise_cut", "transient_cut"):
+        if isinstance(g.get(k), (int, float)):
+            g[k] = round(g[k] * factor, 1)
+
+
+def _apply_adjectives(p: str, spec: SoundSpec) -> None:
+    """Variant adjectives: tweak timbre params and/or append effects."""
+    g = spec.graph
+    is_loop = spec.category == "ambient"
+
+    if any(w in p for w in ("bright", "sharp", "crisp", "shrill")):
+        _scale_cutoffs(g, 1.7)
+    if any(w in p for w in ("dark", "muffled", "dull", "soft", "mellow")):
+        _scale_cutoffs(g, 0.55)
+    if "metallic" in p or ("metal" in p and spec.category == "vocal"):
+        if isinstance(g.get("mod_index"), (int, float)):
+            g["mod_index"] = round(g["mod_index"] * 1.7, 2)
+        spec.effects.append({"type": "reverb", "decay": 0.5, "wet": 0.28})
+
+    added_tail = False
+    if any(w in p for w in ("reverberant", "cavernous", "spacious", "hall",
+                            "in a cave", "echoey hall")):
+        spec.effects.append({"type": "reverb", "decay": 0.8, "wet": 0.4})
+        added_tail = True
+    if any(w in p for w in ("echo", "echoey", "delay", "delayed")):
+        spec.effects.append({"type": "delay", "time_ms": 160, "feedback": 0.42, "wet": 0.4})
+        added_tail = True
+    if any(w in p for w in ("distorted", "gritty", "harsh", "crunchy", "dirty", "growly")):
+        spec.effects.append({"type": "distortion", "drive": 5.0, "wet": 0.85})
+    if any(w in p for w in ("lush", "chorus", "wobbly", "shimmer", "wide")):
+        spec.effects.append({"type": "chorus", "rate_hz": 1.4, "depth_ms": 3.0, "wet": 0.45})
+    if "warm" in p:
+        spec.effects.append({"type": "distortion", "drive": 2.0, "wet": 0.5})
+
+    # Give one-shots room for the reverb/echo tail (loops wrap, so leave them).
+    if added_tail and not is_loop:
+        spec.duration_ms = round(min(10000.0, spec.duration_ms * 2.5 + 500.0), 1)

@@ -6,6 +6,7 @@ from dataclasses import replace
 
 import numpy as np
 
+from .effects import apply_chain
 from .humanize import apply_variance
 from .render import finalize
 from .rng import make_rng
@@ -23,10 +24,13 @@ def render_spec(spec: SoundSpec) -> np.ndarray:
     different take.
     """
     rng = make_rng(spec.seed)
+    is_loop = spec.category in LOOP_CATEGORIES
     graph = apply_variance(spec.graph, spec.variance, rng)
     raw = synthesize(replace(spec, graph=graph), rng)
+    if spec.effects:
+        raw = apply_chain(raw, spec.sample_rate, rng, spec.effects, loop=is_loop)
     # Loops must not get edge fades — they would re-introduce a click at the seam.
-    fade_ms = 0.0 if spec.category in LOOP_CATEGORIES else 3.0
+    fade_ms = 0.0 if is_loop else 3.0
     return finalize(raw, spec.sample_rate, peak_dbfs=spec.gain_dbfs, fade_ms=fade_ms)
 
 

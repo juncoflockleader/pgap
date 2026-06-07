@@ -17,6 +17,7 @@ class SoundSpec:
     gain_dbfs: float = -1.0        # target peak loudness (<= 0)
     variance: float = 0.0          # 0 = exact preset; >0 = seeded humanization (0..1)
     graph: dict = field(default_factory=dict)  # category-specific synth params
+    effects: list = field(default_factory=list)  # ordered post-fx [{type, ...params}]
 
     @classmethod
     def from_dict(cls, d: dict) -> "SoundSpec":

@@ -86,6 +86,8 @@ def main(argv=None) -> int:
     print(f"wrote {Path(args.out) / (spec.name + '.wav')}")
     print(f"  duration   {spec.duration_ms:g} ms · {spec.sample_rate} Hz · {buf.size} samples")
     print(f"  peak       {peak_db:.1f} dBFS")
+    if spec.effects:
+        print(f"  effects    {', '.join(e.get('type', '?') for e in spec.effects)}")
     if args.handoff:
         print(f"  handoff    {Path(args.out) / 'handoff'}/ (S_{spec.name}.wav)")
     return 0

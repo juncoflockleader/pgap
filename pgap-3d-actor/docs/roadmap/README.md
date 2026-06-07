@@ -11,6 +11,7 @@ body-agnostic SDF → skin → uv → texture → animate pipeline), so growth i
 | 1 | **Surface treatments** | scales / feathers / fur / chitin via texture + normal map (mesh stays a smooth blob, but *reads* detailed) | Small (texture-side only) | [1-surface-treatments.md](1-surface-treatments.md) |
 | 2 | **Library flywheel + bestiary** | more bases / slots / variants / named presets, made *contributable*, plus a rendered catalog | Almost none (data) | [2-library-flywheel-and-bestiary.md](2-library-flywheel-and-bestiary.md) |
 | 3 | **v4 — faces** | face textures + a small jaw/eye **bone** rig + expression clips | Moderate; **no morph targets** | [3-v4-faces.md](3-v4-faces.md) |
+| 4 | **Part proportions** | a `girth` knob (slim ↔ chubby), per part, independent of size | Tiny (one radius multiplier) | [4-part-proportions.md](4-part-proportions.md) |
 
 ## Why this order
 

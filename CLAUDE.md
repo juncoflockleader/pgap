@@ -1,54 +1,60 @@
-# CLAUDE.md — pgap
+# CLAUDE.md — pgap (monorepo)
 
 Guidance for Claude working in this repository.
 
 ## What this is
 
-`pgap` (Procedural Generative Asset Pipeline) generates game-ready 3D actors
-procedurally — geometry, skeleton, skin weights, animations, textures — for
-Unreal Engine, without an external text-to-3D service. It is "Architecture B"
-from the `unreal-mcp-rx` analysis. The authoritative spec is **[PRD.md](PRD.md)**;
-read it before designing or implementing anything.
+`pgap` is a small **monorepo of procedural game-asset generators** that share one
+philosophy and architecture: turn a spec/prompt into a game-ready asset by
+**constructing it algorithmically** (not via a generative model), deterministically
+and offline. "Architecture B" from the `unreal-mcp-rx` analysis.
 
-## Core design (do not violate without discussion)
+```
+pgap/
+  pgap.py            # wrapper CLI: routes a mode to its sub-pipeline
+  pgap-3d-actor/     # rigged/skinned/animated/textured creatures (glTF) — IMPLEMENTED
+  pgap-sound/        # SFX/impacts/ambient/creature vocals (WAV) — PRD stage
+  pgap-gear/         # weapons/apparel/armor/accessories — placeholder
+  README.md  AGENTS.md  CLAUDE.md
+```
 
-- **Skeleton-first.** Build the canonical rig first, synthesize geometry around
-  the bones (SDF/metaballs → marching cubes), derive skin weights from
-  distance-to-bone. Never bolt on a post-hoc auto-rigger.
+Each sub-pipeline is self-contained (its own package, CLI, tests, docs, PRD, and
+`AGENTS.md` / `CLAUDE.md`). Read the relevant sub-pipeline's `PRD.md` before
+designing or implementing in it.
+
+## Shared design principles (do not violate without discussion)
+
 - **Deterministic.** Same (spec, seed) → byte-identical output. One seeded RNG
-  threaded through every stage. No wall-clock, no UUIDs, no set/dict-ordering
-  nondeterminism. The core path makes no network calls.
-- **Dependency-light.** Pure Python + numpy for the core. glTF written directly.
-  The only optional online input is base-color texture image-gen, which is
-  isolated, cached, and has a procedural fallback.
-- **Stylized, not photoreal.** That is the deliberate trade for owning the stack.
-  Hero/photoreal assets are a separate path (external services), out of scope.
-- **Archetype-routed.** prop (no rig) / quadruped / biped. Ship the quadruped
-  "dog" reference case end-to-end before generalizing (PRD milestones M0–M7).
-
-## Outputs & the contract with unreal-mcp-rx
-
-- Produce: `<Name>.gltf` (skeletal mesh + skin + animations), texture PNGs,
-  `<Name>.import.json` (target skeleton, tail bone, skeleton policy), and a
-  `manifest.json` (spec hash, seed, generator version, per-file SHA, license note).
-- The `unreal-mcp-rx` MCP server consumes these for import / material authoring /
-  Blueprint assembly / behavior / runtime proof. That "last mile" is built and
-  reused unchanged — do not reimplement it here.
-- Bone names in the generated skeleton MUST match the animation library and the
-  `import.json` sidecar so behaviors bind without retargeting.
+  threaded through every stage; no wall-clock, no UUIDs, no set/dict-ordering
+  nondeterminism. The core path makes no network calls. Determinism is testable —
+  add a fixture-SHA check with any generation code.
+- **Dependency-light.** Pure Python + numpy for the core. Output formats (glTF,
+  WAV, …) written directly. No ML framework, no heavy engine.
+- **Stylized, not photoreal / not recorded.** The deliberate trade for owning the
+  stack offline. Hero/realistic assets are a separate path (external services),
+  out of scope.
+- **Composable + fail-closed.** Assets compose from a curated module library
+  selected by a spec/recipe; a validator rejects unsupported requests (it does not
+  guess). A machine-readable capability report is the vocabulary an LLM authors
+  against.
+- **Engine-neutral output + handoff.** Standard files + a provenance `manifest.json`.
+  The `unreal-mcp-rx` MCP server provides the Unreal "last mile" (import, material/
+  sound authoring, Blueprint assembly, runtime proof) — built and reused unchanged;
+  do not reimplement it here. The bridge is swappable per engine.
 
 ## Conventions
 
-- This is a planning-stage repo: PRD + repo hygiene files only, **no scaffolding
-  yet**. Do not create empty `src/`/`docs/` trees or boilerplate unless asked.
-- Determinism is testable: a fixture spec re-run must diff to an identical output
-  SHA; add such a check before/with any generation code.
+- **Scaffold per pipeline, only when working on it.** Don't create empty trees or
+  boilerplate in a not-yet-started pipeline unless asked.
 - Commit messages: imperative subject; end with
   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 - Default branch is `main`. Only commit/push when the user asks.
+- `out/` and `artifacts/` (any subfolder) are gitignored scratch; `.mcp.json` is
+  local machine wiring (gitignored).
 
-## Quality bar (reference acceptance)
+## Pipeline-specific guidance
 
-Regenerate the golden retriever from a spec and have it import + assemble + pass
-the existing `unreal-mcp-rx` project-clone proof lane (bark + tail-wag PIE) — with
-a *recognizable dog*, not a placeholder. See PRD §9–10.
+- **3d-actor:** see [pgap-3d-actor/CLAUDE.md](pgap-3d-actor/CLAUDE.md),
+  [pgap-3d-actor/PRD.md](pgap-3d-actor/PRD.md), and `pgap-3d-actor/docs/`.
+- **sound:** see [pgap-sound/PRD.md](pgap-sound/PRD.md).
+- **gear:** placeholder — [pgap-gear/README.md](pgap-gear/README.md).

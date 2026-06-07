@@ -11,9 +11,9 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# Generated assets / scratch output (commit only curated golden fixtures)
-/out/
-/artifacts/
+# Generated assets / scratch output (any pipeline subfolder)
+out/
+artifacts/
 *.tmp
 
 # Local MCP server wiring (machine-specific absolute paths)

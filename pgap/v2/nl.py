@@ -33,6 +33,7 @@ _TEMPLATE_KEYWORDS = {
     "boar": ["boar", "warthog", "hog"],
     "horse": ["horse", "pony", "stallion", "mare", "equine"],
     "feline": ["lion", "tiger", "panther", "feline"],
+    "dragon": ["dragon", "wyvern", "drake", "wyrm"],
     "biped": ["humanoid", "human ", "person", "robot", "android", "warrior", "knight"],
 }
 
@@ -116,23 +117,23 @@ def _compose_free(text: str, name: str) -> dict:
             horn_variant = "rhino"
         elif "horn" in text:
             horn_variant = "unicorn"
-        if horn_variant and head_variant == "humanoid":  # plain head takes a horn slot
+        # Horns/tusks/ears are slots on every head variant now.
+        if horn_variant:
             modules.append({"id": "horn", "kind": "horn", "variant": horn_variant, "attach": "head.horns"})
-        if head_variant == "humanoid":
-            if "tusk" in text or "boar" in text or "warthog" in text:
-                tv = "elephant" if "elephant" in text else ("walrus" if "walrus" in text else "boar")
-                modules.append({"id": "tusks", "kind": "tusk", "variant": tv, "attach": "head.tusks"})
-            ear_v = None
-            if "floppy ear" in text:
-                ear_v = "floppy"
-            elif "long ear" in text or "rabbit" in text:
-                ear_v = "long"
-            elif "bat ear" in text:
-                ear_v = "bat"
-            elif "pointy ear" in text or "pointed ear" in text:
-                ear_v = "pointy"
-            if ear_v:
-                modules.append({"id": "ears", "kind": "ear", "variant": ear_v, "attach": "head.ears"})
+        if "tusk" in text or "boar" in text or "warthog" in text:
+            tv = "elephant" if "elephant" in text else ("walrus" if "walrus" in text else "boar")
+            modules.append({"id": "tusks", "kind": "tusk", "variant": tv, "attach": "head.tusks"})
+        ear_v = None
+        if "floppy ear" in text:
+            ear_v = "floppy"
+        elif "long ear" in text or "rabbit" in text:
+            ear_v = "long"
+        elif "bat ear" in text:
+            ear_v = "bat"
+        elif "pointy ear" in text or "pointed ear" in text:
+            ear_v = "pointy"
+        if ear_v:
+            modules.append({"id": "ears", "kind": "ear", "variant": ear_v, "attach": "head.ears"})
         if "mane" in text:
             modules.append({"id": "mane", "kind": "mane", "attach": "neck.mane"})
 

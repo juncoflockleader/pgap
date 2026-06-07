@@ -202,10 +202,12 @@ def draconic_head_module() -> Module:
         bones=[
             BoneSpec("skull", None, v(0, 0, 0), v(0.10, 0.0, 0), 0.075, 0.065, "head"),
             BoneSpec("snout", "skull", v(0.10, 0.0, 0), v(0.24, -0.03, 0), 0.055, 0.030, "snout"),
-            BoneSpec("horn_l", "skull", v(0.01, 0.05, 0.03), v(-0.06, 0.13, 0.05), 0.018, 0.006, "head"),
-            BoneSpec("horn_r", "skull", v(0.01, 0.05, -0.03), v(-0.06, 0.13, -0.05), 0.018, 0.006, "head"),
-        ],
-        sockets={"horns": Socket("horns", v(0.02, 0.06, 0), "skull")},
+        ],  # horns are their own slot now (V3) — attach via head.horns
+        sockets={
+            "horns": Socket("horns", v(0.02, 0.06, 0), "skull"),
+            "ears": Socket("ears", v(-0.02, 0.05, 0), "skull"),
+            "tusks": Socket("tusks", v(0.20, -0.04, 0), "snout"),
+        },
     )
 
 
@@ -310,11 +312,26 @@ def octopus_dragon_recipe() -> Recipe:
             Attachment("body", body_module()),
             Attachment("neck", dragon_neck_module(), parent="body", parent_socket="neck"),
             Attachment("head", draconic_head_module(), parent="neck", parent_socket="top"),
+            Attachment("horns", horn_bull_module(), parent="head", parent_socket="horns"),
             Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
             Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
             Attachment("arms", tentacle_module(), parent="body", parent_socket="rear_ring"),
         ],
     )
+
+
+def dragon_recipe() -> Recipe:
+    """A classic dragon, now expressible from the variant library."""
+    return Recipe("Dragon", [
+        Attachment("body", body_module()),
+        Attachment("neck", dragon_neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", draconic_head_module(), parent="neck", parent_socket="top"),
+        Attachment("horns", horn_bull_module(), parent="head", parent_socket="horns"),
+        Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
 
 
 def sphinx_recipe() -> Recipe:
@@ -533,6 +550,8 @@ def cephalopod_head_module() -> Module:
         sockets={
             "face": Socket("face", v(0.05, -0.02, 0), "skull", ring=6, ring_radius=0.025),
             "horns": Socket("horns", v(0.0, 0.05, 0), "skull"),
+            "ears": Socket("ears", v(-0.02, 0.05, 0), "skull"),
+            "tusks": Socket("tusks", v(0.05, -0.03, 0), "skull"),
         },
     )
 

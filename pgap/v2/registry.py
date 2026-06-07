@@ -111,12 +111,13 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "boar": lambda **o: L.boar_recipe(),
     "horse": lambda **o: L.horse_recipe(),
     "feline": lambda **o: L.feline_recipe(),
+    "dragon": lambda **o: L.dragon_recipe(),
 }
 
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "biped": 180, "beholder": 80, "kraken": 70,
     "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
-    "unicorn": 160, "stag": 150, "boar": 90, "horse": 160, "feline": 100,
+    "unicorn": 160, "stag": 150, "boar": 90, "horse": 160, "feline": 100, "dragon": 140,
 }
 
 

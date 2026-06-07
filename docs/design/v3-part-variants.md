@@ -195,8 +195,15 @@ kind.
   keywords. **Exit (met):** boar (tusks + ears, verified live), horse (4 hooves +
   mane + ears, verified live), feline (12 claws) all generate watertight. 4 new
   tests (123 total).
-- **V3-M4 — NL variant keywords + presets.** "a deer-antlered, feather-winged
-  dragon" composes correctly. **Exit:** variant-aware prompts route end to end.
+- **V3-M4 — NL variant keywords + presets.** *(shipped.)* **Externalized horns
+  from the draconic head** (skull + snout only; horns are always the `horn` slot),
+  and added `ears`/`tusks` sockets to all three head variants — so horns/tusks/ears
+  work on *any* head, and the NL humanoid-only restriction is gone. Added a proper
+  `dragon` preset (body + dragon neck/head + bull horns + bat wings + 4 legs +
+  serpent tail); re-horned the octopus-dragon via the slot. **Exit (met):**
+  *"a deer-antlered dragon with feathered wings and tusks"* composes one recipe
+  threading head:draconic + horn:antler + wing:feathered + tusk:boar, and imports
+  into UE 5.7 as that chimera. 3 new tests (126 total).
 - **V3-M5 — Variant corpus.** Sample variants per slot; all build valid +
   deterministic; no degenerate joins. **Exit:** corpus green.
 

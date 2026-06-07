@@ -19,7 +19,7 @@ def test_variants_emit_different_bones():
     humanoid = {b.name for b in build_module("head").bones}
     draconic = {b.name for b in build_module("head", "draconic").bones}
     assert humanoid != draconic
-    assert "snout" in draconic and "horn_l" in draconic
+    assert "snout" in draconic  # draconic head = skull + snout (horns are a slot now)
     assert "face" in build_module("head", "cephalopod").sockets
 
 
@@ -240,3 +240,39 @@ def test_nl_animal_templates_and_free_tusks():
     res = prompt_to_recipe("a four-legged beast with tusks and a mane", mode="free")
     kinds = [m["kind"] for m in res["recipe_dict"]["modules"]]
     assert "tusk" in kinds and "mane" in kinds
+
+
+# --- V3-M4: variant-rich prompts thread through one composition ------------ #
+def test_variant_rich_prompt_composes_all_variants():
+    res = prompt_to_recipe("a deer-antlered dragon with feathered wings and tusks", mode="free")
+    assert res["ok"]
+    by_kind = {m["kind"]: m.get("variant") for m in res["recipe_dict"]["modules"]}
+    assert by_kind["head"] == "draconic"
+    assert by_kind["horn"] == "antler"
+    assert by_kind["wing"] == "feathered"
+    assert by_kind["tusk"] == "boar"
+    # and it actually builds
+    spec = Spec.from_dict({"name": res["name"], "archetype": "biped", "species": "x",
+                           "seed": res["seed"], "triBudget": 11000,
+                           "proportions": {"heightCm": res["heightCm"]}, "material": res["material"]})
+    _, mesh = build_actor(res["recipe"], spec, make_rng(spec.seed))
+    assert mesh.num_triangles > 0
+
+
+def test_draconic_head_horns_are_externalized():
+    # draconic head no longer bakes horns; they come from the horn slot.
+    bones = {b.name for b in build_module("head", "draconic").bones}
+    assert "horn_l" not in bones and "horn_r" not in bones
+    assert {"horns", "ears", "tusks"} <= set(build_module("head", "draconic").sockets)
+
+
+def test_dragon_preset_builds():
+    recipe = load_template("dragon")
+    spec = Spec.from_dict({"name": "Dragon", "archetype": "biped", "species": "dragon", "seed": 5,
+                           "triBudget": 11000, "proportions": {"heightCm": 140},
+                           "material": {"baseColor": "crimson"}})
+    skel, mesh = build_actor(recipe, spec, make_rng(spec.seed))
+    names = {b.name for b in skel}
+    assert any("wing" in n for n in names) and any("tail" in n or "seg_" in n for n in names)
+    assert mesh.num_triangles > 0
+    assert prompt_to_recipe("a dragon")["template"] == "dragon"

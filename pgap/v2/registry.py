@@ -1,13 +1,17 @@
-"""Module + template registry (V2-M2).
+"""Module + template registry (V2-M2, + V3-M0 variant tables).
 
-Maps string `kind`s (what a JSON recipe references) to module factories, and
-template names to preset recipe factories. This is the vocabulary an LLM/human
-composes from; the grammar validator and capability report read it.
+Maps string `kind`s to **variant tables** (a kind is a slot; a variant is the
+form, e.g. head: humanoid|draconic|cephalopod), and template names to preset
+recipe factories. This is the vocabulary an LLM/human composes from; the grammar
+validator, capability report, and NL front-end read it.
+
+Backward compatible: a recipe that omits `variant` gets the kind's default;
+legacy kind names (`draconic_head`, `cephalopod_head`) resolve via ALIASES.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 from . import library as L
@@ -15,39 +19,59 @@ from .types import Module, Recipe
 
 
 @dataclass(frozen=True)
-class ModuleEntry:
-    factory: Callable          # (params: dict) -> Module
-    params: tuple = ()         # accepted param names (for the capability report)
+class ModuleKind:
+    default: str                       # default variant name
+    variants: dict                     # name -> (params: dict) -> Module
+    params: tuple = field(default_factory=tuple)  # accepted param names
 
 
-# kind -> how to build it. Param-less modules ignore the params dict.
-MODULE_REGISTRY: dict[str, ModuleEntry] = {
-    "spine": ModuleEntry(lambda p: L.spine_module()),
-    "body": ModuleEntry(lambda p: L.body_module()),
-    "neck": ModuleEntry(lambda p: L.neck_module()),
-    "dragon_neck": ModuleEntry(lambda p: L.dragon_neck_module()),
-    "head": ModuleEntry(lambda p: L.head_module()),
-    "draconic_head": ModuleEntry(lambda p: L.draconic_head_module()),
-    "cephalopod_head": ModuleEntry(lambda p: L.cephalopod_head_module()),
-    "arm": ModuleEntry(lambda p: L.arm_module()),
-    "leg": ModuleEntry(lambda p: L.leg_module()),
-    "tentacle": ModuleEntry(lambda p: L.tentacle_module()),
-    "orb": ModuleEntry(
-        lambda p: L.orb_module(radius=float(p.get("radius", 0.24)),
-                               eye_ring=int(p.get("eye_ring", 8)),
-                               arm_ring=int(p.get("arm_ring", 8))),
+def _single(factory: Callable, params: tuple = ()) -> ModuleKind:
+    """A kind with one (default) variant — the v2 single-form modules."""
+    return ModuleKind(default="default", variants={"default": factory}, params=params)
+
+
+# kind -> variant table.
+MODULE_REGISTRY: dict[str, ModuleKind] = {
+    "spine": _single(lambda p: L.spine_module()),
+    "body": _single(lambda p: L.body_module()),
+    "neck": _single(lambda p: L.neck_module()),
+    "dragon_neck": _single(lambda p: L.dragon_neck_module()),
+    # head is the V3-M0 demonstration: one slot, three existing forms.
+    "head": ModuleKind(
+        default="humanoid",
+        variants={
+            "humanoid": lambda p: L.head_module(),
+            "draconic": lambda p: L.draconic_head_module(),
+            "cephalopod": lambda p: L.cephalopod_head_module(),
+        },
+    ),
+    "arm": _single(lambda p: L.arm_module()),
+    "leg": _single(lambda p: L.leg_module()),
+    "tentacle": _single(lambda p: L.tentacle_module()),
+    "orb": ModuleKind(
+        default="default",
+        variants={"default": lambda p: L.orb_module(
+            radius=float(p.get("radius", 0.24)), eye_ring=int(p.get("eye_ring", 8)),
+            arm_ring=int(p.get("arm_ring", 8)))},
         params=("radius", "eye_ring", "arm_ring"),
     ),
-    "eyeball": ModuleEntry(lambda p: L.eyeball_module(radius=float(p.get("radius", 0.11))),
-                           params=("radius",)),
-    "eyestalk": ModuleEntry(lambda p: L.eyestalk_module(eye_radius=float(p.get("eye_radius", 0.05))),
-                            params=("eye_radius",)),
-    "wing": ModuleEntry(lambda p: L.wing_module()),
-    "fin": ModuleEntry(lambda p: L.fin_module()),
-    "serpent_tail": ModuleEntry(lambda p: L.serpent_tail_module()),
+    "eyeball": ModuleKind(default="default",
+                          variants={"default": lambda p: L.eyeball_module(radius=float(p.get("radius", 0.11)))},
+                          params=("radius",)),
+    "eyestalk": ModuleKind(default="default",
+                           variants={"default": lambda p: L.eyestalk_module(eye_radius=float(p.get("eye_radius", 0.05)))},
+                           params=("eye_radius",)),
+    "wing": ModuleKind(default="bat", variants={"bat": lambda p: L.wing_module()}),
+    "fin": _single(lambda p: L.fin_module()),
+    "serpent_tail": _single(lambda p: L.serpent_tail_module()),
 }
 
-# template name -> preset recipe factory (accepts override kwargs).
+# Legacy kind name -> (canonical kind, forced variant). Keeps old JSON valid.
+ALIASES: dict[str, tuple] = {
+    "draconic_head": ("head", "draconic"),
+    "cephalopod_head": ("head", "cephalopod"),
+}
+
 TEMPLATE_REGISTRY: dict[str, Callable] = {
     "biped": lambda **o: L.biped_recipe(),
     "beholder": lambda **o: L.beholder_recipe(eyes=int(o.get("eyes", 8))),
@@ -58,18 +82,37 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "cthulhu": lambda **o: L.cthulhu_recipe(),
 }
 
-# Sensible default standing height (cm) per template, for the CLI.
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "biped": 180, "beholder": 80, "kraken": 70,
     "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
 }
 
 
-def build_module(kind: str, params: dict | None = None) -> Module:
-    entry = MODULE_REGISTRY.get(kind)
-    if entry is None:
-        raise KeyError(f"unknown module kind {kind!r}")
-    return entry.factory(params or {})
+def resolve_kind(kind: str) -> tuple:
+    """(canonical_kind, forced_variant_or_None). Raises KeyError if unknown."""
+    if kind in MODULE_REGISTRY:
+        return kind, None
+    if kind in ALIASES:
+        return ALIASES[kind]
+    raise KeyError(f"unknown module kind {kind!r}")
+
+
+def known_kind(kind: str) -> bool:
+    return kind in MODULE_REGISTRY or kind in ALIASES
+
+
+def variant_names(kind: str) -> list:
+    canon, _ = resolve_kind(kind)
+    return list(MODULE_REGISTRY[canon].variants)
+
+
+def build_module(kind: str, variant: str | None = None, params: dict | None = None) -> Module:
+    canon, forced = resolve_kind(kind)
+    mk = MODULE_REGISTRY[canon]
+    v = forced or variant or mk.default
+    if v not in mk.variants:
+        raise KeyError(f"unknown variant {v!r} for kind {canon!r}; have {list(mk.variants)}")
+    return mk.variants[v](params or {})
 
 
 def load_template(name: str, overrides: dict | None = None) -> Recipe:

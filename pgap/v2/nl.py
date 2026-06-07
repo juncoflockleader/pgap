@@ -86,18 +86,18 @@ def _compose_free(text: str, name: str) -> dict:
         base = "spine"
         modules.append({"id": "spine", "kind": "spine"})
 
-    head_kind = None
+    head_variant = None
     if base == "orb":
         modules.append({"id": "eye", "kind": "eyeball", "attach": "orb.front"})
     else:
         neck_kind = "dragon_neck" if base == "body" else "neck"
         modules.append({"id": "neck", "kind": neck_kind, "attach": f"{base}.neck"})
-        head_kind = "head"
+        head_variant = "humanoid"
         if any(k in text for k in ("dragon", "draconic", "horn", "horned")):
-            head_kind = "draconic_head"
+            head_variant = "draconic"
         if "cthulhu" in text or ("tentacle" in text and ("face" in text or "mouth" in text)):
-            head_kind = "cephalopod_head"
-        modules.append({"id": "head", "kind": head_kind, "attach": "neck.top"})
+            head_variant = "cephalopod"
+        modules.append({"id": "head", "kind": "head", "variant": head_variant, "attach": "neck.top"})
 
     if base == "orb" and any(k in text for k in ("eyestalk", "eye stalk", "many eyes", "beholder")):
         modules.append({"id": "stalk", "kind": "eyestalk", "attach": "orb.eyes_ring"})
@@ -105,7 +105,7 @@ def _compose_free(text: str, name: str) -> dict:
     if any(k in text for k in ("tentacle", "octopus", "squid", "kraken")):
         if base == "orb":
             modules.append({"id": "arms", "kind": "tentacle", "attach": "orb.arms_ring"})
-        elif head_kind == "cephalopod_head":
+        elif head_variant == "cephalopod":
             modules.append({"id": "face", "kind": "tentacle", "attach": "head.face"})
         elif base == "body":
             modules.append({"id": "arms", "kind": "tentacle", "attach": "body.rear_ring"})

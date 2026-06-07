@@ -1,27 +1,31 @@
-"""Recipe JSON schema, fail-closed grammar validator, and v2 capability report.
+"""Recipe JSON schema, fail-closed grammar validator, and v2/v3 capability report.
 
 A recipe is a small JSON document an LLM/human authors:
 
     {
-      "name": "MyBeholder",
+      "name": "MyBeast",
       "modules": [
-        {"id": "orb",   "kind": "orb", "params": {"eye_ring": 6}},
-        {"id": "eye",   "kind": "eyeball", "attach": "orb.front"},
-        {"id": "stalk", "kind": "eyestalk", "attach": "orb.eyes_ring"}
+        {"id": "body", "kind": "body"},
+        {"id": "head", "kind": "head", "variant": "draconic", "attach": "body.neck"},
+        {"id": "wings", "kind": "wing", "variant": "bat", "attach": "body.wings", "mirror": true}
       ],
-      "seed": 5, "heightCm": 80, "material": {"baseColor": "purple"}
+      "seed": 5, "heightCm": 130, "material": {"baseColor": "teal"}
     }
 
-``validate_recipe`` checks it against the module/socket grammar and **fails
-closed** (unknown module kind, dangling parent, missing socket, etc.).
-``capability_report`` is the machine-readable vocabulary the front-end reads.
+`kind` chooses the slot; the optional `variant` chooses the form (V3). The
+validator **fails closed** on unknown kind/variant, missing socket, dangling
+parent, bad root count, or duplicate id. `capability_report` is the
+machine-readable vocabulary (kinds + variants + sockets + params + templates).
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from .registry import MODULE_REGISTRY, TEMPLATE_REGISTRY, build_module
+from .registry import (
+    MODULE_REGISTRY, TEMPLATE_REGISTRY, build_module, known_kind, resolve_kind,
+    variant_names,
+)
 from .types import Attachment, Recipe
 
 
@@ -50,13 +54,19 @@ def validate_recipe(data: dict[str, Any]) -> dict:
         if mid in seen:
             errors.append(f"duplicate module id {mid!r}")
             continue
-        if kind not in MODULE_REGISTRY:
+        if not known_kind(kind):
             errors.append(f"unknown module kind {kind!r} (module {mid!r})")
             seen[mid] = m
             continue
 
-        params = m.get("params") or {}
-        unknown = set(params) - set(MODULE_REGISTRY[kind].params)
+        canon, forced = resolve_kind(kind)
+        # variant: must exist for the kind (aliases force one, ignore provided).
+        variant = m.get("variant")
+        if forced is None and variant is not None and variant not in variant_names(kind):
+            errors.append(f"module {mid!r}: unknown variant {variant!r} for {kind!r} "
+                          f"(have {variant_names(kind)})")
+
+        unknown = set(m.get("params") or {}) - set(MODULE_REGISTRY[canon].params)
         if unknown:
             warnings.append(f"module {mid!r}: ignored unknown params {sorted(unknown)}")
 
@@ -71,8 +81,9 @@ def validate_recipe(data: dict[str, Any]) -> dict:
                 pid, socket = parsed
                 if pid not in seen:
                     errors.append(f"module {mid!r}: attaches to unknown/earlier-undefined parent {pid!r}")
-                elif seen[pid]["kind"] in MODULE_REGISTRY:
-                    psockets = build_module(seen[pid]["kind"], seen[pid].get("params")).sockets
+                elif known_kind(seen[pid]["kind"]):
+                    p = seen[pid]
+                    psockets = build_module(p["kind"], p.get("variant"), p.get("params")).sockets
                     if socket not in psockets:
                         errors.append(f"module {mid!r}: parent {pid!r} has no socket {socket!r} "
                                       f"(has {sorted(psockets)})")
@@ -96,7 +107,7 @@ def recipe_from_dict(data: dict[str, Any]) -> Recipe:
 
     attachments = []
     for m in data["modules"]:
-        module = build_module(m["kind"], m.get("params"))
+        module = build_module(m["kind"], m.get("variant"), m.get("params"))
         if m.get("attach") is None:
             attachments.append(Attachment(m["id"], module))
         else:
@@ -107,21 +118,25 @@ def recipe_from_dict(data: dict[str, Any]) -> Recipe:
 
 
 def capability_report() -> dict:
-    """Machine-readable v2 vocabulary: modules, their sockets, params, templates."""
+    """Machine-readable vocabulary: kinds (+ variants), sockets, params, templates."""
     modules = {}
-    for kind, entry in MODULE_REGISTRY.items():
-        sockets = {}
-        for sname, s in build_module(kind).sockets.items():
-            sockets[sname] = {"ring": bool(s.ring), "mirror": bool(s.mirror)}
-        modules[kind] = {"sockets": sockets, "params": list(entry.params)}
+    for kind, mk in MODULE_REGISTRY.items():
+        sockets = {sname: {"ring": bool(s.ring), "mirror": bool(s.mirror)}
+                   for sname, s in build_module(kind).sockets.items()}
+        modules[kind] = {
+            "variants": list(mk.variants),
+            "defaultVariant": mk.default,
+            "sockets": sockets,
+            "params": list(mk.params),
+        }
     return {
-        "schemaVersion": "pgap.v2.capabilities.v1",
+        "schemaVersion": "pgap.v2.capabilities.v2",
         "modules": modules,
         "templates": list(TEMPLATE_REGISTRY),
         "recipeSchema": {
             "name": "str", "seed": "int", "heightCm": "number",
             "material": {"baseColor": "str"},
-            "modules": [{"id": "str", "kind": "str", "attach": "<parentId>.<socket>",
-                         "mirror": "bool?", "params": "object?"}],
+            "modules": [{"id": "str", "kind": "str", "variant": "str?",
+                         "attach": "<parentId>.<socket>", "mirror": "bool?", "params": "object?"}],
         },
     }

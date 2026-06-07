@@ -155,10 +155,16 @@ kind.
 
 ## 8. Proposed milestones
 
-- **V3-M0 — Variant mechanism.** Registry variant tables, recipe `variant` field,
-  grammar rule, capability `variants`, NL variant layer. Re-express today's wing
-  as `wing/bat` (default). **Exit:** `variant` round-trips, validates fail-closed,
-  no regression (v2 recipes unchanged).
+- **V3-M0 — Variant mechanism.** *(shipped.)* `registry.py` now holds per-kind
+  `ModuleKind(default, variants, params)` tables + `build_module(kind, variant,
+  params)` + legacy `ALIASES`; `recipe.py` validates the optional `variant`
+  (unknown → fail closed; omitted → default) with **variant-specific socket**
+  checks; `capability_report` lists `variants`/`defaultVariant`; NL emits `head` +
+  variant. Demonstrated by consolidating the three head forms into one `head` kind
+  (`humanoid`|`draconic`|`cephalopod`), with `draconic_head`/`cephalopod_head` as
+  aliases; `wing` re-expressed as `wing/bat`. **Exit (met):** variants round-trip,
+  validate fail-closed (incl. variant-only sockets like `head.face`), v2
+  recipes/templates unchanged. 11 new tests (109 total).
 - **V3-M1 — Wing variants.** bat / feathered / membrane / insect. **Exit:** a
   feathered-winged creature imports and reads distinctly from a bat-winged one.
 - **V3-M2 — Horn variants + the `horn` slot.** unicorn / antler / ram / bull /

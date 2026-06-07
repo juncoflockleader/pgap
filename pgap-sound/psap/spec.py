@@ -15,6 +15,7 @@ class SoundSpec:
     duration_ms: float = 400.0
     sample_rate: int = 44100
     gain_dbfs: float = -1.0        # target peak loudness (<= 0)
+    variance: float = 0.0          # 0 = exact preset; >0 = seeded humanization (0..1)
     graph: dict = field(default_factory=dict)  # category-specific synth params
 
     @classmethod

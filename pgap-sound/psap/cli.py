@@ -24,6 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     src.add_argument("--describe", "--prompt", dest="describe",
                      help="natural-language description, e.g. 'a retro coin pickup'")
     p.add_argument("--seed", type=int, default=0, help="RNG seed (default 0)")
+    p.add_argument("--variance", type=float, default=None,
+                   help="seeded humanization 0..1 (change --seed for a different "
+                        "take). Default: 0 for --spec, 0.2 for --describe")
     p.add_argument("--name", help="override the output asset name")
     p.add_argument("--out", default="out", help="output directory (default ./out)")
     p.add_argument("--capabilities", action="store_true",
@@ -41,8 +44,12 @@ def _load_spec(args) -> SoundSpec:
             data["name"] = args.name
         if args.seed:
             data["seed"] = args.seed
-        return SoundSpec.from_dict(data)
-    return nl.prompt_to_spec(args.describe, seed=args.seed, name=args.name)
+        spec = SoundSpec.from_dict(data)
+    else:
+        spec = nl.prompt_to_spec(args.describe, seed=args.seed, name=args.name)
+    if args.variance is not None:
+        spec.variance = args.variance
+    return spec
 
 
 def main(argv=None) -> int:

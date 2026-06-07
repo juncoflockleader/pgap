@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 
+from .humanize import apply_variance
 from .render import finalize
 from .rng import make_rng
 from .spec import SoundSpec
@@ -11,9 +14,15 @@ from .synth import synthesize
 
 
 def render_spec(spec: SoundSpec) -> np.ndarray:
-    """Deterministically render a spec to a final, loudness-safe float buffer."""
+    """Deterministically render a spec to a final, loudness-safe float buffer.
+
+    Draws seeded humanization first (if spec.variance > 0), then synthesis — all
+    from one RNG, so (spec, seed) stays byte-identical while a new seed yields a
+    different take.
+    """
     rng = make_rng(spec.seed)
-    raw = synthesize(spec, rng)
+    graph = apply_variance(spec.graph, spec.variance, rng)
+    raw = synthesize(replace(spec, graph=graph), rng)
     return finalize(raw, spec.sample_rate, peak_dbfs=spec.gain_dbfs)
 
 

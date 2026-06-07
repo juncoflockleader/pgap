@@ -35,6 +35,21 @@ Drive them by name with `--describe` (keyword inference: size words scale pitch,
 "retro/8-bit" adds bitcrush), or author a full `SoundSpec` JSON for exact control.
 Unsupported requests **fail closed** (see `--capabilities`).
 
+### Variation vs. determinism
+
+Output is **deterministic** (same `spec`+`seed` → byte-identical WAV) but **not
+fixed**: the seed is your variation knob. `variance` (0..1) applies a seeded
+*humanization* — small per-seed jitter of pitch / decay / cutoff — so changing
+`--seed` gives a different *take* of the same sound, even for tonal one-shots that
+have no noise. `--describe` defaults to `variance 0.2`; `--spec` defaults to `0`
+(exact). Set `--variance 0` to reproduce a preset byte-for-byte.
+
+```bash
+python pgap.py sound --describe "a laser zap" --seed 1   # a take
+python pgap.py sound --describe "a laser zap" --seed 2   # a different take
+python pgap.py sound --describe "a laser zap" --variance 0   # the exact preset
+```
+
 ## How it works
 
 Architecture B for audio: don't ask a model to *make* the sound — **synthesize it**

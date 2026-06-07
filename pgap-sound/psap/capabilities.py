@@ -29,7 +29,10 @@ def capability_report() -> dict:
         "limits": {
             "gainDbfs": {"min": -60.0, "max": 0.0},
             "durationMs": {"min": 1.0, "max": MAX_DURATION_MS},
+            "variance": {"min": 0.0, "max": 1.0},
         },
+        "variance": "0 = exact preset; >0 = seeded humanization — change the seed "
+                    "for a different take of the same sound (deterministic per seed).",
         "notes": "Synthesized, not recorded. Not music, not voice — mainly sound.",
     }
 
@@ -61,6 +64,10 @@ def validate_spec(d: dict) -> tuple[bool, list[str]]:
     gain = d.get("gain_dbfs", -1.0)
     if not _num(gain) or not (-60.0 <= gain <= 0.0):
         errors.append("gain_dbfs must be in [-60, 0]")
+
+    var = d.get("variance", 0.0)
+    if not _num(var) or not (0.0 <= var <= 1.0):
+        errors.append("variance must be in [0, 1]")
 
     g = d.get("graph", {})
     if not isinstance(g, dict):

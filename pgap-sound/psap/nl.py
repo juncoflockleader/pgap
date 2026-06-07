@@ -57,7 +57,8 @@ def spec_from_preset(preset: str, seed: int = 0, name: str | None = None) -> Sou
     )
 
 
-def prompt_to_spec(prompt: str, seed: int = 0, name: str | None = None) -> SoundSpec:
+def prompt_to_spec(prompt: str, seed: int = 0, name: str | None = None,
+                   variance: float = 0.2) -> SoundSpec:
     p = prompt.lower()
 
     best = None  # (position, keyword, preset)
@@ -74,6 +75,7 @@ def prompt_to_spec(prompt: str, seed: int = 0, name: str | None = None) -> Sound
 
     preset = best[2]
     spec = spec_from_preset(preset, seed=seed, name=name)
+    spec.variance = variance
     g = spec.graph
 
     fscale, dscale = 1.0, 1.0

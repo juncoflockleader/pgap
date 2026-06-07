@@ -34,7 +34,10 @@ def neck_module() -> Module:
     return Module(
         kind="neck",
         bones=[BoneSpec("neck_01", None, v(0, 0, 0), v(0, 0.035, 0), 0.026, 0.024, "neck")],
-        sockets={"top": Socket("top", v(0, 0.035, 0), "neck_01")},
+        sockets={
+            "top": Socket("top", v(0, 0.035, 0), "neck_01"),
+            "mane": Socket("mane", v(0, 0.02, 0), "neck_01"),
+        },
     )
 
 
@@ -42,7 +45,11 @@ def head_module() -> Module:
     return Module(
         kind="head",
         bones=[BoneSpec("head", None, v(0, 0, 0), v(0, 0.055, 0), 0.052, 0.050, "head")],
-        sockets={"horns": Socket("horns", v(0, 0.05, 0), "head")},
+        sockets={
+            "horns": Socket("horns", v(0, 0.05, 0), "head"),
+            "ears": Socket("ears", v(0, 0.04, 0), "head"),
+            "tusks": Socket("tusks", v(0.03, 0.005, 0), "head"),
+        },
     )
 
 
@@ -66,7 +73,7 @@ def leg_module() -> Module:
             BoneSpec("shin", "thigh", v(0, -0.15, 0.005), v(0, -0.28, 0.01), 0.030, 0.022, "leg"),
             BoneSpec("foot", "shin", v(0, -0.28, 0.01), v(0.07, -0.32, 0.01), 0.028, 0.022, "leg"),
         ],
-        sockets={},
+        sockets={"tip": Socket("tip", v(0.07, -0.32, 0.01), "foot")},
     )
 
 
@@ -182,7 +189,10 @@ def dragon_neck_module() -> Module:
             BoneSpec("neck_0", None, v(0, 0, 0), v(0.08, 0.09, 0), 0.075, 0.060, "neck"),
             BoneSpec("neck_1", "neck_0", v(0.08, 0.09, 0), v(0.16, 0.17, 0), 0.060, 0.050, "neck"),
         ],
-        sockets={"top": Socket("top", v(0.16, 0.17, 0), "neck_1")},
+        sockets={
+            "top": Socket("top", v(0.16, 0.17, 0), "neck_1"),
+            "mane": Socket("mane", v(0.05, 0.06, 0), "neck_0"),
+        },
     )
 
 
@@ -411,6 +421,108 @@ def stag_recipe() -> Recipe:
             Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
         ],
     )
+
+
+# --------------------------------------------------------------------------- #
+# V3-M3: ears, tusks (head slots), hoof / claw (leg-tip), mane (neck ridge).
+# --------------------------------------------------------------------------- #
+def _ear(head, tail, rh, rt) -> Module:
+    return Module("ear", _bilateral([("ear", None, head, tail, rh, rt)]), {})
+
+
+def ear_floppy_module() -> Module:
+    return _ear(v(0, 0, 0.03), v(0.02, -0.11, 0.06), 0.030, 0.014)
+
+
+def ear_pointy_module() -> Module:
+    return _ear(v(0, 0, 0.025), v(-0.01, 0.11, 0.04), 0.025, 0.005)
+
+
+def ear_bat_module() -> Module:
+    return _ear(v(0, 0, 0.03), v(0.0, 0.11, 0.10), 0.024, 0.004)
+
+
+def ear_long_module() -> Module:
+    return _ear(v(0, 0, 0.025), v(0.03, -0.17, 0.05), 0.026, 0.010)
+
+
+def tusk_boar_module() -> Module:
+    return Module("tusk", _bilateral([
+        ("t0", None, v(0, 0, 0.025), v(0.04, 0.03, 0.04), 0.013, 0.008),
+        ("t1", "t0", v(0.04, 0.03, 0.04), v(0.06, 0.10, 0.04), 0.008, 0.003),
+    ]), {})
+
+
+def tusk_elephant_module() -> Module:
+    return Module("tusk", _bilateral([
+        ("t", None, v(0, 0, 0.02), v(0.22, -0.06, 0.03), 0.020, 0.005),
+    ]), {})
+
+
+def tusk_walrus_module() -> Module:
+    return Module("tusk", _bilateral([
+        ("t", None, v(0, 0, 0.02), v(0.02, -0.18, 0.03), 0.016, 0.005),
+    ]), {})
+
+
+def hoof_module() -> Module:
+    return Module("hoof", [BoneSpec("hoof", None, v(0, 0, 0), v(0.04, -0.02, 0), 0.036, 0.032, "hoof")], {})
+
+
+def claw_module() -> Module:
+    return Module("claw", [
+        BoneSpec("c0", None, v(0, 0, 0), v(0.05, -0.02, 0.025), 0.010, 0.003, "claw"),
+        BoneSpec("c1", None, v(0, 0, 0), v(0.06, -0.02, 0.0), 0.010, 0.003, "claw"),
+        BoneSpec("c2", None, v(0, 0, 0), v(0.05, -0.02, -0.025), 0.010, 0.003, "claw"),
+    ], {})
+
+
+def mane_module() -> Module:
+    return Module("mane", [
+        BoneSpec("m0", None, v(0.00, 0, 0), v(-0.05, 0.08, 0), 0.022, 0.008, "mane"),
+        BoneSpec("m1", None, v(0.03, 0, 0), v(-0.03, 0.09, 0), 0.020, 0.007, "mane"),
+        BoneSpec("m2", None, v(0.06, 0, 0), v(-0.01, 0.08, 0), 0.018, 0.006, "mane"),
+    ], {})
+
+
+def boar_recipe() -> Recipe:
+    return Recipe("Boar", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        Attachment("tusks", tusk_boar_module(), parent="head", parent_socket="tusks"),
+        Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+    ])
+
+
+def horse_recipe() -> Recipe:
+    return Recipe("Horse", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
+        Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("forehoof", hoof_module(), parent="foreleg", parent_socket="tip", mirror=True),
+        Attachment("hindhoof", hoof_module(), parent="hindleg", parent_socket="tip", mirror=True),
+    ])
+
+
+def feline_recipe() -> Recipe:
+    return Recipe("Feline", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
+        Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("foreclaw", claw_module(), parent="foreleg", parent_socket="tip", mirror=True),
+        Attachment("hindclaw", claw_module(), parent="hindleg", parent_socket="tip", mirror=True),
+    ])
 
 
 def cephalopod_head_module() -> Module:

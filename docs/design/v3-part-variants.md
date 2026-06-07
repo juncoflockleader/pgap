@@ -186,8 +186,15 @@ kind.
   their own slot). **Exit (met):** unicorn (single horn, verified live in UE) and
   stag (antlers) generate watertight; each horn variant builds. 6 new tests
   (119 total).
-- **V3-M3 — Tusks, hooves, claws, manes, ears.** New slots + variants. **Exit:** a
-  boar (tusks), a horse (hooves + mane), a feline (claws) generate.
+- **V3-M3 — Tusks, hooves, claws, manes, ears.** *(shipped.)* New slots:
+  `ear` (floppy/pointy/bat/long), `tusk` (boar/elephant/walrus), `hoof`, `claw`,
+  `mane` — with new sockets `head.ears`, `head.tusks`, `leg.tip`, `neck.mane`
+  (on both neck variants). Hooves/claws attach to **all four legs** via mirror
+  attachments onto the mirrored legs (the child-on-mirrored-parent path). `boar`,
+  `horse`, `feline` templates registered; NL maps the animal names + tusk/ear/mane
+  keywords. **Exit (met):** boar (tusks + ears, verified live), horse (4 hooves +
+  mane + ears, verified live), feline (12 claws) all generate watertight. 4 new
+  tests (123 total).
 - **V3-M4 — NL variant keywords + presets.** "a deer-antlered, feather-winged
   dragon" composes correctly. **Exit:** variant-aware prompts route end to end.
 - **V3-M5 — Variant corpus.** Sample variants per slot; all build valid +

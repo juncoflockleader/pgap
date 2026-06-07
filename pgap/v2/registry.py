@@ -76,6 +76,20 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
         "bull": lambda p: L.horn_bull_module(),
         "rhino": lambda p: L.horn_rhino_module(),
     }),
+    "ear": ModuleKind(default="pointy", variants={
+        "floppy": lambda p: L.ear_floppy_module(),
+        "pointy": lambda p: L.ear_pointy_module(),
+        "bat": lambda p: L.ear_bat_module(),
+        "long": lambda p: L.ear_long_module(),
+    }),
+    "tusk": ModuleKind(default="boar", variants={
+        "boar": lambda p: L.tusk_boar_module(),
+        "elephant": lambda p: L.tusk_elephant_module(),
+        "walrus": lambda p: L.tusk_walrus_module(),
+    }),
+    "hoof": _single(lambda p: L.hoof_module()),
+    "claw": _single(lambda p: L.claw_module()),
+    "mane": _single(lambda p: L.mane_module()),
 }
 
 # Legacy kind name -> (canonical kind, forced variant). Keeps old JSON valid.
@@ -94,12 +108,15 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "cthulhu": lambda **o: L.cthulhu_recipe(),
     "unicorn": lambda **o: L.unicorn_recipe(),
     "stag": lambda **o: L.stag_recipe(),
+    "boar": lambda **o: L.boar_recipe(),
+    "horse": lambda **o: L.horse_recipe(),
+    "feline": lambda **o: L.feline_recipe(),
 }
 
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "biped": 180, "beholder": 80, "kraken": 70,
     "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
-    "unicorn": 160, "stag": 150,
+    "unicorn": 160, "stag": 150, "boar": 90, "horse": 160, "feline": 100,
 }
 
 

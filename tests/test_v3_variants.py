@@ -191,3 +191,52 @@ def test_nl_unicorn_and_horns():
     # free: a horned beast composes a horn module
     res = prompt_to_recipe("a four-legged beast with a unicorn horn", mode="free")
     assert any(m["kind"] == "horn" for m in res["recipe_dict"]["modules"])
+
+
+# --- V3-M3: tusks / ears / hooves / claws / manes -------------------------- #
+def test_new_slots_registered_with_sockets():
+    rep = capability_report()
+    assert variant_names("ear") == ["floppy", "pointy", "bat", "long"]
+    assert set(variant_names("tusk")) == {"boar", "elephant", "walrus"}
+    for k in ("hoof", "claw", "mane"):
+        assert k in rep["modules"]
+    assert {"ears", "tusks"} <= set(rep["modules"]["head"]["sockets"])
+    assert "tip" in rep["modules"]["leg"]["sockets"]
+    assert "mane" in rep["modules"]["neck"]["sockets"]
+
+
+def test_new_detail_modules_build():
+    spec = Spec.from_dict({"name": "D", "archetype": "biped", "species": "x", "seed": 5,
+                           "triBudget": 8000, "proportions": {"heightCm": 60},
+                           "material": {"baseColor": "brown"}})
+    for kind in ("ear", "tusk", "hoof", "claw", "mane"):
+        recipe = recipe_from_dict({"name": "D", "modules": [{"id": "m", "kind": kind}]})
+        _, mesh = build_actor(recipe, spec, make_rng(spec.seed))
+        assert mesh.num_triangles > 0
+
+
+def test_boar_horse_feline_build_with_details():
+    counts = {}
+    for name in ("boar", "horse", "feline"):
+        recipe = load_template(name)
+        spec = Spec.from_dict({"name": name, "archetype": "biped", "species": name, "seed": 5,
+                               "triBudget": 11000, "proportions": {"heightCm": 120},
+                               "material": {"baseColor": "brown"}})
+        skel, mesh = build_actor(recipe, spec, make_rng(spec.seed))
+        names = [b.name for b in skel]
+        counts[name] = names
+        assert mesh.num_triangles > 0
+    assert any("tusks" in n for n in counts["boar"])
+    # hoof/claw applied to all four legs (2 mirror attachments x 2 sides)
+    assert sum("hoof" in n for n in counts["horse"]) == 4
+    assert sum(n.endswith(("_c0", "_c1", "_c2")) or "claw" in n for n in counts["feline"]) >= 12
+    assert any("mane" in n or n.startswith(("mane", "horse_mane")) for n in counts["horse"])
+
+
+def test_nl_animal_templates_and_free_tusks():
+    assert prompt_to_recipe("a wild boar")["template"] == "boar"
+    assert prompt_to_recipe("a horse")["template"] == "horse"
+    assert prompt_to_recipe("a lion")["template"] == "feline"
+    res = prompt_to_recipe("a four-legged beast with tusks and a mane", mode="free")
+    kinds = [m["kind"] for m in res["recipe_dict"]["modules"]]
+    assert "tusk" in kinds and "mane" in kinds

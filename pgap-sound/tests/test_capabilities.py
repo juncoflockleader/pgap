@@ -16,7 +16,7 @@ def test_report_shape():
 
 
 def test_fixtures_validate():
-    for name in ("laser", "coin", "bark", "roar"):
+    for name in ("laser", "coin", "bark", "roar", "metal_clang"):
         ok, errors = validate_spec(load_fixture(name).to_dict())
         assert ok, f"{name}: {errors}"
 

@@ -6,7 +6,7 @@ from .helpers import load_fixture, render_bytes
 
 
 def test_fixtures_are_byte_identical_on_rerun():
-    for name in ("laser", "coin", "bark", "roar"):
+    for name in ("laser", "coin", "bark", "roar", "metal_clang"):
         spec = load_fixture(name)
         assert render_bytes(spec) == render_bytes(spec), f"{name} not deterministic"
 

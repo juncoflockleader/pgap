@@ -1,0 +1,13 @@
+{
+  "name": "MetalClang",
+  "category": "impact",
+  "seed": 5,
+  "duration_ms": 1600,
+  "sample_rate": 44100,
+  "gain_dbfs": -1.0,
+  "graph": {
+    "material": "metal",
+    "base_freq": 520,
+    "transient": 0.22
+  }
+}

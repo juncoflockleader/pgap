@@ -30,6 +30,7 @@ a `SoundWave` import sidecar) — the dog's bark, generated rather than placehol
 - **SFX** — `laser`, `coin`, `pickup`, `powerup`, `jump`, `hit`, `explosion`
 - **UI** — `blip`
 - **Vocals** — `bark`, `growl`, `roar`, `chirp`, `squeak`
+- **Impacts** (modal synthesis) — `wood`, `metal`, `glass`, `stone`
 
 Drive them by name with `--describe` (keyword inference: size words scale pitch,
 "retro/8-bit" adds bitcrush), or author a full `SoundSpec` JSON for exact control.
@@ -55,10 +56,11 @@ python pgap.py sound --describe "a laser zap" --variance 0   # the exact preset
 Architecture B for audio: don't ask a model to *make* the sound — **synthesize it**
 with classic DSP. A `SoundSpec` → one seeded `PCG64` RNG → category router
 (SFX = oscillator + sweep/arpeggio + envelope + filter + noise + bitcrush; vocals =
-FM + pitch contour + growl AM + noise rasp) → render (DC-removal, soft-limit, fades,
-peak-normalize) → hand-written PCM16 WAV + manifest. Pure Python + numpy, no ML
-framework, no network. **Same (spec, seed) → byte-identical WAV.**
+FM + pitch contour + growl AM + noise rasp; impacts = a bank of decaying resonant
+modes + a noise contact transient, mode ratios encoding the material) → render
+(DC-removal, soft-limit, fades, peak-normalize) → hand-written PCM16 WAV + manifest.
+Pure Python + numpy, no ML framework, no network. **Same (spec, seed) →
+byte-identical WAV.**
 
 The deliberate trade is **synthesized, not recorded** (stylized, not foley).
-Impacts (modal synthesis) and seamless ambient loops are the first fast-follows —
-see [MVP.md](MVP.md).
+Seamless ambient loops are the next fast-follow — see [MVP.md](MVP.md).

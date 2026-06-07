@@ -22,7 +22,7 @@ def test_peak_hits_target():
 
 
 def test_all_fixtures_loudness_safe():
-    for name in ("laser", "coin", "bark", "roar"):
+    for name in ("laser", "coin", "bark", "roar", "metal_clang"):
         buf = render_spec(load_fixture(name))
         assert np.max(np.abs(buf)) <= 1.0
         # peak normalized to the spec default (-1 dBFS) => clearly audible

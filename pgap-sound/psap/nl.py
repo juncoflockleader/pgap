@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 
+from .impact import IMPACT_PRESETS
 from .sfx import SFX_PRESETS
 from .spec import SoundSpec
 from .vocal import VOCAL_PRESETS
@@ -31,6 +32,11 @@ KEYWORDS: list[tuple[str, str]] = [
     ("roar", "roar"), ("dragon", "roar"), ("monster", "roar"), ("beast", "roar"),
     ("chirp", "chirp"), ("bird", "chirp"), ("tweet", "chirp"),
     ("squeak", "squeak"), ("mouse", "squeak"), ("rat", "squeak"),
+    # impacts (modal synthesis) — material collision sounds
+    ("wood", "wood"), ("wooden", "wood"), ("knock", "wood"),
+    ("metal", "metal"), ("metallic", "metal"), ("clang", "metal"), ("clank", "metal"),
+    ("glass", "glass"), ("smash", "glass"), ("shatter", "glass"),
+    ("stone", "stone"), ("rock", "stone"), ("thud", "stone"),
 ]
 
 _BIGGER = ("big", "large", "deep", "low", "heavy", "huge", "giant")
@@ -43,6 +49,8 @@ def _preset_def(preset: str):
         return SFX_PRESETS[preset]
     if preset in VOCAL_PRESETS:
         return VOCAL_PRESETS[preset]
+    if preset in IMPACT_PRESETS:
+        return IMPACT_PRESETS[preset]
     raise KeyError(preset)
 
 
@@ -91,7 +99,7 @@ def prompt_to_spec(prompt: str, seed: int = 0, name: str | None = None,
         dscale *= 0.7
 
     if abs(fscale - 1.0) > 1e-9:
-        for k in ("freq", "f0", "fpeak", "f1"):
+        for k in ("freq", "f0", "fpeak", "f1", "base_freq"):
             if k in g and isinstance(g[k], (int, float)):
                 g[k] = round(g[k] * fscale, 2)
     if abs(dscale - 1.0) > 1e-9:

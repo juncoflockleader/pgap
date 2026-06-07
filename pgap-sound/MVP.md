@@ -131,9 +131,11 @@ playable Unreal audio.
 
 ## Fast-follow (post-MVP, in order)
 
-1. **Impacts (modal synthesis)** — resonant-mode banks per material (wood / metal /
-   glass / stone); the biggest SFX category after one-shots.
-2. **Ambient loops** — filtered/granular noise + slow envelopes; **seamless
+1. ✅ **Impacts (modal synthesis)** — resonant-mode banks per material (wood /
+   metal / glass / stone) + a noise contact transient. Live-verified: `S_MetalClang`
+   and `S_WoodKnock` imported into UE 5.7.4 as `SoundWave`. Category `impact`,
+   NL keywords (clang/knock/shatter/thud), seeded variance on pitch.
+2. **Ambient loops** *(next)* — filtered/granular noise + slow envelopes; **seamless
    looping** (zero-crossing + crossfade; FR3).
 3. **Recipe grammar + variants + effects** — compose oscillator/filter/fx chains;
    reverb/delay/chorus/distortion; variant keywords in NL (mirrors the 3D recipe

@@ -17,7 +17,7 @@ import numpy as np
 
 # relative ± perturbation at variance == 1.0 (multiplied by `variance`)
 _REL = {
-    "freq": 0.10, "f0": 0.10, "fpeak": 0.10, "f1": 0.10,
+    "freq": 0.10, "f0": 0.10, "fpeak": 0.10, "f1": 0.10, "base_freq": 0.10,
     "sweep": 0.12, "mod_index": 0.15, "growl_hz": 0.10,
 }
 _ENV_REL = {"attack": 0.15, "decay": 0.15, "hold": 0.15}

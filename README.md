@@ -16,7 +16,7 @@ engine handoff), and a single wrapper CLI.
 | Mode | Folder | What it generates | Status |
 |---|---|---|---|
 | **`3d-actor`** | [pgap-3d-actor/](pgap-3d-actor/) | rigged / skinned / animated / textured creatures (glTF) | **Implemented** (v1+v2+v3, live-verified in UE 5.7) |
-| **`sound`** | [pgap-sound/](pgap-sound/) | SFX / UI / stylized creature vocals (WAV) — *not music, not voice* | **MVP implemented** (S0–S5; impacts/ambient are fast-follows) |
+| **`sound`** | [pgap-sound/](pgap-sound/) | SFX / UI / creature vocals / material impacts (WAV) — *not music, not voice* | **Implemented** (MVP S0–S5 + impacts + seeded variance; ambient next) |
 | **`gear`** | [pgap-gear/](pgap-gear/) | weapons / apparel / armor / accessories | Planned |
 
 ## Usage

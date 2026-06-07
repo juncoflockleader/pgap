@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from . import sfx, vocal
+from . import impact, sfx, vocal
 from .spec import SoundSpec
 
 
@@ -14,4 +14,6 @@ def synthesize(spec: SoundSpec, rng) -> np.ndarray:
         return sfx.synth(spec.graph, n, spec.sample_rate, rng)
     if spec.category == "vocal":
         return vocal.synth(spec.graph, n, spec.sample_rate, rng)
+    if spec.category == "impact":
+        return impact.synth(spec.graph, n, spec.sample_rate, rng)
     raise ValueError(f"unsupported category {spec.category!r}")

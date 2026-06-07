@@ -98,8 +98,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default="out", help="output directory (default: ./out)")
     parser.add_argument("--capabilities", action="store_true", help="print the v1 capability report and exit")
     parser.add_argument("--v2-capabilities", action="store_true", help="print the v2 module/socket capability report and exit")
-    parser.add_argument("--creature", help="build a v2 creature template (strict): beholder, kraken, octopus_dragon, sphinx, merfolk, biped")
+    parser.add_argument("--creature", help="build a v2 creature template (strict): beholder, kraken, octopus_dragon, sphinx, merfolk, cthulhu, biped")
     parser.add_argument("--recipe", help="build a v2 creature from a recipe JSON file (free mode)")
+    parser.add_argument("--describe", help="natural-language prompt → v2 creature")
+    parser.add_argument("--mode", choices=("strict", "free"), default="strict", help="--describe mode (default: strict)")
     parser.add_argument("--color", help="coat baseColor for --creature (default: stone)")
     parser.add_argument("--handoff", action="store_true", help="also emit the M5 source-handoff bundle")
     parser.add_argument("--package-root", default="/Game/Prototype/Dogs", help="Unreal package root for handoff")
@@ -126,6 +128,22 @@ def main(argv: list[str] | None = None) -> int:
             material={"baseColor": args.color or "stone"}, tri_budget=10000, out_dir=args.out,
         )
         print(f"creature → {args.creature} (strict)")
+        _print_result(r)
+        return 0
+
+    if args.describe:
+        from .v2.nl import prompt_to_recipe
+        res = prompt_to_recipe(args.describe, seed=args.seed if args.seed is not None else 5, mode=args.mode)
+        for w in res.get("warnings", []):
+            print(f"  warning: {w}", file=sys.stderr)
+        if not res["ok"]:
+            for e in res["errors"]:
+                print(f"  error: {e}", file=sys.stderr)
+            return 2
+        r = generate_v2(res["recipe"], name=res["name"], seed=res["seed"],
+                        height=res["heightCm"], material=res["material"],
+                        tri_budget=11000, out_dir=args.out)
+        print(f"describe → {res['mode']}: {res.get('template', 'composed recipe')}")
         _print_result(r)
         return 0
 

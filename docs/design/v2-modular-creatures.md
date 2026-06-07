@@ -267,8 +267,15 @@ nothing downstream or in the proof lane changes.
   valid + non-degenerate + within-budget + deterministic. **Exit (met):** all five
   generate valid, importable meshes; cthulhu verified live in UE 5.7. 3 new tests
   (91 total).
-- **V2-M5 — NL → recipe.** Prompt → composition inference, fail-closed grammar.
-  **Exit:** "a winged lion with a human head" → sphinx-like recipe → actor.
+- **V2-M5 — NL → recipe.** *(shipped — v2 complete.)* `v2/nl.py`:
+  `prompt_to_recipe(prompt, mode)`. **strict** maps a prompt to the nearest
+  template ("a winged lion with a human head" → sphinx); **free** composes a
+  recipe from feature keywords (base + wings + tentacles + tail + …), validated by
+  the grammar with template fallback. Coat + size inferred; unrecognized prompts
+  fail closed. CLI: `--describe "<prompt>" [--mode strict|free]`. **Exit (met):**
+  the winged-lion prompt builds a sphinx; *"a winged humanoid with a fish tail"*
+  (free) composes a novel winged-merfolk that imports + animates in UE 5.7. 7 new
+  tests (98 total).
 
 ## 10. Open questions
 

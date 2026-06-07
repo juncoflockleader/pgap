@@ -28,6 +28,7 @@ MODULE_REGISTRY: dict[str, ModuleEntry] = {
     "dragon_neck": ModuleEntry(lambda p: L.dragon_neck_module()),
     "head": ModuleEntry(lambda p: L.head_module()),
     "draconic_head": ModuleEntry(lambda p: L.draconic_head_module()),
+    "cephalopod_head": ModuleEntry(lambda p: L.cephalopod_head_module()),
     "arm": ModuleEntry(lambda p: L.arm_module()),
     "leg": ModuleEntry(lambda p: L.leg_module()),
     "tentacle": ModuleEntry(lambda p: L.tentacle_module()),
@@ -54,12 +55,13 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "octopus_dragon": lambda **o: L.octopus_dragon_recipe(),
     "sphinx": lambda **o: L.sphinx_recipe(),
     "merfolk": lambda **o: L.merfolk_recipe(),
+    "cthulhu": lambda **o: L.cthulhu_recipe(),
 }
 
 # Sensible default standing height (cm) per template, for the CLI.
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "biped": 180, "beholder": 80, "kraken": 70,
-    "octopus_dragon": 130, "sphinx": 120, "merfolk": 175,
+    "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
 }
 
 

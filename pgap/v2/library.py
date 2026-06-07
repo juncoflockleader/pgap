@@ -25,6 +25,7 @@ def spine_module() -> Module:
             "shoulder": Socket("shoulder", v(0, 0.20, 0.07), "spine_02", mirror=True),
             "hip": Socket("hip", v(0, 0.005, 0.045), "root", mirror=True),
             "base": Socket("base", v(0, -0.005, 0), "root"),  # centered (mermaid tail)
+            "wings": Socket("wings", v(0, 0.18, 0.05), "spine_02", mirror=True),  # back (cthulhu)
         },
     )
 
@@ -199,9 +200,9 @@ def draconic_head_module() -> Module:
 
 
 def wing_module() -> Module:
-    """Stylized bat wing: an arm + 3 splayed fingers + webbing, pointing +Z out."""
-    elbow = v(0, 0.06, 0.18)
-    t1, t2, t3 = v(-0.12, 0.04, 0.30), v(0.0, 0.0, 0.38), v(0.13, 0.02, 0.30)
+    """Stylized bat wing: an arm + 3 splayed fingers + webbing, swept up and out."""
+    elbow = v(0, 0.13, 0.15)
+    t1, t2, t3 = v(-0.10, 0.20, 0.26), v(0.02, 0.14, 0.34), v(0.13, 0.16, 0.24)
     return Module(
         kind="wing",
         bones=[
@@ -284,6 +285,30 @@ def merfolk_recipe() -> Recipe:
             Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
             Attachment("tail", serpent_tail_module(), parent="spine", parent_socket="base"),
             Attachment("fin", fin_module(), parent="tail", parent_socket="tip"),
+        ],
+    )
+
+
+def cephalopod_head_module() -> Module:
+    """A rounded skull with a downward-front ring of face tentacles (cthulhu)."""
+    return Module(
+        kind="head",
+        bones=[BoneSpec("skull", None, v(0, 0, 0), v(0.05, 0.0, 0), 0.065, 0.060, "head")],
+        sockets={"face": Socket("face", v(0.05, -0.02, 0), "skull", ring=6, ring_radius=0.025)},
+    )
+
+
+def cthulhu_recipe() -> Recipe:
+    return Recipe(
+        name="Cthulhu",
+        attachments=[
+            Attachment("spine", spine_module()),
+            Attachment("neck", neck_module(), parent="spine", parent_socket="neck"),
+            Attachment("head", cephalopod_head_module(), parent="neck", parent_socket="top"),
+            Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
+            Attachment("leg", leg_module(), parent="spine", parent_socket="hip", mirror=True),
+            Attachment("wing", wing_module(), parent="spine", parent_socket="wings", mirror=True),
+            Attachment("face", tentacle_module(), parent="head", parent_socket="face"),
         ],
     )
 

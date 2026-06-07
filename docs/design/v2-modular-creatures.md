@@ -258,8 +258,15 @@ nothing downstream or in the proof lane changes.
   CLI now emits an `idle` clip). **Exit (met):** the kraken's 8 tentacles (48
   tracks) undulate, the beholder's eyestalks sway — verified as a valid UE
   AnimSequence (3 s, 0 issues) on the generated skeleton. 6 new tests.
-- **V2-M4 — Reference chimeras.** The five targets as recipes + variance corpus.
-  **Exit:** all five generate valid, importable, recognizable-as-described meshes.
+- **V2-M4 — Reference chimeras + corpus.** *(shipped.)* All five PRD targets are
+  registered templates: **octopus-dragon, mermaid (merfolk), cthulhu, sphinx,
+  beholder** (+ kraken, biped). Added the `cephalopod_head` (face-tentacle ring)
+  and a `wings` socket on the biped spine for **cthulhu** (winged humanoid + 6
+  face tentacles, 65 bones); swept the wings up so they read as spread. A variance
+  corpus (`test_v2_corpus`) builds every creature across 3 seeds asserting
+  valid + non-degenerate + within-budget + deterministic. **Exit (met):** all five
+  generate valid, importable meshes; cthulhu verified live in UE 5.7. 3 new tests
+  (91 total).
 - **V2-M5 — NL → recipe.** Prompt → composition inference, fail-closed grammar.
   **Exit:** "a winged lion with a human head" → sphinx-like recipe → actor.
 

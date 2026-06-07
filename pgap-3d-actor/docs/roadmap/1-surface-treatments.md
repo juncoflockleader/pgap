@@ -13,6 +13,12 @@ on-brand.
 
 This makes *all existing creatures* look dramatically better at once.
 
+**Reference case — the dog's coat.** The golden retriever is the clearest payoff:
+today it's a smooth golden blob; with `surface: fur` it gains a directional, light-
+catching coat and finally *reads* as a furry dog rather than a mannequin. "Make the
+dog realistic" is, concretely, **fur** — so the dog is the acceptance creature for
+S0–S2 (the S2 NL case is literally "a furry golden retriever" → `fur`).
+
 ## The idea
 
 Add a **surface** treatment to the material:
@@ -52,10 +58,12 @@ the PNG encoder. Surfaces are just richer textures.
   field; one procedural pattern (scales). **Exit:** a scaled creature imports into
   UE with visible relief; deterministic; flat normal map for `smooth` (no change).
 - **S1 — Surface library.** scales / feathers / fur / chitin / bark height+color
-  generators. **Exit:** each reads distinctly in a viewer/UE.
+  generators. **Exit:** each reads distinctly in a viewer/UE — and the **golden
+  retriever with `fur` reads as a furry dog** (the headline win).
 - **S2 — Authoring hooks.** `material.surface` in spec + recipe; NL keywords
-  (scaly/scaled → scales, feathered → feathers, furry → fur, etc.); capability
-  report lists surfaces. **Exit:** "a scaly green dragon" picks scales end to end.
+  (scaly/scaled → scales, feathered → feathers, **furry/fluffy → fur**, etc.);
+  capability report lists surfaces. **Exit:** "a scaly green dragon" picks scales
+  and "a furry golden retriever" picks fur, end to end.
 - **S3 — Per-region surface.** A surface per module/region (body scales + wing
   feathers) via vertex-tagged regions or the `--free` per-module skin block.
   **Exit:** a mixed-surface creature.

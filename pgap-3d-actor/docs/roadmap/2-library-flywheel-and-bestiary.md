@@ -25,6 +25,41 @@ complex.
 
 ### B. The content batch (the first big expansion)
 
+#### B0 — Flagship first part: **eyes** (the most important organ)
+
+Eyes lead the batch. They're the highest-value addition — eyes are what make a head
+read as a *face*, and **creatures today have none** (the dog has a snout, cheeks,
+and a nose blob, but no eyes). Geometrically an eye is trivial — a sphere at a head
+socket, structurally identical to a horn — which makes it the ideal first concrete
+part. But it forces three decisions that set the convention for *every* future
+organ (teeth, claws, gems, beaks):
+
+1. **Non-fusion.** The kernel smooth-mins everything into one watertight blob, which
+   would swallow a small eyeball. Eyes must be a **non-fused element** that sits
+   *proud* of the head surface — the first part that is *not* blended into the body.
+   This "separate blob / second mesh element" concept is reused by teeth, claws,
+   inset gems, etc. *Decision:* add a non-fused part flag to the kernel.
+2. **The eye material.** An eye wants glossy sclera + a colored iris + a dark pupil
+   (+ a catchlight) — distinct from fur/skin. *Decision:* paint the iris/pupil onto
+   the eyeball's own UVs via the existing base-color texture (texture-side,
+   on-brand); promote to a second glossier material slot only if needed.
+3. **Painted eyes vs. geometry eyes.** The cheapest first cut is a **decal** — paint
+   the eyes straight onto the head texture (ties into roadmap 1's texture layer):
+   flat, but reads fine at stylized distance and is zero geometry risk. Geometry
+   eyeballs (catchlights, correct from side angles) are the upgrade. *Decision:*
+   ship painted-on eyes first, then geometry eyeballs as a variant.
+
+The module machinery already exists (`eyeball_module`, `eyestalk_module` from the
+beholder/kraken) — it just isn't wired onto standard heads. Give every head an
+`eyes` socket (mirrored pair; `ring` for radial/extra eyes, as the beholder does).
+**Variants:** round, almond, slit-pupil (reptile), compound (insect), googly.
+**Params:** size, spacing, iris color, pupil shape.
+
+*Static, placed eyes belong here; the expressive **eye-bone** rig (blink, gaze,
+emotion) is roadmap 3 — a creature should* have *eyes long before it can emote.*
+
+#### B1 — Bases, slots, variants, presets (the breadth batch)
+
 - **Body bases:** `serpentine` (no legs), `hexapod`/insect thorax (6 legs),
   `arachnid` (radial 8-leg), `avian` (bird torso), `centaur` (quadruped body + a
   humanoid-torso socket). Each is one new root module with sockets.
@@ -60,16 +95,26 @@ keywords). The thumbnail mechanism.
 
 - **L0 — Authoring guide + checklist.** **Exit:** a contributor can add a part end
   to end following the doc; the corpus gates it.
-- **L1 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Exit:**
+- **L1 — Eyes (flagship organ, do first).** The lead concrete part (see B0):
+  - *E0 — Painted eyes.* An `eyes` decal in the head base-color (iris + pupil +
+    catchlight) at a head-socket position. **Exit:** the **dog has visible eyes**;
+    deterministic.
+  - *E1 — Geometry eyeballs.* A **non-fused** eyeball part at the `eyes` socket with
+    a painted iris; variants round / almond / slit-pupil. **Exit:** eyes read from
+    multiple angles and don't melt into the head.
+  - *E2 — Eyes everywhere.* every head variant gets an `eyes` socket; NL
+    ("slit-pupil eyes", "big eyes", iris color); corpus. **Exit:** green; eyes
+    compose on all heads. (Expressive eye-*bone* rig → roadmap 3.)
+- **L2 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Exit:**
   each builds a valid creature; a snake, a spider, a bird generate.
-- **L2 — Slots batch.** beak, frill, spikes, shell, gills, whiskers, mandibles,
+- **L3 — Slots batch.** beak, frill, spikes, shell, gills, whiskers, mandibles,
   dorsal fin, stinger. **Exit:** each module builds + composes on a host.
-- **L3 — Presets batch.** griffin, manticore, wyvern, pegasus, hydra, naga,
+- **L4 — Presets batch.** griffin, manticore, wyvern, pegasus, hydra, naga,
   phoenix, basilisk, chimera, centaur. **Exit:** all generate + read as described;
   NL routes their names.
-- **L4 — Bestiary catalog.** generator + gallery doc with thumbnails. **Exit:**
+- **L5 — Bestiary catalog.** generator + gallery doc with thumbnails. **Exit:**
   the gallery renders every template.
-- **L5 — Corpus sweep.** all new bases/slots/variants/presets in the corpus;
+- **L6 — Corpus sweep.** all new bases/slots/variants/presets in the corpus;
   sample variants to keep runtime bounded. **Exit:** green.
 
 ## Risks & decisions

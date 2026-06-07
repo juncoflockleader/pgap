@@ -9,7 +9,7 @@ body-agnostic SDF → skin → uv → texture → animate pipeline), so growth i
 | # | Feature | One line | New machinery? | Doc |
 |---|---|---|---|---|
 | 1 | **Surface treatments** | scales / feathers / fur / chitin via texture + normal map (mesh stays a smooth blob, but *reads* detailed) | Small (texture-side only) | [1-surface-treatments.md](1-surface-treatments.md) |
-| 2 | **Library flywheel + bestiary** | more bases / slots / variants / named presets, made *contributable*, plus a rendered catalog | Almost none (data) | [2-library-flywheel-and-bestiary.md](2-library-flywheel-and-bestiary.md) |
+| 2 | **Library flywheel + bestiary** | more bases / slots / variants / presets, made *contributable*, plus a catalog — led by **eyes** (the flagship first organ) | Almost none (data; eyes add a non-fused-part flag) | [2-library-flywheel-and-bestiary.md](2-library-flywheel-and-bestiary.md) |
 | 3 | **v4 — faces** | face textures + a small jaw/eye **bone** rig + expression clips | Moderate; **no morph targets** | [3-v4-faces.md](3-v4-faces.md) |
 | 4 | **Part proportions** | a `girth` knob (slim ↔ chubby), per part, independent of size | Tiny (one radius multiplier) | [4-part-proportions.md](4-part-proportions.md) |
 
@@ -18,8 +18,9 @@ body-agnostic SDF → skin → uv → texture → animate pipeline), so growth i
 1. **Surface treatments first** — biggest visual upgrade for the least work, and
    it makes *every existing creature* look better at once. Pure texture-side, fully
    on-brand (lightweight, deterministic, offline).
-2. **Library flywheel second** — once creatures look good, widen the bestiary; the
-   payoff is breadth, and the work is small isolated modules (ideally
+2. **Library flywheel second** — once creatures look good, widen the bestiary,
+   **starting with eyes** (the single highest-value organ — creatures have none
+   today); the payoff is breadth, and the work is small isolated modules (ideally
    community-contributable, gated by the corpus test).
 3. **Faces last** — highest value but highest uncertainty (stylized capsule blobs
    are the hardest place to put a readable, expressive face). Do it once the look

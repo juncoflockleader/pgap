@@ -204,8 +204,12 @@ kind.
   *"a deer-antlered dragon with feathered wings and tusks"* composes one recipe
   threading head:draconic + horn:antler + wing:feathered + tusk:boar, and imports
   into UE 5.7 as that chimera. 3 new tests (126 total).
-- **V3-M5 — Variant corpus.** Sample variants per slot; all build valid +
-  deterministic; no degenerate joins. **Exit:** corpus green.
+- **V3-M5 — Variant corpus.** *(shipped — v3 complete.)* `test_v3_corpus` sweeps
+  **every variant of every slot** (in isolation and composed on a host creature)
+  plus **every template**, asserting each builds valid, non-degenerate,
+  within-budget, weights-normalized, and deterministic per seed. **Exit (met):**
+  corpus green — 5 tests covering ~30 (kind, variant) combos + ~17 templates
+  (131 total).
 
 ## 9. Open questions
 

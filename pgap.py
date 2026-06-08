@@ -7,7 +7,9 @@ passed through unchanged to that pipeline's own CLI.
 
 Modes:
   3d-actor   rigged / skinned / animated / textured creatures      (implemented)
-  sound      SFX / impacts / ambient / stylized creature vocals     (planned)
+  sound      SFX / impacts / ambient / stylized creature vocals     (implemented)
+  landscape  biome terrain: heightmap + layers + scatter            (scaffold)
+  city       modular building kits + city layouts                   (scaffold)
   gear       weapons / apparel / armor / accessories                (planned)
 
 Usage:
@@ -36,6 +38,10 @@ PIPELINES: dict[str, dict] = {
                  "desc": "rigged / skinned / animated / textured creatures"},
     "sound":    {"dir": "pgap-sound", "module": "psap.cli", "ready": True,
                  "desc": "SFX / impacts / ambient / stylized creature vocals"},
+    "landscape": {"dir": "pgap-landscape", "module": "psl.cli", "ready": True,
+                  "desc": "biome terrain: heightmap + layers + scatter"},
+    "city":     {"dir": "pgap-city", "module": "psc.cli", "ready": True,
+                 "desc": "modular building kits + city layouts"},
     "gear":     {"dir": "pgap-gear", "module": "pgear.cli", "ready": False,
                  "desc": "weapons / apparel / armor / accessories"},
 }

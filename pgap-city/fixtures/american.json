@@ -1,0 +1,8 @@
+{
+  "name": "Gridtown",
+  "era": "modern",
+  "culture": "american",
+  "seed": 5,
+  "sizeBlocks": [4, 4],
+  "landmarks": ["tower"]
+}

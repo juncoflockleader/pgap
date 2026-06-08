@@ -15,12 +15,18 @@ pgap/
   pgap-3d-actor/     # rigged/skinned/animated/textured creatures (glTF) — IMPLEMENTED
   pgap-sound/        # SFX/impacts/ambient/creature vocals (WAV) — PRD stage
   pgap-gear/         # weapons/apparel/armor/accessories — placeholder
-  README.md  AGENTS.md  CLAUDE.md
+  pgap-landscape/    # biome terrain (heightmap+layers) — PRD + scaffold
+  pgap-city/         # modular building kits + city layouts — PRD + scaffold
+  README.md  AGENTS.md  CLAUDE.md  SPLIT.md
 ```
 
 Each sub-pipeline is self-contained (its own package, CLI, tests, docs, PRD, and
 `AGENTS.md` / `CLAUDE.md`). Read the relevant sub-pipeline's `PRD.md` before
 designing or implementing in it.
+
+**[SPLIT.md](SPLIT.md)** is the authority on the pgap ⇄ unreal-mcp-rx boundary
+("what exists and where" vs "how it's realized" + the manifest-role contract).
+Read it before designing any engine handoff.
 
 ## Shared design principles (do not violate without discussion)
 

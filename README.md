@@ -61,6 +61,10 @@ and examples (e.g. [pgap-3d-actor/AGENTS.md](pgap-3d-actor/AGENTS.md)).
 ## Status
 
 `3d-actor` is fully built and live-verified in Unreal Engine 5.7 (131 tests).
-`sound` is at the PRD stage; `gear` is a placeholder. The trade is deliberate
-across all of them: **stylized, owned, and offline** beats photoreal-via-service
-for low-budget development.
+`sound` is implemented (MVP); `landscape` and `city` are at the PRD + scaffold
+stage; `gear` is a placeholder. The trade is deliberate across all of them:
+**stylized, owned, and offline** beats photoreal-via-service for low-budget
+development.
+
+The pgap ⇄ unreal-mcp-rx responsibility boundary (and the manifest-role contract
+that is the only seam between them) is documented in **[SPLIT.md](SPLIT.md)**.

@@ -55,16 +55,18 @@ def _seg_distance(positions: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.nda
 
 def paint_colors(mesh: Mesh, skel: list[Bone], spec: Spec, parts: tuple = ()) -> Mesh:
     assert mesh.joints is not None and mesh.weights is not None, "skin before painting"
-    names = [b.name for b in skel]
     dominant = mesh.joints[np.arange(mesh.num_vertices), np.argmax(mesh.weights, axis=1)]
 
     spine_ys = [b.head[1] for b in skel if b.name.startswith(("root", "spine"))]
     body_mid = float(np.mean(spine_ys)) if spine_ys else 0.0
 
     # Region per vertex from the dominant bone (+ belly test on body vertices).
+    # A bone may name its own region (v2 organs, e.g. an eyeball's dark "eyes");
+    # that wins over the name-based lookup so the organ colors independently.
     regions = []
     for i in range(mesh.num_vertices):
-        region = _region_for(names[int(dominant[i])])
+        bone = skel[int(dominant[i])]
+        region = getattr(bone, "region", None) or _region_for(bone.name)
         if region == "body" and mesh.positions[i, 1] < body_mid:
             region = "belly"
         regions.append(region)

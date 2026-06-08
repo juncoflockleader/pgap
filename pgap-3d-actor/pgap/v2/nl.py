@@ -107,6 +107,22 @@ def _compose_free(text: str, name: str) -> dict:
         if "cthulhu" in text or ("tentacle" in text and ("face" in text or "mouth" in text)):
             head_variant = "cephalopod"
         modules.append({"id": "head", "kind": "head", "variant": head_variant, "attach": "neck.top"})
+        # eyes: every face gets a pair; keywords pick shape + size (else a sensible
+        # default — slit for reptilian heads, round otherwise).
+        eye_variant = "slit" if head_variant == "draconic" else "round"
+        if any(k in text for k in ("slit", "reptil", "snake eye", "serpent eye", "lizard eye")):
+            eye_variant = "slit"
+        elif "almond" in text:
+            eye_variant = "almond"
+        elif "round eye" in text:
+            eye_variant = "round"
+        eye_radius = 0.016
+        if any(k in text for k in ("big eye", "large eye", "huge eye", "googly", "wide eye", "bug eye")):
+            eye_radius = 0.024
+        elif any(k in text for k in ("small eye", "beady", "tiny eye")):
+            eye_radius = 0.012
+        modules.append({"id": "eyes", "kind": "eyes", "variant": eye_variant,
+                        "attach": "head.eyes", "params": {"radius": eye_radius}})
         horn_variant = None
         if "unicorn" in text or "spiral horn" in text:
             horn_variant = "unicorn"

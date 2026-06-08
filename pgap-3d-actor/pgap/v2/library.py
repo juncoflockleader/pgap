@@ -49,6 +49,7 @@ def head_module() -> Module:
             "horns": Socket("horns", v(0, 0.05, 0), "head"),
             "ears": Socket("ears", v(0, 0.04, 0), "head"),
             "tusks": Socket("tusks", v(0.03, 0.005, 0), "head"),
+            "eyes": Socket("eyes", v(0.034, 0.030, 0), "head"),
         },
     )
 
@@ -118,7 +119,8 @@ def orb_module(radius: float = 0.24, eye_ring: int = 8, arm_ring: int = 8) -> Mo
 def eyeball_module(radius: float = 0.11) -> Module:
     return Module(
         kind="eye",
-        bones=[BoneSpec("eye", None, v(0, 0, 0), v(0.004, 0, 0), radius, radius, "eye")],
+        bones=[BoneSpec("eye", None, v(0, 0, 0), v(0.004, 0, 0), radius, radius, "eye",
+                        region="eyes")],
         sockets={},
     )
 
@@ -130,10 +132,67 @@ def eyestalk_module(eye_radius: float = 0.05) -> Module:
         bones=[
             BoneSpec("stem1", None, v(0, 0, 0), v(0.05, 0.09, 0), 0.015, 0.012, "eyestalk"),
             BoneSpec("stem2", "stem1", v(0.05, 0.09, 0), v(0.09, 0.17, 0), 0.012, 0.010, "eyestalk"),
-            BoneSpec("eye", "stem2", v(0.09, 0.17, 0), v(0.095, 0.175, 0), eye_radius, eye_radius, "eye"),
+            BoneSpec("eye", "stem2", v(0.09, 0.17, 0), v(0.095, 0.175, 0), eye_radius, eye_radius, "eye",
+                     region="eyes"),
         ],
         sockets={},
     )
+
+
+def _eye_pair(segments) -> list:
+    """Author a LEFT eye (z>0); emit it (_l) plus a Z-mirrored twin (_r). Every
+    bone is non-fused (a proud bead, not melted in) and tagged region ``eyes`` so
+    paint colors it the dark iris independent of the head coat. Mirrors ``_bilateral``
+    but for the eye organ; used by :func:`eyes_module`."""
+    out = []
+    for side, sign in (("l", 1.0), ("r", -1.0)):
+        for nm, par, h, t, rh, rt in segments:
+            hh, tt = h.copy(), t.copy()
+            hh[2] *= sign
+            tt[2] *= sign
+            out.append(BoneSpec(f"{nm}_{side}", (f"{par}_{side}" if par else None),
+                                hh, tt, rh, rt, "eye", fused=False, region="eyes"))
+    return out
+
+
+def eyes_module(variant: str = "round", radius: float = 0.016,
+                spacing: float = 0.030) -> Module:
+    """A mirrored pair of proud eyeballs for a head's ``eyes`` socket.
+
+    Authored in the head's local frame (+X forward, +Y up, +Z = left side): the
+    socket sits at the front-upper face, and each eye sits ``spacing`` to its side,
+    nudged slightly forward so the bead pokes proud of the skull. ``variant`` sets
+    the bead shape; ``radius``/``spacing`` scale it to the head.
+
+    Variants: ``round`` (a sphere — the default), ``almond`` (a horizontal capsule,
+    wider than tall), ``slit`` (a narrow vertical capsule — reptilian). Pupil/iris
+    detail is a texture-side upgrade (roadmap 1); here the dark ``eyes`` region
+    reads as the pupil-forward eye from every angle.
+    """
+    fwd = 0.004  # nudge toward +X so the bead sits on the front of the face
+    if variant == "round":
+        seg = [("eye", None, v(fwd, 0.0, spacing), v(fwd + 0.002, 0.0, spacing),
+                radius, radius)]
+    elif variant == "almond":
+        e = radius * 0.85
+        seg = [("eye", None, v(fwd - radius, 0.0, spacing), v(fwd + radius, 0.0, spacing),
+                e, e)]
+    elif variant == "slit":
+        e = radius * 0.80
+        seg = [("eye", None, v(fwd, -radius, spacing), v(fwd, radius, spacing), e, e)]
+    else:
+        raise ValueError(f"unknown eyes variant {variant!r}")
+    return Module(kind="eyes", bones=_eye_pair(seg), sockets={})
+
+
+
+def _eyes_for(parent: str, variant: str = "round", radius: float = 0.016,
+              spacing: float = 0.030) -> "Attachment":
+    """A standard eyes attachment onto ``parent``'s ``eyes`` socket. Used by every
+    head-bearing preset so creatures actually have a face."""
+    return Attachment("eyes", eyes_module(variant, radius, spacing),
+                      parent=parent, parent_socket="eyes")
+
 
 
 def beholder_recipe(eyes: int = 8) -> Recipe:
@@ -207,6 +266,7 @@ def draconic_head_module() -> Module:
             "horns": Socket("horns", v(0.02, 0.06, 0), "skull"),
             "ears": Socket("ears", v(-0.02, 0.05, 0), "skull"),
             "tusks": Socket("tusks", v(0.20, -0.04, 0), "snout"),
+            "eyes": Socket("eyes", v(0.075, 0.045, 0), "skull"),
         },
     )
 
@@ -313,6 +373,7 @@ def octopus_dragon_recipe() -> Recipe:
             Attachment("neck", dragon_neck_module(), parent="body", parent_socket="neck"),
             Attachment("head", draconic_head_module(), parent="neck", parent_socket="top"),
             Attachment("horns", horn_bull_module(), parent="head", parent_socket="horns"),
+            _eyes_for("head", "slit", radius=0.020, spacing=0.045),
             Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
             Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
             Attachment("arms", tentacle_module(), parent="body", parent_socket="rear_ring"),
@@ -327,6 +388,7 @@ def dragon_recipe() -> Recipe:
         Attachment("neck", dragon_neck_module(), parent="body", parent_socket="neck"),
         Attachment("head", draconic_head_module(), parent="neck", parent_socket="top"),
         Attachment("horns", horn_bull_module(), parent="head", parent_socket="horns"),
+        _eyes_for("head", "slit", radius=0.020, spacing=0.045),
         Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
         Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
@@ -341,6 +403,7 @@ def sphinx_recipe() -> Recipe:
             Attachment("body", body_module()),
             Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
             Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            _eyes_for("head"),
             Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
             Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
             Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
@@ -355,6 +418,7 @@ def merfolk_recipe() -> Recipe:
             Attachment("spine", spine_module()),
             Attachment("neck", neck_module(), parent="spine", parent_socket="neck"),
             Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            _eyes_for("head"),
             Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
             Attachment("tail", serpent_tail_module(), parent="spine", parent_socket="base"),
             Attachment("fin", fin_module(), parent="tail", parent_socket="tip"),
@@ -419,6 +483,7 @@ def unicorn_recipe() -> Recipe:
             Attachment("body", body_module()),
             Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
             Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            _eyes_for("head"),
             Attachment("horn", horn_unicorn_module(), parent="head", parent_socket="horns"),
             Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
             Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
@@ -433,6 +498,7 @@ def stag_recipe() -> Recipe:
             Attachment("body", body_module()),
             Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
             Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            _eyes_for("head"),
             Attachment("antlers", horn_antler_module(), parent="head", parent_socket="horns"),
             Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
             Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
@@ -507,6 +573,7 @@ def boar_recipe() -> Recipe:
         Attachment("body", body_module()),
         Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
         Attachment("tusks", tusk_boar_module(), parent="head", parent_socket="tusks"),
         Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
@@ -519,6 +586,7 @@ def horse_recipe() -> Recipe:
         Attachment("body", body_module()),
         Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
         Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
         Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
@@ -533,6 +601,7 @@ def feline_recipe() -> Recipe:
         Attachment("body", body_module()),
         Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
         Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
         Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
@@ -552,6 +621,7 @@ def cephalopod_head_module() -> Module:
             "horns": Socket("horns", v(0.0, 0.05, 0), "skull"),
             "ears": Socket("ears", v(-0.02, 0.05, 0), "skull"),
             "tusks": Socket("tusks", v(0.05, -0.03, 0), "skull"),
+            "eyes": Socket("eyes", v(0.050, 0.030, 0), "skull"),
         },
     )
 
@@ -563,6 +633,7 @@ def cthulhu_recipe() -> Recipe:
             Attachment("spine", spine_module()),
             Attachment("neck", neck_module(), parent="spine", parent_socket="neck"),
             Attachment("head", cephalopod_head_module(), parent="neck", parent_socket="top"),
+            _eyes_for("head", radius=0.017, spacing=0.035),
             Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
             Attachment("leg", leg_module(), parent="spine", parent_socket="hip", mirror=True),
             Attachment("wing", wing_module(), parent="spine", parent_socket="wings", mirror=True),
@@ -578,6 +649,7 @@ def biped_recipe() -> Recipe:
             Attachment("spine", spine_module()),
             Attachment("neck", neck_module(), parent="spine", parent_socket="neck"),
             Attachment("head", head_module(), parent="neck", parent_socket="top"),
+            _eyes_for("head"),
             Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
             Attachment("leg", leg_module(), parent="spine", parent_socket="hip", mirror=True),
         ],
@@ -607,6 +679,7 @@ def serpent_recipe() -> Recipe:
     return Recipe("Serpent", [
         Attachment("body", serpent_body_module()),
         Attachment("head", head_module(), parent="body", parent_socket="neck"),
+        _eyes_for("head", "slit"),
     ])
 
 
@@ -630,6 +703,7 @@ def avian_recipe() -> Recipe:
         Attachment("torso", avian_torso_module()),
         Attachment("neck", neck_module(), parent="torso", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
         Attachment("wing", wing_feathered_module(), parent="torso", parent_socket="wings", mirror=True),
         Attachment("leg", leg_module(), parent="torso", parent_socket="hip", mirror=True),
         Attachment("tail", serpent_tail_module(), parent="torso", parent_socket="tail"),
@@ -647,6 +721,7 @@ def arachnid_body_module(legs: int = 8) -> Module:
         "legs_ring": Socket("legs_ring", v(0.0, 0.0, 0.0), "cephalothorax",
                             ring=legs, ring_radius=0.07),
         "head": Socket("head", v(0.10, 0.0, 0.0), "cephalothorax"),
+        "eyes": Socket("eyes", v(0.085, 0.055, 0), "cephalothorax"),
     })
 
 
@@ -664,4 +739,5 @@ def arachnid_recipe(legs: int = 8) -> Recipe:
     return Recipe("Arachnid", [
         Attachment("body", arachnid_body_module(legs)),
         Attachment("legs", spider_leg_module(), parent="body", parent_socket="legs_ring"),
+        _eyes_for("body", radius=0.018, spacing=0.030),
     ])

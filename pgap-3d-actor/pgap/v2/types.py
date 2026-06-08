@@ -32,6 +32,8 @@ class BoneSpec:
     radius_head: float
     radius_tail: float
     group: str = "none"
+    fused: bool = True            # False = proud, non-melting organ (e.g. eyeball)
+    region: Optional[str] = None  # paint region override (e.g. "eyes")
 
 
 @dataclass(frozen=True)

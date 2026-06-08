@@ -45,6 +45,11 @@ class Bone:
 
     ``head``/``tail`` are the segment endpoints (world rest pose). The radii
     drive the tapered-capsule SDF the geometry kernel sweeps along the segment.
+
+    ``fused``/``region`` mirror :class:`Primitive` for *bone-borne organs* (the v2
+    path builds parts from bones, not extra primitives): ``fused=False`` hard-min's
+    the bone as a proud, non-melting bead (an eyeball), and ``region`` colors it
+    independently of the dominant-bone coat (a dark ``"eyes"`` iris on a skull).
     """
 
     name: str
@@ -53,6 +58,8 @@ class Bone:
     tail: np.ndarray  # f32[3]
     radius_head: float
     radius_tail: float
+    fused: bool = True
+    region: Optional[str] = None
 
 
 # Topologically sorted, root first.

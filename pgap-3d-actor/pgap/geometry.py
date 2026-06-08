@@ -57,16 +57,16 @@ def _smin(a: np.ndarray, b: np.ndarray, k: float) -> np.ndarray:
 def _blobs(skel: list[Bone], parts: tuple) -> tuple[list[_Blob], list[_Blob]]:
     """Normalize bones + part primitives into (soft, hard) float64 blob lists.
 
-    ``soft`` blobs smooth-min into one body; ``hard`` blobs (``Primitive.fused ==
-    False``) are plain-union'd on top so they stay distinct (proud organs).
+    ``soft`` blobs smooth-min into one body; ``hard`` blobs (``fused == False``,
+    on either a bone or a part) are plain-union'd on top so they stay distinct
+    (proud organs — an eyeball that sits on the head instead of melting into it).
     """
     soft: list[_Blob] = []
     hard: list[_Blob] = []
     for bone in skel:
-        soft.append(
-            (bone.head.astype(np.float64), bone.tail.astype(np.float64),
-             float(bone.radius_head), float(bone.radius_tail))
-        )
+        blob = (bone.head.astype(np.float64), bone.tail.astype(np.float64),
+                float(bone.radius_head), float(bone.radius_tail))
+        (soft if getattr(bone, "fused", True) else hard).append(blob)
     for p in parts:
         blob = (np.asarray(p.a, dtype=np.float64), np.asarray(p.b, dtype=np.float64),
                 float(p.radius_a), float(p.radius_b))
@@ -75,12 +75,21 @@ def _blobs(skel: list[Bone], parts: tuple) -> tuple[list[_Blob], list[_Blob]]:
 
 
 def _field(pts: np.ndarray, blobs: tuple[list[_Blob], list[_Blob]]) -> np.ndarray:
-    """SDF at the given points (K,): soft blobs smooth-min'd, hard blobs plain-min'd."""
+    """SDF at the given points (K,): soft blobs smooth-min'd, hard blobs plain-min'd.
+
+    Handles an all-hard skeleton (e.g. the eyes module built in isolation): with no
+    soft body to fuse into, the hard blobs are plain-union'd among themselves.
+    """
     soft, hard = blobs
-    d = _capsule_sdf(pts, soft[0])
-    for blob in soft[1:]:
-        d = _smin(d, _capsule_sdf(pts, blob), _SMIN_K)
-    for blob in hard:
+    rest = hard
+    if soft:
+        d = _capsule_sdf(pts, soft[0])
+        for blob in soft[1:]:
+            d = _smin(d, _capsule_sdf(pts, blob), _SMIN_K)
+    else:
+        d = _capsule_sdf(pts, hard[0])
+        rest = hard[1:]
+    for blob in rest:
         d = np.minimum(d, _capsule_sdf(pts, blob))
     return d
 

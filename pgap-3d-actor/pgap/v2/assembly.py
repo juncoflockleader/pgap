@@ -50,7 +50,7 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
     module instance: {id, kind, local_bones, phase} — consumed by the animator."""
     mirrored = {a.id for a in recipe.attachments if a.mirror}
     placed: dict[str, _Placed] = {}
-    raw: list[tuple] = []  # (name, parent, head, tail, rh, rt, group)
+    raw: list[tuple] = []  # (name, parent, head, tail, rh, rt, group, fused, region)
     meta: list[dict] = []
 
     for att in recipe.attachments:
@@ -102,21 +102,23 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
                 tail = origin + rot @ tail
                 parent = f"{inst_id}_{b.parent}" if b.parent else cross
                 raw.append((f"{inst_id}_{b.name}", parent, head, tail,
-                            b.radius_head, b.radius_tail, b.group))
+                            b.radius_head, b.radius_tail, b.group,
+                            getattr(b, "fused", True), getattr(b, "region", None)))
 
     # Uniform height scale + ground clamp (matches v1 convention).
     g = float(spec.proportions["heightCm"]) / _REF_HEIGHT_CM
-    min_y = min(min(h[1] - rh, t[1] - rt) for _, _, h, t, rh, rt, _ in raw) * g
+    min_y = min(min(h[1] - rh, t[1] - rt) for _, _, h, t, rh, rt, _, _, _ in raw) * g
 
     bones: list[Bone] = []
-    for name, parent, head, tail, rh, rt, group in raw:
+    for name, parent, head, tail, rh, rt, group, fused, region in raw:
         head = head * g
         tail = tail * g
         head[1] -= min_y
         tail[1] -= min_y
         bones.append(
             Bone(name=name, parent=parent, head=head.astype(_F), tail=tail.astype(_F),
-                 radius_head=float(rh * g), radius_tail=float(rt * g))
+                 radius_head=float(rh * g), radius_tail=float(rt * g),
+                 fused=fused, region=region)
         )
     return bones, meta
 

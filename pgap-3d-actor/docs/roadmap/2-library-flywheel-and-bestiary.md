@@ -27,13 +27,20 @@ complex.
 
 #### B0 — Flagship first part: **eyes** (the most important organ) — ✅ done (dog)
 
-Status: **implemented for the dog** (v1) — two non-fused, dark, proud "bead" eyes
-(E0/E1), plus a **black nose, lower jaw, and mouth line** ("jaws"). Built on two
-new reusable kernel capabilities: `Primitive.fused=False` (a non-fused organ that
-sits proud instead of melting into the smooth-min body) and `Primitive.region`
-(color an organ independently of its bone). Remaining: variant shapes (almond/
-slit), generalizing to v2 heads (needs non-fused *bones* in the v2 assembler), and
-the expressive eye-bone rig (roadmap 3). Live-verified in UE 5.7.4.
+Status: **implemented for the dog (v1) and generalized to every v2 head** — two
+non-fused, dark, proud "bead" eyes (E0/E1), plus a **black nose, lower jaw, and
+mouth line** ("jaws"). Built on two reusable kernel capabilities, now on **both**
+the part path and the bone path: `fused=False` (a non-fused organ that sits proud
+instead of melting into the smooth-min body) and `region` (color an organ
+independently of its bone). The v2 assembler threads both flags from `BoneSpec`
+→ `Bone` → the SDF kernel, so the modular `eyes` module is a mirrored pair of
+proud, region-tagged eyeball bones at a head's `eyes` socket. **Variants:** round /
+almond / slit (E1). **Done (E2):** every head variant (humanoid / draconic /
+cephalopod) and the arachnid carry an `eyes` socket; all head-bearing presets ship
+eyes; the beholder/kraken eye organs are region-tagged too; NL routes shape + size
+("slit-pupil eyes", "big eyes"); the corpus + `test_v2_eyes` gate it. Remaining:
+iris-color params and the expressive eye-bone rig (roadmap 3). v1 live-verified in
+UE 5.7.4.
 
 Eyes lead the batch. They're the highest-value addition — eyes are what make a head
 read as a *face*, and **creatures today have none** (the dog has a snout, cheeks,
@@ -107,12 +114,13 @@ keywords). The thumbnail mechanism.
   - *E0 — Painted eyes.* An `eyes` decal in the head base-color (iris + pupil +
     catchlight) at a head-socket position. **Exit:** the **dog has visible eyes**;
     deterministic.
-  - *E1 — Geometry eyeballs.* A **non-fused** eyeball part at the `eyes` socket with
-    a painted iris; variants round / almond / slit-pupil. **Exit:** eyes read from
-    multiple angles and don't melt into the head.
-  - *E2 — Eyes everywhere.* every head variant gets an `eyes` socket; NL
-    ("slit-pupil eyes", "big eyes", iris color); corpus. **Exit:** green; eyes
-    compose on all heads. (Expressive eye-*bone* rig → roadmap 3.)
+  - *E1 — Geometry eyeballs.* ✅ **done** — a **non-fused** eyeball at the `eyes`
+    socket; variants round / almond / slit. Eyes are bone-borne organs (non-fused
+    + region now work on bones, not just parts), so they don't melt into the head.
+  - *E2 — Eyes everywhere.* ✅ **done** — every head variant (+ the arachnid) has
+    an `eyes` socket; every head-bearing preset ships a pair; NL routes shape +
+    size ("slit-pupil eyes", "big eyes"); corpus + `test_v2_eyes` green. Remaining:
+    iris-color params; the expressive eye-*bone* rig → roadmap 3.
 - **L2 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Started:**
   `serpent` (legless cobra-ish chain), `avian` (torso + 2 legs + feathered wings +
   tail), and `arachnid` (cephalothorax + abdomen + 8 splayed `spider_leg`s on a

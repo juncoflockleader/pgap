@@ -59,6 +59,11 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
             arm_ring=int(p.get("arm_ring", 8)))},
         params=("radius", "eye_ring", "arm_ring"),
     ),
+    "eyes": ModuleKind(default="round", variants={
+        "round": lambda p: L.eyes_module("round", float(p.get("radius", 0.016)), float(p.get("spacing", 0.030))),
+        "almond": lambda p: L.eyes_module("almond", float(p.get("radius", 0.016)), float(p.get("spacing", 0.030))),
+        "slit": lambda p: L.eyes_module("slit", float(p.get("radius", 0.016)), float(p.get("spacing", 0.030))),
+    }, params=("radius", "spacing")),
     "eyeball": ModuleKind(default="default",
                           variants={"default": lambda p: L.eyeball_module(radius=float(p.get("radius", 0.11)))},
                           params=("radius",)),

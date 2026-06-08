@@ -31,11 +31,12 @@ def _spec():
 def test_recipe_assembles_expected_bones():
     skel = assemble_recipe(biped_recipe(), _spec())
     names = [b.name for b in skel]
-    # spine(3) + neck(1) + head(1) + arm x2 (3) + leg x2 (3) = 17
-    assert len(skel) == 17
-    assert len(set(names)) == 17  # unique
+    # spine(3) + neck(1) + head(1) + eyes(2) + arm x2 (3) + leg x2 (3) = 19
+    assert len(skel) == 19
+    assert len(set(names)) == 19  # unique
     assert skel[0].name == "spine_root" and skel[0].parent is None
     assert {"arm_l_upperarm", "arm_r_upperarm", "leg_l_thigh", "leg_r_thigh"} <= set(names)
+    assert {"eyes_eye_l", "eyes_eye_r"} <= set(names)  # a mirrored eye pair
 
 
 def test_all_parents_resolve():

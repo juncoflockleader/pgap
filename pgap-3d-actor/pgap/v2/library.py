@@ -37,6 +37,7 @@ def neck_module() -> Module:
         sockets={
             "top": Socket("top", v(0, 0.035, 0), "neck_01"),
             "mane": Socket("mane", v(0, 0.02, 0), "neck_01"),
+            "gills": Socket("gills", v(0, 0.012, 0), "neck_01"),
         },
     )
 
@@ -51,6 +52,7 @@ def head_module() -> Module:
             "tusks": Socket("tusks", v(0.03, 0.005, 0), "head"),
             "eyes": Socket("eyes", v(0.034, 0.030, 0), "head"),
             "jaws": Socket("jaws", v(0.044, -0.006, 0), "head"),
+            "cheeks": Socket("cheeks", v(0.030, 0.0, 0.0), "head"),
         },
     )
 
@@ -268,6 +270,7 @@ def body_module() -> Module:
             "hip": Socket("hip", v(0.06, -0.06, 0.10), "spine0", mirror=True),
             "rear_ring": Socket("rear_ring", v(-0.02, -0.03, 0), "spine0", ring=6, ring_radius=0.07),
             "tail": Socket("tail", v(-0.02, 0.02, 0), "spine0"),
+            "ridge": Socket("ridge", v(0.40, 0.12, 0), "spine1"),
         },
     )
 
@@ -282,6 +285,7 @@ def dragon_neck_module() -> Module:
         sockets={
             "top": Socket("top", v(0.16, 0.17, 0), "neck_1"),
             "mane": Socket("mane", v(0.05, 0.06, 0), "neck_0"),
+            "gills": Socket("gills", v(0.05, 0.06, 0), "neck_0"),
         },
     )
 
@@ -299,6 +303,7 @@ def draconic_head_module() -> Module:
             "tusks": Socket("tusks", v(0.20, -0.04, 0), "snout"),
             "eyes": Socket("eyes", v(0.075, 0.045, 0), "skull"),
             "jaws": Socket("jaws", v(0.235, -0.030, 0), "snout"),
+            "cheeks": Socket("cheeks", v(0.18, -0.010, 0), "snout"),
         },
     )
 
@@ -427,6 +432,7 @@ def dragon_recipe() -> Recipe:
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
         Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
         Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+        Attachment("spikes", spikes_module(), parent="body", parent_socket="ridge"),
     ])
 
 
@@ -465,8 +471,10 @@ def merfolk_recipe() -> Recipe:
 # --------------------------------------------------------------------------- #
 # V3-M2: horn slot — variants attach at head.horns, pointing up (+Y).
 # --------------------------------------------------------------------------- #
-def _bilateral(segments) -> list:
-    """Author a left side (z>=0); emit it (_l) plus a Z-mirrored twin (_r)."""
+def _bilateral(segments, group: str = "horn", region=None, fused: bool = True) -> list:
+    """Author a left side (z>=0); emit it (_l) plus a Z-mirrored twin (_r). ``group``/
+    ``region``/``fused`` let non-horn slots (gills, whiskers, mandibles, …) set their
+    own surface/paint/proudness; defaults keep the original horn behavior."""
     out = []
     for side, sign in (("l", 1.0), ("r", -1.0)):
         for nm, par, h, t, rh, rt in segments:
@@ -474,7 +482,7 @@ def _bilateral(segments) -> list:
             hh[2] *= sign
             tt[2] *= sign
             out.append(BoneSpec(f"{nm}_{side}", (f"{par}_{side}" if par else None),
-                                hh, tt, rh, rt, "horn"))
+                                hh, tt, rh, rt, group, fused=fused, region=region))
     return out
 
 
@@ -606,6 +614,92 @@ def mane_module() -> Module:
     ], {})
 
 
+# --------------------------------------------------------------------------- #
+# L3 — slot batch: beak, frill, spikes, shell, gills, whiskers, mandibles,
+# dorsal fin, stinger. Each attaches at a host socket; +X fwd, +Y up, +Z left.
+# --------------------------------------------------------------------------- #
+def beak_module(length: float = 0.12) -> Module:
+    """Upper + lower keratin mandibles forming a bird/raptor beak (head.jaws)."""
+    return Module("beak", [
+        BoneSpec("upper", None, v(0, 0.012, 0), v(length, -0.012, 0), 0.030, 0.004, "beak", region="nose"),
+        BoneSpec("lower", None, v(0, -0.018, 0), v(length * 0.8, -0.030, 0), 0.022, 0.004, "beak", region="nose"),
+    ], {})
+
+
+def frill_module() -> Module:
+    """A spiky fan radiating up/back/out from behind the head (head.horns)."""
+    seg = [
+        ("f0", None, v(0, 0, 0.0), v(-0.06, 0.11, 0.02), 0.010, 0.002),
+        ("f1", None, v(0, 0, 0.0), v(-0.08, 0.13, 0.09), 0.010, 0.002),
+        ("f2", None, v(0, 0, 0.0), v(-0.05, 0.10, 0.15), 0.010, 0.002),
+    ]
+    return Module("frill", _bilateral(seg, group="frill"), {})
+
+
+def spikes_module(n: int = 5) -> Module:
+    """A row of dorsal spikes running back along the ridge, pointing up (body.ridge)."""
+    bones = [
+        BoneSpec(f"spike_{i}", None, v(0.10 - 0.10 * i, 0, 0), v(0.085 - 0.10 * i, 0.06 - 0.005 * i, 0),
+                 0.016, 0.002, "spike")
+        for i in range(n)
+    ]
+    return Module("spikes", bones, {})
+
+
+def shell_module() -> Module:
+    """A broad domed carapace over the back (body.ridge)."""
+    return Module("shell", [
+        BoneSpec("shell", None, v(0.04, -0.02, 0), v(-0.22, -0.02, 0), 0.17, 0.13, "shell"),
+    ], {})
+
+
+def gills_module() -> Module:
+    """Three short slit-ridges on each side of the neck (neck.gills)."""
+    seg = [
+        ("g0", None, v(0, 0.03, 0.0), v(-0.02, 0.01, 0.03), 0.006, 0.003),
+        ("g1", None, v(0, 0.00, 0.0), v(-0.02, -0.02, 0.03), 0.006, 0.003),
+        ("g2", None, v(0, -0.03, 0.0), v(-0.02, -0.05, 0.03), 0.006, 0.003),
+    ]
+    return Module("gills", _bilateral(seg, group="gills"), {})
+
+
+def whiskers_module() -> Module:
+    """Two long thin whiskers per side sweeping back from the muzzle (head.cheeks)."""
+    seg = [
+        ("w0", None, v(0, 0.0, 0.012), v(-0.11, 0.03, 0.10), 0.004, 0.001),
+        ("w1", None, v(0, -0.01, 0.012), v(-0.11, -0.02, 0.12), 0.004, 0.001),
+    ]
+    return Module("whiskers", _bilateral(seg, group="whisker"), {})
+
+
+def mandibles_module() -> Module:
+    """Curved chitin pincers at the mouth, tips hooking inward (head.jaws)."""
+    seg = [
+        ("m0", None, v(0, 0, 0.02), v(0.08, 0.0, 0.05), 0.012, 0.005),
+        ("m1", "m0", v(0.08, 0.0, 0.05), v(0.13, 0.0, 0.015), 0.006, 0.003),
+    ]
+    return Module("mandibles", _bilateral(seg, group="mandible", region="nose"), {})
+
+
+def dorsal_fin_module() -> Module:
+    """A shark-style fin on the back: rises +Y, trailing edge sweeps back (body.ridge)."""
+    base = v(0.02, 0, 0)
+    peak = v(-0.04, 0.15, 0)
+    return Module("dorsal_fin", [
+        BoneSpec("front", None, base, peak, 0.020, 0.006, "fin"),
+        BoneSpec("trail", "front", peak, v(-0.16, 0.0, 0), 0.014, 0.006, "fin"),
+        BoneSpec("web", "front", base, v(-0.16, 0.0, 0), 0.018, 0.006, "fin"),
+    ], {})
+
+
+def stinger_module() -> Module:
+    """A bulb + an upward-hooking barb for a scorpion/bee tail tip (tail.tip)."""
+    return Module("stinger", [
+        BoneSpec("bulb", None, v(0, 0, 0), v(-0.04, 0.05, 0), 0.024, 0.013, "stinger"),
+        BoneSpec("barb", "bulb", v(-0.04, 0.05, 0), v(0.03, 0.11, 0), 0.012, 0.002, "stinger", region="nose"),
+    ], {})
+
+
 def boar_recipe() -> Recipe:
     return Recipe("Boar", [
         Attachment("body", body_module()),
@@ -664,6 +758,7 @@ def cephalopod_head_module() -> Module:
             "tusks": Socket("tusks", v(0.05, -0.03, 0), "skull"),
             "eyes": Socket("eyes", v(0.050, 0.030, 0), "skull"),
             "jaws": Socket("jaws", v(0.058, -0.034, 0), "skull"),
+            "cheeks": Socket("cheeks", v(0.045, -0.010, 0), "skull"),
         },
     )
 
@@ -749,7 +844,7 @@ def avian_recipe() -> Recipe:
         Attachment("neck", neck_module(), parent="torso", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
         _eyes_for("head"),
-        _jaws_for("head", nose=False),
+        Attachment("beak", beak_module(), parent="head", parent_socket="jaws"),
         Attachment("wing", wing_feathered_module(), parent="torso", parent_socket="wings", mirror=True),
         Attachment("leg", leg_module(), parent="torso", parent_socket="hip", mirror=True),
         Attachment("tail", serpent_tail_module(), parent="torso", parent_socket="tail"),
@@ -886,7 +981,7 @@ def griffin_recipe() -> Recipe:
         Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
         _eyes_for("head"),
-        _jaws_for("head", nose=False),  # a beak
+        Attachment("beak", beak_module(), parent="head", parent_socket="jaws"),
         Attachment("wing", wing_feathered_module(), parent="body", parent_socket="wings", mirror=True),
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
         Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
@@ -908,6 +1003,7 @@ def manticore_recipe() -> Recipe:
         Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
         Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
         Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+        Attachment("stinger", stinger_module(), parent="tail", parent_socket="tip"),
     ])
 
 
@@ -985,7 +1081,7 @@ def phoenix_recipe() -> Recipe:
         Attachment("neck", neck_module(), parent="torso", parent_socket="neck"),
         Attachment("head", head_module(), parent="neck", parent_socket="top"),
         _eyes_for("head"),
-        _jaws_for("head", nose=False),  # beak
+        Attachment("beak", beak_module(), parent="head", parent_socket="jaws"),
         Attachment("crest", horn_unicorn_module(), parent="head", parent_socket="horns"),
         Attachment("wing", wing_feathered_module(), parent="torso", parent_socket="wings", mirror=True),
         Attachment("leg", leg_module(), parent="torso", parent_socket="hip", mirror=True),

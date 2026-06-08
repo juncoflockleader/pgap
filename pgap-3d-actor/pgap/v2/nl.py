@@ -152,11 +152,19 @@ def _compose_free(text: str, name: str) -> dict:
             eye_radius = 0.012
         modules.append({"id": "eyes", "kind": "eyes", "variant": eye_variant,
                         "attach": "head.eyes", "params": {"radius": eye_radius}})
-        # jaws (nose + mouth line) complete the face; beaked/lipless faces drop the nose.
-        jaw_variant = "default"
-        if any(k in text for k in ("beak", "beaked", "bird", "no nose", "noseless")):
-            jaw_variant = "lipped"
-        modules.append({"id": "jaws", "kind": "jaws", "variant": jaw_variant, "attach": "head.jaws"})
+        # the mouth: a beak, insect mandibles, or a nose + mouth-line jaws (the default).
+        if any(k in text for k in ("beak", "beaked")):
+            modules.append({"id": "beak", "kind": "beak", "attach": "head.jaws"})
+        elif any(k in text for k in ("mandible", "pincer", "mandibles")):
+            modules.append({"id": "mandibles", "kind": "mandibles", "attach": "head.jaws"})
+        else:
+            jaw_variant = "lipped" if any(k in text for k in ("bird", "no nose", "noseless")) else "default"
+            modules.append({"id": "jaws", "kind": "jaws", "variant": jaw_variant, "attach": "head.jaws"})
+        # L3 head slots that don't fight the mouth socket.
+        if "whisker" in text:
+            modules.append({"id": "whiskers", "kind": "whiskers", "attach": "head.cheeks"})
+        if any(k in text for k in ("gills", "gilled")):
+            modules.append({"id": "gills", "kind": "gills", "attach": "neck.gills"})
         horn_variant = None
         if "unicorn" in text or "spiral horn" in text:
             horn_variant = "unicorn"
@@ -173,6 +181,8 @@ def _compose_free(text: str, name: str) -> dict:
         # Horns/tusks/ears are slots on every head variant now.
         if horn_variant:
             modules.append({"id": "horn", "kind": "horn", "variant": horn_variant, "attach": "head.horns"})
+        elif "frill" in text or "crest" in text:  # frill shares the head.horns crown slot
+            modules.append({"id": "frill", "kind": "frill", "attach": "head.horns"})
         if "tusk" in text or "boar" in text or "warthog" in text:
             tv = "elephant" if "elephant" in text else ("walrus" if "walrus" in text else "boar")
             modules.append({"id": "tusks", "kind": "tusk", "variant": tv, "attach": "head.tusks"})
@@ -189,6 +199,15 @@ def _compose_free(text: str, name: str) -> dict:
             modules.append({"id": "ears", "kind": "ear", "variant": ear_v, "attach": "head.ears"})
         if "mane" in text:
             modules.append({"id": "mane", "kind": "mane", "attach": "neck.mane"})
+
+    # one back slot on the body ridge (shell / dorsal fin / spikes — first wins).
+    if base == "body":
+        if any(k in text for k in ("shell", "carapace", "turtle", "tortoise")):
+            modules.append({"id": "shell", "kind": "shell", "attach": "body.ridge"})
+        elif any(k in text for k in ("dorsal fin", "shark fin", "shark")):
+            modules.append({"id": "dorsalfin", "kind": "dorsal_fin", "attach": "body.ridge"})
+        elif any(k in text for k in ("spikes", "spiked", "spiky", "spiny", "spines", "dorsal spikes")):
+            modules.append({"id": "spikes", "kind": "spikes", "attach": "body.ridge"})
 
     if base == "orb" and any(k in text for k in ("eyestalk", "eye stalk", "many eyes", "beholder")):
         modules.append({"id": "stalk", "kind": "eyestalk", "attach": "orb.eyes_ring"})

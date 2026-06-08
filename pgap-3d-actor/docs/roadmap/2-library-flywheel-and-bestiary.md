@@ -143,8 +143,13 @@ keywords). The thumbnail mechanism.
   legs, no new module). All implemented, NL-routed, and corpus-gated; serpent/avian/
   arachnid live-verified in UE 5.7.4. **Exit:** each builds a valid creature; a
   snake, a spider, a bird, a bug, a centaur generate.
-- **L3 — Slots batch.** beak, frill, spikes, shell, gills, whiskers, mandibles,
-  dorsal fin, stinger. **Exit:** each module builds + composes on a host.
+- **L3 — Slots batch.** ✅ **done** — beak, frill, spikes, shell, gills, whiskers,
+  mandibles, dorsal fin, stinger. Each is a module on a host socket: beak/mandibles
+  → `head.jaws`, frill → `head.horns`, whiskers → new `head.cheeks`, gills → new
+  `neck.gills`, spikes/shell/dorsal_fin → new `body.ridge`, stinger → `tail.tip`.
+  Registered, corpus-gated, NL-routed (free mode), and used by the presets (griffin/
+  phoenix/avian get real beaks, manticore a stinger, dragon dorsal spikes);
+  `test_slots` checks each builds + composes on a host. **Exit:** ✔
 - **L4 — Presets batch.** ✅ **done** — griffin, manticore, wyvern, pegasus, hydra,
   naga, phoenix, basilisk, chimera (centaur shipped in L2). Each is a ~10-line
   recipe over existing bases + parts: griffin (lion body + feathered wings + beak +

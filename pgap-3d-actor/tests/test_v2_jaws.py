@@ -87,7 +87,7 @@ def test_jaws_socket_on_every_head_variant():
 def test_named_templates_have_a_mouth():
     # Every head-bearing preset gains a dark, midline mouth line.
     for name in ("biped", "dragon", "unicorn", "sphinx", "horse", "feline",
-                 "stag", "boar", "serpent", "merfolk", "avian"):
+                 "stag", "boar", "serpent", "merfolk"):
         spec = _spec(name, h=TEMPLATE_HEIGHT_CM[name])
         skel, mesh = build_actor(load_template(name), spec, make_rng(spec.seed))
         mouth = _region_verts(skel, mesh, "jaws_mouth")
@@ -97,12 +97,13 @@ def test_named_templates_have_a_mouth():
         assert mz.min() < 0 < mz.max() and abs(mz.mean()) < 0.02, (name, float(mz.mean()))
 
 
-def test_avian_is_beaked_no_nose():
-    # The bird preset uses the lipped variant — a mouth, no separate nose bead.
+def test_avian_is_beaked():
+    # The bird preset wears a beak slot (L3) instead of a nose/mouth jaws.
     spec = _spec("avian", h=TEMPLATE_HEIGHT_CM["avian"])
     skel, _ = build_actor(load_template("avian"), spec, make_rng(spec.seed))
-    assert "jaws_mouth" in {b.name for b in skel}
-    assert "jaws_nose" not in {b.name for b in skel}
+    names = {b.name for b in skel}
+    assert {"beak_upper", "beak_lower"} <= names
+    assert "jaws_nose" not in names and "jaws_mouth" not in names
 
 
 def test_v2_jaws_deterministic():

@@ -111,6 +111,16 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
     "hoof": _single(lambda p: L.hoof_module()),
     "claw": _single(lambda p: L.claw_module()),
     "mane": _single(lambda p: L.mane_module()),
+    # L3 slot batch
+    "beak": _single(lambda p: L.beak_module()),
+    "frill": _single(lambda p: L.frill_module()),
+    "spikes": _single(lambda p: L.spikes_module()),
+    "shell": _single(lambda p: L.shell_module()),
+    "gills": _single(lambda p: L.gills_module()),
+    "whiskers": _single(lambda p: L.whiskers_module()),
+    "mandibles": _single(lambda p: L.mandibles_module()),
+    "dorsal_fin": _single(lambda p: L.dorsal_fin_module()),
+    "stinger": _single(lambda p: L.stinger_module()),
 }
 
 # Legacy kind name -> (canonical kind, forced variant). Keeps old JSON valid.

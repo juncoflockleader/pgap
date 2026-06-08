@@ -61,16 +61,20 @@ def generate_layout(profile: dict, size_blocks, seed: int, density: float) -> Di
                     floors = int(rng.integers(fmin, fmax + 1))
                     var_seed = int(rng.integers(0, 2**31 - 1))
                     zone = _zone_for(rng)
+                    fx, fy = round(lot_w * 0.85, 2), round(lot_d * 0.85, 2)
+                    height = round(floors * fh, 2)
                     # taller toward block interior for cyberpunk/japan feel; gentle bias
                     instances.append({
-                        "kit": f"{profile['streetNet']}_{zone}",   # kit variant id (meshes: C1)
+                        "kit": f"{profile['streetNet']}_{zone}",   # kit variant id -> SM_<kit>.gltf
                         "x": round(cx * M, 1),
                         "y": round(cy * M, 1),
                         "z": 0.0,
                         "yaw": float(rng.choice([0.0, 90.0, 180.0, 270.0])),
-                        "footprint_m": [round(lot_w * 0.85, 2), round(lot_d * 0.85, 2)],
+                        "footprint_m": [fx, fy],
                         "floors": floors,
-                        "height_m": round(floors * fh, 2),
+                        "height_m": height,
+                        # unit-box (1 m) multiplier for HISM: [width, depth, height] in m
+                        "scale3": [fx, fy, height],
                         "scale": 1.0,
                         "varSeed": var_seed,
                         "zone": zone,

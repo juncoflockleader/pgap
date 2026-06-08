@@ -27,8 +27,8 @@ def test_all_v1_cells_generate(tmp_path):
         assert m["counts"]["instances"] >= 1
         layout = json.loads(p["layout"].read_text())
         assert layout["cell"] == f"{era}x{culture}"
-        # every instance references a kit id that is declared pending
-        kits = set(layout["kitsPending"])
+        # every instance references a kit that has an emitted mesh
+        kits = {k["id"] for k in layout["kits"]}
         assert all(inst["kit"] in kits for inst in layout["instances"])
 
 

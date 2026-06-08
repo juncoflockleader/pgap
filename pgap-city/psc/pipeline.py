@@ -13,8 +13,9 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from . import network, render
+from . import gltf, network, render
 from .pngio import write_rgb8
+from .render import ZONE_COLOR
 from .spec import validate_spec
 from .styles import MODULE_KINDS, profile_for
 
@@ -44,10 +45,28 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     layout = network.generate_layout(profile, s["sizeBlocks"], int(s["seed"]), float(s["density"]))
     layout["name"] = name
     layout["cell"] = f"{era}x{culture}"
-    # kit variant ids referenced by instances (meshes themselves are C1)
-    layout["kitsPending"] = sorted({inst["kit"] for inst in layout["instances"]})
+    kit_ids = sorted({inst["kit"] for inst in layout["instances"]})
 
     paths: Dict[str, Path] = {}
+
+    # C0 building kit: one unit-box mesh (SM_<kit>.gltf) per variant, zone-colored.
+    # Instances HISM it with location (x,y,z) cm + yaw + scale3 (m). The kit is tiny
+    # (a few meshes); the skyline is the transform list.
+    kit_meshes: Dict[str, Path] = {}
+    kits_meta = []
+    for kit in kit_ids:
+        zone = kit.rsplit("_", 1)[-1]
+        color = ZONE_COLOR.get(zone, (150, 150, 150))
+        mesh_path = out / f"SM_{kit}.gltf"
+        mesh_path.write_bytes(gltf.box_gltf(list(color), name=f"SM_{kit}"))
+        kit_meshes[kit] = mesh_path
+        paths[f"kit_{kit}"] = mesh_path
+        kits_meta.append({"id": kit, "mesh": mesh_path.name, "zone": zone,
+                          "baseColor": list(color)})
+    layout["kits"] = kits_meta
+    layout["instanceModel"] = ("SM_<kit>.gltf is a 1 m XY-centered box (base z=0); "
+                               "place at (x,y,z) cm, rotate yaw, scale by scale3 (m).")
+
     layout_path = out / f"{name}.city.layout.json"
     layout_path.write_text(json.dumps(layout, indent=2))
     paths["layout"] = layout_path
@@ -79,10 +98,15 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "seed": int(s["seed"]),
         "specHash": _spec_hash(s),
         "license": "procedurally generated original work",
-        "files": {p.name: _sha1(p) for p in (layout_path, style_path, plan_path)},
-        "roles": {"CityLayout": layout_path.name, "StyleMaterialSpec": style_path.name},
-        "counts": layout["counts"],
-        "pending": ["BuildingKit:<id>", "RoadNetwork", "PropScatter"],
+        "files": {p.name: _sha1(p) for p in
+                  (layout_path, style_path, plan_path, *kit_meshes.values())},
+        "roles": {
+            "CityLayout": layout_path.name,
+            "StyleMaterialSpec": style_path.name,
+            **{f"BuildingKit:{kit}": kit_meshes[kit].name for kit in kit_ids},
+        },
+        "counts": {**layout["counts"], "kits": len(kit_ids)},
+        "pending": ["RoadNetwork", "PropScatter"],
         "warnings": v["warnings"],
     }
     manifest_path = out / "manifest.json"
@@ -98,6 +122,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
             "roles": [
                 {"role": "CityLayout", "file": layout_path.name},
                 {"role": "StyleMaterialSpec", "file": style_path.name},
+                *[{"role": f"BuildingKit:{kit}", "file": kit_meshes[kit].name} for kit in kit_ids],
             ],
             "pending": manifest["pending"],
         }

@@ -9,8 +9,8 @@ from .styles import MODULE_KINDS, STYLE_PROFILES
 
 CAPABILITIES_SCHEMA_VERSION = "psc.capabilities.v1"
 
-# Handoff roles this pipeline emits (see SPLIT.md). v1 implements CityLayout +
-# StyleMaterialSpec; BuildingKit / RoadNetwork / PropScatter land in C1+.
+# Handoff roles this pipeline emits (see SPLIT.md). C0 implements CityLayout +
+# StyleMaterialSpec + BuildingKit (box proxies); RoadNetwork / PropScatter land in C1+.
 HANDOFF_ROLES = [
     "BuildingKit:<id>",
     "CityLayout",
@@ -18,14 +18,14 @@ HANDOFF_ROLES = [
     "StyleMaterialSpec",
     "RoadNetwork",
 ]
-IMPLEMENTED = ["CityLayout", "StyleMaterialSpec"]  # C0
+IMPLEMENTED = ["CityLayout", "StyleMaterialSpec", "BuildingKit:<id>"]  # C0
 
 
 def capabilities() -> Dict[str, Any]:
     return {
         "schemaVersion": CAPABILITIES_SCHEMA_VERSION,
         "generator": "psc",
-        "status": "scaffold (C0: layout grammar)",
+        "status": "C0 (layout grammar + box-proxy building kit + plan preview)",
         "eras": list(ERAS),
         "cultures": list(CULTURES),
         "cells": [f"{e}x{c}" for e, c in CELLS],

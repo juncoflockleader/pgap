@@ -105,10 +105,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--color", help="coat baseColor for --creature (default: stone)")
     parser.add_argument("--handoff", action="store_true", help="also emit the M5 source-handoff bundle")
     parser.add_argument("--package-root", default="/Game/Prototype/Dogs", help="Unreal package root for handoff")
+    parser.add_argument("--catalog", action="store_true",
+                        help="render the bestiary gallery (docs/BESTIARY.md + thumbnails) and exit")
     args = parser.parse_args(argv)
 
     if args.capabilities:
         print(json.dumps(capability_report(), indent=2))
+        return 0
+
+    if args.catalog:
+        from .catalog import build_catalog
+        rows = build_catalog()
+        print(f"wrote bestiary gallery: {len(rows)} templates → docs/BESTIARY.md + docs/bestiary/")
         return 0
 
     if args.v2_capabilities:

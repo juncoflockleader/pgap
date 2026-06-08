@@ -145,8 +145,14 @@ keywords). The thumbnail mechanism.
 - **L4 — Presets batch.** griffin, manticore, wyvern, pegasus, hydra, naga,
   phoenix, basilisk, chimera, centaur. **Exit:** all generate + read as described;
   NL routes their names.
-- **L5 — Bestiary catalog.** generator + gallery doc with thumbnails. **Exit:**
-  the gallery renders every template.
+- **L5 — Bestiary catalog.** ✅ **done** — `pgap.catalog` builds every template and
+  renders a deterministic thumbnail with a new **headless software renderer**
+  (`pgap.render` — pure-numpy z-buffer rasterizer, shades the mesh's own vertex
+  colors so coats + eyes/iris/nose/mouth show; *no engine needed*, unlike the
+  parking-lot UE path). Writes `docs/BESTIARY.md` + `docs/bestiary/*.png`; run via
+  `python -m pgap.catalog` or `--catalog`. The gallery doubles as an at-a-glance
+  visual regression. `test_catalog` gates it. **Exit:** the gallery renders every
+  template. ✔
 - **L6 — Corpus sweep.** all new bases/slots/variants/presets in the corpus;
   sample variants to keep runtime bounded. **Exit:** green.
 

@@ -32,13 +32,13 @@ def test_materials_are_spectrally_distinct():
     assert cen["glass"] > cen["stone"]
 
 
-def test_metal_rings_longer_than_stone():
+def test_glass_rings_longer_than_wood():
+    # Measured (Kenney CC0) modes: glass has the longest decay, wood the shortest.
     def tail_energy(m):
         buf = render_spec(spec_from_preset(m, seed=1))
         half = buf.size // 2
         return float(np.sqrt(np.mean(buf[half:] ** 2)))
-    # metal sustains into its second half; stone is nearly silent by then
-    assert tail_energy("metal") > tail_energy("stone")
+    assert tail_energy("glass") > tail_energy("wood")
 
 
 def test_impact_determinism_and_seeded_transient():

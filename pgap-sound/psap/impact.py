@@ -16,15 +16,20 @@ import numpy as np
 
 from . import dsp
 
-# material -> partials [(freq ratio, gain, decay seconds)], + defaults
+# material -> {duration_ms, base_freq, transient, partials [(freq ratio, gain,
+# decay seconds)]}. wood/metal/glass are MEASURED from Kenney Impact Sounds (CC0)
+# by psap.analyze (modal analysis of refs/impacts/*.wav) — real resonances, not
+# hand-guessed. stone stays hand-tuned (no reference sample yet). Re-derive with:
+#   python -m psap.analyze refs/impacts/<mat>_000.wav --material <mat>
 MATERIAL_PRESETS: dict[str, dict] = {
-    "wood": {"duration_ms": 350, "base_freq": 280.0, "transient": 0.35, "partials": [
-        (1.0, 1.0, 0.13), (1.58, 0.5, 0.10), (2.13, 0.3, 0.08), (2.96, 0.2, 0.06)]},
-    "metal": {"duration_ms": 1600, "base_freq": 520.0, "transient": 0.22, "partials": [
-        (1.0, 1.0, 1.30), (1.84, 0.7, 1.10), (2.71, 0.55, 0.95), (3.95, 0.4, 0.80),
-        (5.12, 0.3, 0.65), (6.79, 0.2, 0.50)]},
-    "glass": {"duration_ms": 800, "base_freq": 1700.0, "transient": 0.30, "partials": [
-        (1.0, 1.0, 0.42), (2.41, 0.6, 0.36), (3.83, 0.4, 0.30), (5.18, 0.25, 0.24)]},
+    "wood": {"duration_ms": 330, "base_freq": 172.27, "transient": 0.5, "partials": [
+        (1.0, 1.0, 0.0424), (1.625, 0.9032, 0.0274)]},
+    "metal": {"duration_ms": 269, "base_freq": 839.79, "transient": 0.5, "partials": [
+        (1.0, 0.4877, 0.0309), (1.1795, 1.0, 0.0309), (2.6154, 0.16, 0.0306),
+        (3.5641, 0.4167, 0.0307)]},
+    "glass": {"duration_ms": 540, "base_freq": 904.39, "transient": 0.5, "partials": [
+        (1.0, 1.0, 0.0765), (1.5476, 0.0327, 0.0828), (1.619, 0.2197, 0.0771),
+        (1.7381, 0.3303, 0.0767)]},
     "stone": {"duration_ms": 240, "base_freq": 180.0, "transient": 0.50, "partials": [
         (1.0, 1.0, 0.06), (1.42, 0.5, 0.05), (1.93, 0.3, 0.04)]},
 }

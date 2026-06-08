@@ -17,7 +17,12 @@ import numpy as np
 
 from . import field, surfacing
 from . import scatter as scatter_mod
-from .capabilities import SKY_PROFILE_BY_BIOME, WATER_BY_BIOME
+from .capabilities import (
+    SKY_PROFILE_BY_BIOME,
+    SUBMERGED_TARGET_BY_BIOME,
+    WATER_BY_BIOME,
+    WATER_COLOR_BY_BIOME,
+)
 from .pngio import write_gray8, write_gray16
 from .spec import validate_spec
 
@@ -53,9 +58,18 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     write_gray16(str(height_path), height16)
     paths["heightmap"] = height_path
 
-    # L1 surfacing: per-layer weightmaps derived by rule from slope/altitude.
+    # L4 water: ocean/shore get a sea level. If the spec leaves it at 0 (sentinel),
+    # derive it from the field so a target fraction is submerged regardless of seed
+    # (the gradient/basin keeps that submerged part on one side = a coastline).
+    water = WATER_BY_BIOME.get(biome, False)
+    sea = float(s["seaLevel"])
+    if water and sea <= 0.0:
+        sea = float(np.percentile(height, SUBMERGED_TARGET_BY_BIOME[biome] * 100.0))
+
+    # L1 surfacing: per-layer weightmaps derived by rule from slope/altitude (the
+    # beach bands key off the *effective* sea level so wet/dry sand meet the water).
     layers = list(s["layers"])
-    weights, deriv = surfacing.weightmaps(height, biome, layers, float(s["seaLevel"]))
+    weights, deriv = surfacing.weightmaps(height, biome, layers, sea)
     weight_files: Dict[str, str] = {}
     for layer in layers:
         wpath = out / f"{name}_Weight_{layer}.png"
@@ -81,6 +95,24 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     scatter_path.write_text(json.dumps(scatter_data, indent=2))
     paths["scatter"] = scatter_path
 
+    # L4 WaterPlane spec (ocean/shore): a flat water surface at sea level, with
+    # color + foam hints the bridge's water tool realizes. Submerged fraction is
+    # how much of the tile sits at/below the waterline.
+    if water:
+        submerged = float((height <= sea).mean())
+        water_spec = {
+            "enabled": True,
+            "seaLevel": round(sea, 4),
+            "seaLevelM": round(sea * float(s["heightScaleM"]), 1),
+            "color": list(WATER_COLOR_BY_BIOME.get(biome, (28, 70, 100))),
+            "foam": True,
+            "foamWidthM": round(0.01 * float(s["sizeKm"]) * 1000.0, 1),
+            "submergedFraction": round(submerged, 3),
+            "extentKm": s["sizeKm"],
+        }
+    else:
+        water_spec = {"enabled": False}
+
     sidecar = {
         "schemaVersion": "psl.landscape.import.v1",
         "name": name,
@@ -88,7 +120,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "sizeKm": s["sizeKm"],
         "resolution": res,
         "heightScaleM": s["heightScaleM"],
-        "seaLevel": s["seaLevel"],
+        "seaLevel": round(sea, 4),
         "layers": s["layers"],
         "materialSpec": material_spec,    # L1: layer order + colors + weightmaps
         "scatter": {                      # L2: foliage rules + baked points (sidecar file)
@@ -97,10 +129,10 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
             "counts": scatter_data["counts"],
             "points": scatter_path.name,
         },
-        "water": WATER_BY_BIOME.get(biome, False),
+        "water": water_spec,              # L4: WaterPlane spec
         "skyProfile": SKY_PROFILE_BY_BIOME.get(biome, "clear_day"),
         "palette": s.get("palette", ""),
-        "pending": ["WaterPlane", "T_<layer> tiling textures"],
+        "pending": ["T_<layer> tiling textures"],
     }
     sidecar_path = out / f"{name}.landscape.import.json"
     sidecar_path.write_text(json.dumps(sidecar, indent=2))
@@ -122,6 +154,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
             "Heightmap": height_path.name,
             "LandscapeMaterialSpec": sidecar_path.name,
             "FoliageRule": scatter_path.name,
+            **({"WaterPlane": sidecar_path.name} if water else {}),
             **{f"Weightmap:{layer}": weight_files[layer] for layer in layers},
         },
         "warnings": v["warnings"],
@@ -131,8 +164,9 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     paths["manifest"] = manifest_path
 
     if handoff:
-        # L0 emits a minimal source manifest with the Heightmap role only; the rest
-        # of the role set (Weightmap/Material/Foliage/Water/Sky) lands in L1–L5.
+        # The unreal-mcp-rx source manifest with every role pgap emits (the bridge
+        # realizes them: import heightmap, paint weightmaps, scatter foliage, place
+        # the water plane). Tiling layer textures are the remaining role (L5).
         hand = out / "handoff"
         hand.mkdir(exist_ok=True)
         src = {
@@ -142,6 +176,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
                 {"role": "Heightmap", "file": height_path.name},
                 {"role": "LandscapeMaterialSpec", "file": sidecar_path.name},
                 {"role": "FoliageRule", "file": scatter_path.name},
+                *([{"role": "WaterPlane", "file": sidecar_path.name}] if water else []),
                 *[{"role": f"Weightmap:{layer}", "file": weight_files[layer]} for layer in layers],
             ],
             "sidecar": sidecar_path.name,

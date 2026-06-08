@@ -13,11 +13,12 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from . import network
+from . import network, render
+from .pngio import write_rgb8
 from .spec import validate_spec
 from .styles import MODULE_KINDS, profile_for
 
-GENERATOR_VERSION = "0.0.0"
+GENERATOR_VERSION = "0.1.0"
 
 
 def _sha1(path: Path) -> str:
@@ -51,6 +52,11 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     layout_path.write_text(json.dumps(layout, indent=2))
     paths["layout"] = layout_path
 
+    # top-down plan preview (inspection aid; not an engine role)
+    plan_path = out / f"{name}_Plan.png"
+    write_rgb8(str(plan_path), render.render_plan(layout))
+    paths["plan"] = plan_path
+
     style_spec = {
         "schemaVersion": "psc.style.material.v1",
         "cell": f"{era}x{culture}",
@@ -73,7 +79,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "seed": int(s["seed"]),
         "specHash": _spec_hash(s),
         "license": "procedurally generated original work",
-        "files": {p.name: _sha1(p) for p in (layout_path, style_path)},
+        "files": {p.name: _sha1(p) for p in (layout_path, style_path, plan_path)},
         "roles": {"CityLayout": layout_path.name, "StyleMaterialSpec": style_path.name},
         "counts": layout["counts"],
         "pending": ["BuildingKit:<id>", "RoadNetwork", "PropScatter"],

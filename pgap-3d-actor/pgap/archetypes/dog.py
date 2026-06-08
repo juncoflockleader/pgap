@@ -35,8 +35,10 @@ def _norm(v: np.ndarray) -> np.ndarray:
     return v / n if n > 1e-9 else v
 
 
-def _capsule(a: np.ndarray, b: np.ndarray, ra: float, rb: float, anchor: str) -> Primitive:
-    return Primitive(a=a.astype(_F), b=b.astype(_F), radius_a=float(ra), radius_b=float(rb), anchor=anchor)
+def _capsule(a: np.ndarray, b: np.ndarray, ra: float, rb: float, anchor: str,
+             fused: bool = True, region: str | None = None) -> Primitive:
+    return Primitive(a=a.astype(_F), b=b.astype(_F), radius_a=float(ra), radius_b=float(rb),
+                     anchor=anchor, fused=fused, region=region)
 
 
 def _along(bone: Bone, t: float) -> np.ndarray:
@@ -57,7 +59,20 @@ def build(skel: list[Bone], spec: Spec) -> list[Primitive]:
     for sign in (1.0, -1.0):
         cheek = _along(snout, 0.18) + np.array([0.0, -0.1 * rh, sign * 0.55 * snout.radius_head])
         parts.append(_sphere(cheek, snout.radius_head * 0.85, "head"))
-    parts.append(_sphere(snout.tail.astype(np.float64), snout.radius_tail * 1.15, "snout"))  # nose
+    # --- nose: a black, slightly-proud nose pad at the snout tip --------------
+    nose_c = snout.tail.astype(np.float64) + _FWD * (0.12 * snout.radius_tail)
+    parts.append(_sphere(nose_c, snout.radius_tail * 1.2, "snout", fused=False, region="nose"))
+
+    # --- jaw: a lower jaw/chin under the muzzle + a dark mouth line -----------
+    sd = _norm(snout.tail.astype(np.float64) - snout.head.astype(np.float64))
+    jaw_a = _along(snout, 0.12) + _UP * (-0.55 * snout.radius_head)
+    jaw_b = snout.tail.astype(np.float64) + _UP * (-0.42 * snout.radius_tail)
+    parts.append(_capsule(jaw_a, jaw_b, snout.radius_head * 0.60, snout.radius_tail * 0.72, "snout"))
+    # mouth line: thin dark region along the lower muzzle (tints, minimal bulge)
+    mouth_a = _along(snout, 0.32) + _UP * (-0.34 * snout.radius_head)
+    mouth_b = snout.tail.astype(np.float64) + _UP * (-0.30 * snout.radius_tail) - sd * (0.08 * snout.radius_tail)
+    parts.append(_capsule(mouth_a, mouth_b, snout.radius_head * 0.30, snout.radius_tail * 0.26,
+                          "snout", region="mouth"))
 
     # --- eyes: two dark, non-fused "bead" eyes on the front-upper sides of the skull
     fwd = _norm(head.tail.astype(np.float64) - head.head.astype(np.float64))

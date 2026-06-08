@@ -35,6 +35,20 @@ def test_dog_has_two_dark_eyes():
     assert pos[:, 1].min() > 0.5
 
 
+def test_dog_has_black_nose_and_mouth():
+    _, mesh = _dog()
+    lum = mesh.colors[:, :3].mean(axis=1)
+    very_dark = lum < 0.25
+    pos = mesh.positions[very_dark]
+    # the nose is the front-most dark cluster (largest x, near the midline)
+    front_x = pos[:, 0].max()
+    nose = pos[(pos[:, 0] > front_x - 0.06)]
+    assert len(nose) >= 3, "no black nose at the snout tip"
+    assert np.abs(nose[:, 2]).mean() < 0.06, "nose should sit near the midline"
+    # total facial dark (eyes + nose + mouth) is clearly more than eyes alone
+    assert very_dark.sum() >= 40
+
+
 def test_primitive_defaults_unchanged():
     p = Primitive(a=np.zeros(3, np.float32), b=np.zeros(3, np.float32),
                   radius_a=0.1, radius_b=0.1)

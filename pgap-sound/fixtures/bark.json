@@ -2,15 +2,16 @@
   "name": "DogBark",
   "category": "vocal",
   "seed": 3,
-  "duration_ms": 260,
+  "duration_ms": 240,
   "sample_rate": 44100,
   "gain_dbfs": -1.0,
   "graph": {
     "preset": "bark",
-    "f0": 280, "fpeak": 430, "f1": 170,
-    "mod_ratio": 1.5, "mod_index": 4,
-    "growl": 0.3, "growl_hz": 45,
-    "noise": 0.25, "noise_cut": 3500,
-    "env": {"attack": 3, "hold": 40, "decay": 180}
+    "f0": 270, "fpeak": 400, "f1": 150,
+    "mod_ratio": 1.0, "mod_index": 2.2,
+    "growl": 0.5, "growl_hz": 75, "rough": 0.6,
+    "jitter": 0.2, "drive": 3.0,
+    "noise": 0.4, "noise_hp": 600, "noise_cut": 4200,
+    "env": {"attack": 2, "hold": 28, "decay": 160}
   }
 }

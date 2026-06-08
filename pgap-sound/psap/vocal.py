@@ -14,10 +14,11 @@ from . import dsp
 
 # preset -> {category, duration_ms, graph}
 VOCAL_PRESETS: dict[str, dict] = {
-    "bark": {"category": "vocal", "duration_ms": 260, "graph": {
-        "f0": 280.0, "fpeak": 430.0, "f1": 170.0, "mod_ratio": 1.5, "mod_index": 4.0,
-        "growl": 0.3, "growl_hz": 45.0, "noise": 0.25, "noise_cut": 3500.0,
-        "env": {"attack": 3, "hold": 40, "decay": 180}}},
+    "bark": {"category": "vocal", "duration_ms": 240, "graph": {
+        "f0": 270.0, "fpeak": 400.0, "f1": 150.0, "mod_ratio": 1.0, "mod_index": 2.2,
+        "growl": 0.5, "growl_hz": 75.0, "rough": 0.6, "jitter": 0.2, "drive": 3.0,
+        "noise": 0.4, "noise_hp": 600.0, "noise_cut": 4200.0,
+        "env": {"attack": 2, "hold": 28, "decay": 160}}},
     "growl": {"category": "vocal", "duration_ms": 700, "graph": {
         "f0": 130.0, "f1": 105.0, "mod_ratio": 1.0, "mod_index": 4.0,
         "growl": 0.6, "growl_hz": 30.0, "noise": 0.3, "noise_cut": 2500.0,
@@ -51,6 +52,15 @@ def synth(g: dict, n: int, sr: int, rng) -> np.ndarray:
     else:
         contour = np.linspace(f0, f1, n)
 
+    t = np.arange(n, dtype=np.float64) / sr
+
+    # Pitch jitter (aperiodicity): a little flutter on the pitch breaks the clean,
+    # synthetic "rubber" glide and reads as an organic, growly voice.
+    jitter = float(g.get("jitter", 0.0))
+    if jitter > 0.0:
+        flutter = dsp.biquad_lowpass(dsp.oscillator("noise", 0, n, sr, rng), sr, 70.0)
+        contour = contour * (1.0 + jitter * flutter / (np.max(np.abs(flutter)) + 1e-9))
+
     # FM: carrier modulated by a sine at mod_ratio * pitch, depth = mod_index.
     ratio = float(g.get("mod_ratio", 2.0))
     index = float(g.get("mod_index", 3.0))
@@ -58,16 +68,39 @@ def synth(g: dict, n: int, sr: int, rng) -> np.ndarray:
     phase = np.cumsum(dsp.TWO_PI * contour / sr)
     voice = np.sin(phase + modulator)
 
+    # Subharmonic buzz (octave-down): gives a growl its chesty "ruff" body.
+    rough = float(g.get("rough", 0.0))
+    if rough > 0.0:
+        voice = voice + rough * 0.45 * np.sin(0.5 * phase)
+
     growl = float(g.get("growl", 0.0))
     if growl > 0.0:
         ghz = float(g.get("growl_hz", 30.0))
-        am = 1.0 - growl * 0.5 * (1.0 + np.sin(dsp.TWO_PI * ghz * np.arange(n) / sr))
-        voice = voice * am
+        mod = np.sin(dsp.TWO_PI * ghz * t)
+        if rough > 0.0:
+            # Roughen the growl with noise so it rasps instead of wobbling (rubber).
+            rn = dsp.biquad_lowpass(dsp.oscillator("noise", 0, n, sr, rng), sr, ghz * 6.0)
+            mod = 0.6 * mod + 0.4 * rn / (np.max(np.abs(rn)) + 1e-9)
+        voice = voice * (1.0 - growl * 0.5 * (1.0 + mod))
+
+    # Waveshaping drive: adds harmonics, replacing the hollow pure-sine "rubber" tone.
+    drive = float(g.get("drive", 0.0))
+    if drive > 0.0:
+        k = 1.0 + drive
+        voice = np.tanh(k * voice) / np.tanh(k)
 
     noise_mix = float(g.get("noise", 0.0))
     if noise_mix > 0.0:
-        rasp = dsp.biquad_lowpass(dsp.oscillator("noise", 0, n, sr, rng),
-                                  sr, float(g.get("noise_cut", 3000.0)))
+        rasp = dsp.oscillator("noise", 0, n, sr, rng)
+        hp = float(g.get("noise_hp", 0.0))
+        if hp > 0.0:
+            rasp = dsp.biquad_highpass(rasp, sr, hp)
+        rasp = dsp.biquad_lowpass(rasp, sr, float(g.get("noise_cut", 3000.0)))
+        if rough > 0.0:
+            # Turbulent breath: the rasp tracks the voice amplitude (gritty airflow)
+            # instead of sitting under it as a steady hiss.
+            amp = dsp.biquad_lowpass(np.abs(voice), sr, 60.0)
+            rasp = rasp * (0.3 + 0.7 * amp / (np.max(amp) + 1e-9))
         voice = (1.0 - noise_mix) * voice + noise_mix * rasp
 
     dur_ms = n / sr * 1000.0

@@ -64,6 +64,13 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
         "almond": lambda p: L.eyes_module("almond", float(p.get("radius", 0.016)), float(p.get("spacing", 0.030))),
         "slit": lambda p: L.eyes_module("slit", float(p.get("radius", 0.016)), float(p.get("spacing", 0.030))),
     }, params=("radius", "spacing")),
+    "jaws": ModuleKind(default="default", variants={
+        "default": lambda p: L.jaws_module(float(p.get("radius", 0.013)),
+                                           float(p.get("width", 0.020)),
+                                           bool(p.get("nose", True))),
+        "lipped": lambda p: L.jaws_module(float(p.get("radius", 0.013)),
+                                          float(p.get("width", 0.020)), nose=False),
+    }, params=("radius", "width", "nose")),
     "eyeball": ModuleKind(default="default",
                           variants={"default": lambda p: L.eyeball_module(radius=float(p.get("radius", 0.11)))},
                           params=("radius",)),

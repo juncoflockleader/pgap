@@ -42,6 +42,14 @@ eyes; the beholder/kraken eye organs are region-tagged too; NL routes shape + si
 iris-color params and the expressive eye-bone rig (roadmap 3). v1 live-verified in
 UE 5.7.4.
 
+**Static jaws — ✅ generalized to v2 too.** The dog's nose + mouth line now ride
+the same bone path as eyes: a `jaws` module (a proud non-fused **nose** bead,
+region `nose`, above a *fused*, region-`mouth` lip line that tints without
+bulging) at a per-head `jaws` socket. Every head variant has the socket; every
+head-bearing preset ships jaws (draconic snouts get a tip nose; the avian uses the
+`lipped` no-nose variant for a beak); NL routes `beaked`/`no nose` → lipped;
+`test_v2_jaws` gates it. The *openable* jaw **bone** (bark/roar) stays roadmap 3.
+
 Eyes lead the batch. They're the highest-value addition — eyes are what make a head
 read as a *face*, and **creatures today have none** (the dog has a snout, cheeks,
 and a nose blob, but no eyes). Geometrically an eye is trivial — a sphere at a head

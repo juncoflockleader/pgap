@@ -123,6 +123,11 @@ def _compose_free(text: str, name: str) -> dict:
             eye_radius = 0.012
         modules.append({"id": "eyes", "kind": "eyes", "variant": eye_variant,
                         "attach": "head.eyes", "params": {"radius": eye_radius}})
+        # jaws (nose + mouth line) complete the face; beaked/lipless faces drop the nose.
+        jaw_variant = "default"
+        if any(k in text for k in ("beak", "beaked", "bird", "no nose", "noseless")):
+            jaw_variant = "lipped"
+        modules.append({"id": "jaws", "kind": "jaws", "variant": jaw_variant, "attach": "head.jaws"})
         horn_variant = None
         if "unicorn" in text or "spiral horn" in text:
             horn_variant = "unicorn"

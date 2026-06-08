@@ -113,8 +113,12 @@ keywords). The thumbnail mechanism.
   - *E2 — Eyes everywhere.* every head variant gets an `eyes` socket; NL
     ("slit-pupil eyes", "big eyes", iris color); corpus. **Exit:** green; eyes
     compose on all heads. (Expressive eye-*bone* rig → roadmap 3.)
-- **L2 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Exit:**
-  each builds a valid creature; a snake, a spider, a bird generate.
+- **L2 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Started:**
+  `serpent` (legless cobra-ish chain), `avian` (torso + 2 legs + feathered wings +
+  tail), and `arachnid` (cephalothorax + abdomen + 8 splayed `spider_leg`s on a
+  ring) are implemented, NL-routed, and corpus-gated; live-verified in UE 5.7.4.
+  Remaining: hexapod, centaur. **Exit:** each builds a valid creature; a snake, a
+  spider, a bird generate.
 - **L3 — Slots batch.** beak, frill, spikes, shell, gills, whiskers, mandibles,
   dorsal fin, stinger. **Exit:** each module builds + composes on a host.
 - **L4 — Presets batch.** griffin, manticore, wyvern, pegasus, hydra, naga,

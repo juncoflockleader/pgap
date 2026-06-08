@@ -34,6 +34,9 @@ _TEMPLATE_KEYWORDS = {
     "horse": ["horse", "pony", "stallion", "mare", "equine"],
     "feline": ["lion", "tiger", "panther", "feline"],
     "dragon": ["dragon", "wyvern", "drake", "wyrm"],
+    "serpent": ["snake", "serpent", "cobra", "viper", "python", "boa", "anaconda"],
+    "avian": ["bird", "eagle", "hawk", "falcon", "owl", "raven", "crow", "parrot", "songbird"],
+    "arachnid": ["spider", "arachnid", "tarantula", "widow"],
     "biped": ["humanoid", "human ", "person", "robot", "android", "warrior", "knight"],
 }
 

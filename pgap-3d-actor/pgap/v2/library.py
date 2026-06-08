@@ -582,3 +582,86 @@ def biped_recipe() -> Recipe:
             Attachment("leg", leg_module(), parent="spine", parent_socket="hip", mirror=True),
         ],
     )
+
+
+# --------------------------------------------------------------------------- #
+# New body-plan archetypes (legless serpent, avian, arachnid)
+# --------------------------------------------------------------------------- #
+def serpent_body_module() -> Module:
+    """A long legless body along +X that rises at the head end (cobra-like) and
+    tapers to a thin tail. Exposes ``neck`` at the raised front for a head."""
+    pts = [v(0.0, 0.0, 0.0), v(0.20, 0.0, 0.0), v(0.42, 0.0, 0.0),
+           v(0.62, 0.04, 0.0), v(0.78, 0.16, 0.0), v(0.88, 0.30, 0.0)]
+    radii = [0.030, 0.070, 0.082, 0.075, 0.058, 0.044]
+    bones = [
+        BoneSpec(f"coil_{i}", (f"coil_{i-1}" if i else None), pts[i], pts[i + 1],
+                 radii[i], radii[i + 1], "spine")
+        for i in range(len(pts) - 1)
+    ]
+    return Module(kind="serpent_body", bones=bones, sockets={
+        "neck": Socket("neck", pts[-1], f"coil_{len(pts)-2}"),
+    })
+
+
+def serpent_recipe() -> Recipe:
+    return Recipe("Serpent", [
+        Attachment("body", serpent_body_module()),
+        Attachment("head", head_module(), parent="body", parent_socket="neck"),
+    ])
+
+
+def avian_torso_module() -> Module:
+    """A plump bird torso (+X = head end, +Y up): neck (front-top), wings
+    (sides-top, bilateral), legs (underside, bilateral), tail (rear)."""
+    bones = [
+        BoneSpec("chest", None, v(0.0, 0.0, 0.0), v(-0.14, 0.0, 0.0), 0.11, 0.10, "spine"),
+        BoneSpec("rump", "chest", v(-0.14, 0.0, 0.0), v(-0.28, 0.03, 0.0), 0.10, 0.07, "spine"),
+    ]
+    return Module(kind="avian_torso", bones=bones, sockets={
+        "neck": Socket("neck", v(0.01, 0.08, 0.0), "chest"),
+        "wings": Socket("wings", v(-0.07, 0.09, 0.05), "chest", mirror=True),
+        "hip": Socket("hip", v(-0.13, -0.08, 0.05), "rump", mirror=True),
+        "tail": Socket("tail", v(-0.28, 0.04, 0.0), "rump"),
+    })
+
+
+def avian_recipe() -> Recipe:
+    return Recipe("Avian", [
+        Attachment("torso", avian_torso_module()),
+        Attachment("neck", neck_module(), parent="torso", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        Attachment("wing", wing_feathered_module(), parent="torso", parent_socket="wings", mirror=True),
+        Attachment("leg", leg_module(), parent="torso", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="torso", parent_socket="tail"),
+    ])
+
+
+def arachnid_body_module(legs: int = 8) -> Module:
+    """A spider: small cephalothorax at the origin + a fat abdomen behind (-X),
+    with a ring of `legs` sockets for radial legs."""
+    bones = [
+        BoneSpec("cephalothorax", None, v(0.0, 0.0, 0.0), v(0.03, 0.0, 0.0), 0.10, 0.10, "body"),
+        BoneSpec("abdomen", "cephalothorax", v(-0.07, 0.01, 0.0), v(-0.24, 0.05, 0.0), 0.13, 0.09, "body"),
+    ]
+    return Module(kind="arachnid_body", bones=bones, sockets={
+        "legs_ring": Socket("legs_ring", v(0.0, 0.0, 0.0), "cephalothorax",
+                            ring=legs, ring_radius=0.07),
+        "head": Socket("head", v(0.10, 0.0, 0.0), "cephalothorax"),
+    })
+
+
+def spider_leg_module() -> Module:
+    """A bent spider leg: out (+X) to a raised knee, then down to a foot. On a ring
+    socket each copy is rotated around Y, so eight of them splay radially."""
+    return Module(kind="spider_leg", bones=[
+        BoneSpec("coxa", None, v(0, 0, 0), v(0.12, 0.03, 0), 0.024, 0.018, "leg"),
+        BoneSpec("femur", "coxa", v(0.12, 0.03, 0), v(0.24, 0.06, 0), 0.018, 0.014, "leg"),
+        BoneSpec("tibia", "femur", v(0.24, 0.06, 0), v(0.30, -0.18, 0), 0.014, 0.010, "leg"),
+    ], sockets={})
+
+
+def arachnid_recipe(legs: int = 8) -> Recipe:
+    return Recipe("Arachnid", [
+        Attachment("body", arachnid_body_module(legs)),
+        Attachment("legs", spider_leg_module(), parent="body", parent_socket="legs_ring"),
+    ])

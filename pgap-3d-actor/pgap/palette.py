@@ -69,6 +69,36 @@ _COATS = (
 
 COAT_KEYWORDS = tuple(k for kws, _ in _COATS for k in kws)  # public capability surface
 
+# Iris colors for the eyes region (sRGB). When ``material.eyeColor`` names one of
+# these, the eyeball renders that hue instead of the coat's default near-black eye
+# — so a creature can have amber, green, or glowing-red eyes. Stylized solid iris;
+# pupil/catchlight detail is a texture-side upgrade (roadmap 1).
+_IRIS = {
+    "amber": (0.62, 0.34, 0.04), "gold": (0.66, 0.48, 0.08), "golden": (0.66, 0.48, 0.08),
+    "yellow": (0.74, 0.64, 0.10), "orange": (0.72, 0.32, 0.05),
+    "green": (0.10, 0.42, 0.14), "emerald": (0.05, 0.45, 0.22), "lime": (0.40, 0.62, 0.10),
+    "blue": (0.10, 0.26, 0.58), "cyan": (0.10, 0.50, 0.56), "teal": (0.06, 0.42, 0.42),
+    "red": (0.56, 0.05, 0.05), "crimson": (0.50, 0.04, 0.09),
+    "violet": (0.36, 0.10, 0.46), "purple": (0.30, 0.08, 0.40),
+    "pink": (0.80, 0.40, 0.50), "white": (0.90, 0.90, 0.92), "black": (0.03, 0.02, 0.02),
+}
+IRIS_KEYWORDS = tuple(_IRIS)  # public capability surface
+
+
+def eye_color(material: dict) -> np.ndarray:
+    """The iris color for the eyes region. ``material.eyeColor`` selects an iris by
+    the *earliest* keyword in the string; absent/unrecognized falls back to the
+    coat's default dark eye (the prior behavior)."""
+    text = str(material.get("eyeColor", "")).lower()
+    best, best_pos = None, len(text) + 1
+    for k, rgb in _IRIS.items():
+        pos = text.find(k)
+        if 0 <= pos < best_pos:
+            best, best_pos = rgb, pos
+    if best is not None:
+        return np.array(best, dtype=_F)
+    return np.array(coat_palette(material)["eyes"], dtype=_F)
+
 
 def coat_palette(material: dict) -> dict:
     """Pick the coat from ``material.baseColor`` by the *earliest* color keyword.

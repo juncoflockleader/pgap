@@ -55,6 +55,21 @@ def _coat(text: str) -> str:
     return " ".join(dict.fromkeys(found)) if found else "stone"
 
 
+def _eye_color(text: str) -> str | None:
+    """Pull an iris color from phrases like 'amber eyes', 'red-eyed', 'glowing
+    green eyes', or 'eyes of crimson'. Returns a palette iris keyword or None."""
+    from ..palette import IRIS_KEYWORDS
+    # "<color> eye[s]" / "<color>-eyed"
+    for m in re.finditer(r"([a-z]+)[ -](?:eye|eyes|eyed)\b", text):
+        if m.group(1) in IRIS_KEYWORDS:
+            return m.group(1)
+    # "eyes (are|of) <color>"
+    m = re.search(r"eyes?(?: are| of)? ([a-z]+)", text)
+    if m and m.group(1) in IRIS_KEYWORDS:
+        return m.group(1)
+    return None
+
+
 def _size_mult(text: str) -> float:
     if any(k in text for k in ("giant", "huge", "colossal", "massive", "great")):
         return 1.6
@@ -211,6 +226,9 @@ def prompt_to_recipe(prompt: str, seed: int = 5, mode: str = "strict") -> dict:
     surface = _surface_word(text)
     if surface:
         coat["surface"] = surface
+    iris = _eye_color(text)
+    if iris:
+        coat["eyeColor"] = iris
     mult = _size_mult(text)
     warnings: list[str] = []
 

@@ -46,6 +46,7 @@ def capability_report() -> dict:
         "traits": {k: list(v) for k, v in TRAIT_VOCAB.items()},
         "animationsByArchetype": {k: list(v) for k, v in ARCHETYPE_CLIPS.items()},
         "coatKeywords": list(palette.COAT_KEYWORDS),
+        "irisKeywords": list(palette.IRIS_KEYWORDS),
         "surfaces": list(texture.SURFACES),
         "proportionRanges": {k: list(v) for k, v in PROPORTION_RANGES.items()},
     }

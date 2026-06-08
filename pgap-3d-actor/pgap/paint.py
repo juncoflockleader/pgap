@@ -85,7 +85,10 @@ def paint_colors(mesh: Mesh, skel: list[Bone], spec: Spec, parts: tuple = ()) ->
     base = palette.base_coat(spec.material).astype(np.float64)
     colors = np.ones((mesh.num_vertices, 4), dtype=_F)
     for i in range(mesh.num_vertices):
-        target = palette.region_color(spec.material, regions[i]).astype(np.float64)
+        if regions[i] == "eyes":  # iris hue (material.eyeColor), else default dark
+            target = palette.eye_color(spec.material).astype(np.float64)
+        else:
+            target = palette.region_color(spec.material, regions[i]).astype(np.float64)
         rgb = np.clip(target / np.maximum(base, 1e-3), 0.0, 4.0)
         colors[i, :3] = rgb.astype(_F)
     return Mesh(

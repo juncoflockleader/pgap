@@ -135,7 +135,7 @@ def capability_report() -> dict:
         "templates": list(TEMPLATE_REGISTRY),
         "recipeSchema": {
             "name": "str", "seed": "int", "heightCm": "number",
-            "material": {"baseColor": "str"},
+            "material": {"baseColor": "str", "eyeColor": "str?"},
             "modules": [{"id": "str", "kind": "str", "variant": "str?",
                          "attach": "<parentId>.<socket>", "mirror": "bool?", "params": "object?"}],
         },

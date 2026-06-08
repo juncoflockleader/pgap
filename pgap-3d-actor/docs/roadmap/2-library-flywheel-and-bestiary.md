@@ -38,9 +38,10 @@ proud, region-tagged eyeball bones at a head's `eyes` socket. **Variants:** roun
 almond / slit (E1). **Done (E2):** every head variant (humanoid / draconic /
 cephalopod) and the arachnid carry an `eyes` socket; all head-bearing presets ship
 eyes; the beholder/kraken eye organs are region-tagged too; NL routes shape + size
-("slit-pupil eyes", "big eyes"); the corpus + `test_v2_eyes` gate it. Remaining:
-iris-color params and the expressive eye-bone rig (roadmap 3). v1 live-verified in
-UE 5.7.4.
+("slit-pupil eyes", "big eyes"); **iris color** via `material.eyeColor` (amber /
+green / glowing-red …, NL-routed from "amber eyes" / "red-eyed"); the corpus +
+`test_v2_eyes` gate it. Remaining: the expressive eye-bone rig (roadmap 3). v1
+live-verified in UE 5.7.4.
 
 **Static jaws — ✅ generalized to v2 too.** The dog's nose + mouth line now ride
 the same bone path as eyes: a `jaws` module (a proud non-fused **nose** bead,
@@ -128,7 +129,8 @@ keywords). The thumbnail mechanism.
   - *E2 — Eyes everywhere.* ✅ **done** — every head variant (+ the arachnid) has
     an `eyes` socket; every head-bearing preset ships a pair; NL routes shape +
     size ("slit-pupil eyes", "big eyes"); corpus + `test_v2_eyes` green. Remaining:
-    iris-color params; the expressive eye-*bone* rig → roadmap 3.
+    the expressive eye-*bone* rig → roadmap 3 (iris color now ships via
+    `material.eyeColor`).
 - **L2 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Started:**
   `serpent` (legless cobra-ish chain), `avian` (torso + 2 legs + feathered wings +
   tail), and `arachnid` (cephalothorax + abdomen + 8 splayed `spider_leg`s on a

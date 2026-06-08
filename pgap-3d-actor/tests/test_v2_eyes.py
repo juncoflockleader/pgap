@@ -103,6 +103,39 @@ def test_named_templates_have_eyes():
         assert (pos[:, 2] > 0.003).sum() >= 2 and (pos[:, 2] < -0.003).sum() >= 2, name
 
 
+def _biped_region_rgb(material, bone):
+    spec = Spec.from_dict({"name": "b", "archetype": "biped", "species": "b", "seed": 5,
+                           "triBudget": 11000, "proportions": {"heightCm": 120},
+                           "material": material})
+    skel, mesh = build_actor(load_template("biped"), spec, make_rng(spec.seed))
+    names = [b.name for b in skel]
+    dom = mesh.joints[np.arange(mesh.num_vertices), np.argmax(mesh.weights, axis=1)]
+    v = np.nonzero(dom == names.index(bone))[0]
+    return mesh.colors[v, :3].mean(axis=0)
+
+
+def test_iris_color_tints_the_eyes():
+    # Default eyes are dark; a named eyeColor tints them by hue.
+    dark = _biped_region_rgb({"baseColor": "stone"}, "eyes_eye_l")
+    assert dark.max() < 0.4, dark
+    amber = _biped_region_rgb({"baseColor": "stone", "eyeColor": "amber"}, "eyes_eye_l")
+    assert amber[0] > amber[2] and amber[0] > 0.6, amber           # warm, bright
+    green = _biped_region_rgb({"baseColor": "stone", "eyeColor": "green"}, "eyes_eye_l")
+    assert green[1] > green[0] and green[1] > green[2], green       # green-dominant
+
+
+def test_iris_color_leaves_nose_and_mouth_dark():
+    mat = {"baseColor": "stone", "eyeColor": "red"}
+    for bone in ("jaws_nose", "jaws_mouth"):
+        assert _biped_region_rgb(mat, bone).max() < 0.4, bone
+
+
+def test_nl_routes_eye_color():
+    from pgap.v2.nl import prompt_to_recipe
+    r = prompt_to_recipe("a knight with glowing green eyes", mode="strict")
+    assert r["ok"] and r["material"].get("eyeColor") == "green", r.get("material")
+
+
 def test_v2_eyes_deterministic():
     a = _build_head_with_eyes("humanoid", "slit")
     b = _build_head_with_eyes("humanoid", "slit")

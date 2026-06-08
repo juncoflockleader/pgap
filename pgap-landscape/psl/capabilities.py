@@ -56,7 +56,7 @@ def capabilities() -> Dict[str, Any]:
     return {
         "schemaVersion": CAPABILITIES_SCHEMA_VERSION,
         "generator": "psl",
-        "status": "L4 (heightmap + weightmaps + material + scatter + water plane)",
+        "status": "L5 (heightmap + tiling layer textures + scatter + water — all roles)",
         "biomes": list(BIOMES),
         "layersByBiome": {b: list(LAYERS_BY_BIOME[b]) for b in BIOMES},
         "scatterByBiome": {b: list(SCATTER_BY_BIOME[b]) for b in BIOMES},

@@ -57,3 +57,19 @@ def write_gray8(path: str, arr: np.ndarray) -> None:
         raw += flat[y * w : (y + 1) * w]
     with open(path, "wb") as f:
         f.write(_png(w, h, 8, 0, bytes(raw)))
+
+
+def write_rgb8(path: str, arr: np.ndarray) -> None:
+    """Write an (H,W,3) uint8 array as an 8-bit RGB PNG (layer textures, L5)."""
+    a = np.ascontiguousarray(np.asarray(arr)).astype("u1")
+    if a.ndim != 3 or a.shape[2] != 3:
+        raise ValueError("write_rgb8 expects an (H,W,3) array")
+    h, w, _ = a.shape
+    rowbytes = w * 3
+    flat = a.reshape(h, rowbytes).tobytes()
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)  # filter type 0 (None)
+        raw += flat[y * rowbytes : (y + 1) * rowbytes]
+    with open(path, "wb") as f:
+        f.write(_png(w, h, 8, 2, bytes(raw)))  # color type 2 = RGB

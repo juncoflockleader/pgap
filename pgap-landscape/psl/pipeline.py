@@ -15,7 +15,7 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
-from . import field, surfacing
+from . import field, surfacing, texture
 from . import scatter as scatter_mod
 from .capabilities import (
     SKY_PROFILE_BY_BIOME,
@@ -23,10 +23,10 @@ from .capabilities import (
     WATER_BY_BIOME,
     WATER_COLOR_BY_BIOME,
 )
-from .pngio import write_gray8, write_gray16
+from .pngio import write_gray8, write_gray16, write_rgb8
 from .spec import validate_spec
 
-GENERATOR_VERSION = "0.1.0"
+GENERATOR_VERSION = "0.2.0"
 
 
 def _sha1(path: Path) -> str:
@@ -71,20 +71,34 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     layers = list(s["layers"])
     weights, deriv = surfacing.weightmaps(height, biome, layers, sea)
     weight_files: Dict[str, str] = {}
+    # L5 tiling textures get their own RNG so they don't perturb the scatter stream.
+    tex_rng = np.random.Generator(np.random.PCG64(int(s["seed"]) ^ 0x7e5715))
+    tex_files: Dict[str, tuple] = {}
     for layer in layers:
         wpath = out / f"{name}_Weight_{layer}.png"
         write_gray8(str(wpath), np.clip(weights[layer] * 255.0 + 0.5, 0, 255).astype(np.uint8))
         weight_files[layer] = wpath.name
         paths[f"weight_{layer}"] = wpath
+        # seamless per-layer base-color + normal map (L5)
+        base_rgb, normal_rgb = texture.layer_textures(layer, surfacing.layer_color(layer), tex_rng)
+        bpath = out / f"T_{layer}_BaseColor.png"
+        npath = out / f"T_{layer}_Normal.png"
+        write_rgb8(str(bpath), base_rgb)
+        write_rgb8(str(npath), normal_rgb)
+        tex_files[layer] = (bpath.name, npath.name)
+        paths[f"tex_base_{layer}"], paths[f"tex_normal_{layer}"] = bpath, npath
 
     material_spec = {
         "blend": "weight",                       # weights sum to 1 per texel
         "layerOrder": layers,
         "layers": [
             {"name": layer, "color": surfacing.layer_color(layer),
-             "weightmap": weight_files[layer]} for layer in layers
+             "weightmap": weight_files[layer],
+             "baseColor": tex_files[layer][0], "normal": tex_files[layer][1]}
+            for layer in layers
         ],
         "rule": "weights are a deterministic function of slope+altitude (no hand-paint)",
+        "tiling": True,
     }
 
     # L2 scatter: foliage/prop rules + a baked point list, derived from the same
@@ -132,7 +146,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "water": water_spec,              # L4: WaterPlane spec
         "skyProfile": SKY_PROFILE_BY_BIOME.get(biome, "clear_day"),
         "palette": s.get("palette", ""),
-        "pending": ["T_<layer> tiling textures"],
+        "pending": [],
     }
     sidecar_path = out / f"{name}.landscape.import.json"
     sidecar_path.write_text(json.dumps(sidecar, indent=2))
@@ -149,7 +163,9 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "license": "procedurally generated original work",
         "files": {p.name: _sha1(p) for p in (
             height_path, sidecar_path, scatter_path,
-            *[paths[f"weight_{layer}"] for layer in layers])},
+            *[paths[f"weight_{layer}"] for layer in layers],
+            *[paths[f"tex_base_{layer}"] for layer in layers],
+            *[paths[f"tex_normal_{layer}"] for layer in layers])},
         "roles": {
             "Heightmap": height_path.name,
             "LandscapeMaterialSpec": sidecar_path.name,

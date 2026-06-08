@@ -1,0 +1,11 @@
+{
+  "name": "GrassPlain",
+  "biome": "plain",
+  "seed": 7,
+  "sizeKm": 2.0,
+  "resolution": 1009,
+  "heightScaleM": 250,
+  "seaLevel": 0.0,
+  "ruggedness": 0.4,
+  "palette": "summer green"
+}

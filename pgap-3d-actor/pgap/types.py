@@ -20,6 +20,14 @@ class Primitive:
     A tapered capsule from ``a`` to ``b``; a sphere is ``a == b``. ``anchor`` is
     documentation only (the bone the part conceptually belongs to) — skinning
     binds parts by proximity, not by this field.
+
+    ``fused=False`` makes the blob a *non-fused organ*: it is hard-min'd (plain
+    union, a crease) with the body instead of smooth-min'd, so a small sphere like
+    an eyeball sits *proud* as a distinct bead rather than melting into the surface.
+    It must still overlap the body to survive the largest-component cleanup.
+
+    ``region`` tags the blob's surface so paint can color it independently of the
+    nearest bone (e.g. a dark ``"eyes"`` iris on a head-colored skull).
     """
 
     a: np.ndarray  # f32[3]
@@ -27,6 +35,8 @@ class Primitive:
     radius_a: float
     radius_b: float
     anchor: Optional[str] = None
+    fused: bool = True
+    region: Optional[str] = None
 
 
 @dataclass(frozen=True)

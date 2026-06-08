@@ -23,9 +23,16 @@ _UP = np.array([0.0, 1.0, 0.0])
 _FWD = np.array([1.0, 0.0, 0.0])
 
 
-def _sphere(center: np.ndarray, radius: float, anchor: str) -> Primitive:
+def _sphere(center: np.ndarray, radius: float, anchor: str,
+            fused: bool = True, region: str | None = None) -> Primitive:
     c = center.astype(_F)
-    return Primitive(a=c, b=c, radius_a=float(radius), radius_b=float(radius), anchor=anchor)
+    return Primitive(a=c, b=c, radius_a=float(radius), radius_b=float(radius),
+                     anchor=anchor, fused=fused, region=region)
+
+
+def _norm(v: np.ndarray) -> np.ndarray:
+    n = float(np.linalg.norm(v))
+    return v / n if n > 1e-9 else v
 
 
 def _capsule(a: np.ndarray, b: np.ndarray, ra: float, rb: float, anchor: str) -> Primitive:
@@ -51,6 +58,14 @@ def build(skel: list[Bone], spec: Spec) -> list[Primitive]:
         cheek = _along(snout, 0.18) + np.array([0.0, -0.1 * rh, sign * 0.55 * snout.radius_head])
         parts.append(_sphere(cheek, snout.radius_head * 0.85, "head"))
     parts.append(_sphere(snout.tail.astype(np.float64), snout.radius_tail * 1.15, "snout"))  # nose
+
+    # --- eyes: two dark, non-fused "bead" eyes on the front-upper sides of the skull
+    fwd = _norm(head.tail.astype(np.float64) - head.head.astype(np.float64))
+    front = _along(head, 0.86)
+    for sign in (1.0, -1.0):
+        out = _norm(fwd * 0.5 + _UP * 0.42 + np.array([0.0, 0.0, sign]) * 0.9)
+        eye_c = front + out * (rh * 0.86)
+        parts.append(_sphere(eye_c, rh * 0.46, "head", fused=False, region="eyes"))
 
     # --- deep chest / brisket and neck ruff ----------------------------------
     chest_a = spine2.head.astype(np.float64) + _UP * (-0.45 * spine2.radius_head) + _FWD * 0.02

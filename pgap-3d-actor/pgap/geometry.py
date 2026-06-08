@@ -54,37 +54,44 @@ def _smin(a: np.ndarray, b: np.ndarray, k: float) -> np.ndarray:
     return b * (1.0 - h) + a * h - k * h * (1.0 - h)
 
 
-def _blobs(skel: list[Bone], parts: tuple) -> list[_Blob]:
-    """Normalize bones + part primitives into one float64 blob list."""
-    out: list[_Blob] = []
+def _blobs(skel: list[Bone], parts: tuple) -> tuple[list[_Blob], list[_Blob]]:
+    """Normalize bones + part primitives into (soft, hard) float64 blob lists.
+
+    ``soft`` blobs smooth-min into one body; ``hard`` blobs (``Primitive.fused ==
+    False``) are plain-union'd on top so they stay distinct (proud organs).
+    """
+    soft: list[_Blob] = []
+    hard: list[_Blob] = []
     for bone in skel:
-        out.append(
+        soft.append(
             (bone.head.astype(np.float64), bone.tail.astype(np.float64),
              float(bone.radius_head), float(bone.radius_tail))
         )
     for p in parts:
-        out.append(
-            (np.asarray(p.a, dtype=np.float64), np.asarray(p.b, dtype=np.float64),
-             float(p.radius_a), float(p.radius_b))
-        )
-    return out
+        blob = (np.asarray(p.a, dtype=np.float64), np.asarray(p.b, dtype=np.float64),
+                float(p.radius_a), float(p.radius_b))
+        (soft if getattr(p, "fused", True) else hard).append(blob)
+    return soft, hard
 
 
-def _field(pts: np.ndarray, blobs: list[_Blob]) -> np.ndarray:
-    """Blended SDF of all blobs at the given points (K,)."""
-    d = _capsule_sdf(pts, blobs[0])
-    for blob in blobs[1:]:
+def _field(pts: np.ndarray, blobs: tuple[list[_Blob], list[_Blob]]) -> np.ndarray:
+    """SDF at the given points (K,): soft blobs smooth-min'd, hard blobs plain-min'd."""
+    soft, hard = blobs
+    d = _capsule_sdf(pts, soft[0])
+    for blob in soft[1:]:
         d = _smin(d, _capsule_sdf(pts, blob), _SMIN_K)
+    for blob in hard:
+        d = np.minimum(d, _capsule_sdf(pts, blob))
     return d
 
 
 # --------------------------------------------------------------------------- #
 # Voxel grid
 # --------------------------------------------------------------------------- #
-def _grid_bounds(blobs: list[_Blob]) -> tuple[np.ndarray, np.ndarray]:
+def _grid_bounds(blobs: tuple[list[_Blob], list[_Blob]]) -> tuple[np.ndarray, np.ndarray]:
     pts = []
     max_r = 0.0
-    for a, b, ra, rb in blobs:
+    for a, b, ra, rb in (blobs[0] + blobs[1]):
         pts.append(a)
         pts.append(b)
         max_r = max(max_r, ra, rb)
@@ -107,7 +114,7 @@ def _resolution(spec: Spec, extent: np.ndarray, res_scale: float = 1.0) -> np.nd
     return counts
 
 
-def _sample_field(blobs: list[_Blob], spec: Spec, res_scale: float = 1.0):
+def _sample_field(blobs: tuple[list[_Blob], list[_Blob]], spec: Spec, res_scale: float = 1.0):
     lo, hi = _grid_bounds(blobs)
     extent = hi - lo
     counts = _resolution(spec, extent, res_scale)  # (nx,ny,nz) sample counts

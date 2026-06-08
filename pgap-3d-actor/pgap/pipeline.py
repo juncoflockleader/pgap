@@ -37,7 +37,7 @@ def build_actor(spec: Spec, rng: Rng) -> tuple[list[Bone], Mesh]:
     mesh = build_geometry(skel, spec, rng, tuple(parts))
     mesh = skin(mesh, skel)
     mesh = layout_uvs(mesh, skel, spec)
-    mesh = paint_colors(mesh, skel, spec)
+    mesh = paint_colors(mesh, skel, spec, tuple(parts))
     return skel, mesh
 
 

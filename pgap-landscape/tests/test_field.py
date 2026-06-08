@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from psl import field
+from psl import field, stamps
 from psl.spec import BIOMES
 
 
@@ -35,6 +35,26 @@ def test_erosion_carves_without_flattening():
 
 def test_snow_is_rougher_than_plain():
     assert _h("snow").std() > _h("plain").std() * 0.8  # ridged alpine ≳ rolling plain
+
+
+def test_crater_field_makes_bowls_and_rims():
+    base = np.full((128, 128), 0.5)
+    h = stamps.crater_field(base, np.random.Generator(np.random.PCG64(1)), count=40)
+    assert h.min() < 0.5 - 0.02      # bowls dig below the base
+    assert h.max() > 0.5 + 0.004     # rims rise above it
+    assert h.std() > 0.02
+
+
+def test_crater_field_deterministic():
+    base = np.full((128, 128), 0.5)
+    a = stamps.crater_field(base, np.random.Generator(np.random.PCG64(2)), count=30)
+    b = stamps.crater_field(base, np.random.Generator(np.random.PCG64(2)), count=30)
+    assert np.array_equal(a, b)
+
+
+def test_moon_biome_is_cratered():
+    h = _h("moon")
+    assert h.std() > 0.05            # not flat — the crater field gives it relief
 
 
 def test_domain_warp_changes_field():

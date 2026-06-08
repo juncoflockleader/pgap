@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from . import stamps
+
 
 def _smoothstep(t: np.ndarray) -> np.ndarray:
     return t * t * (3.0 - 2.0 * t)
@@ -140,8 +142,8 @@ def height_for_biome(rng: np.random.Generator, res: int, biome: str, ruggedness:
     elif biome == "shore":                              # land rising away from the sea
         grad = np.linspace(0.0, 1.0, res)[None, :] ** 1.3
         h = _norm01(0.65 * warped * grad + 0.18 * grad)
-    elif biome == "moon":                               # gentle base; craters land in L3
-        h = warped
+    elif biome == "moon":                               # battered regolith: faint base + crater field
+        h = stamps.crater_field(0.25 * warped, rng, count=int(130 * (0.5 + r)))
     else:                                               # plain: warped rolling hills
         h = warped
     return _norm01(h)

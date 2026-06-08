@@ -16,6 +16,7 @@ from typing import Any, Dict, Tuple
 import numpy as np
 
 from . import field, surfacing
+from . import scatter as scatter_mod
 from .capabilities import SKY_PROFILE_BY_BIOME, WATER_BY_BIOME
 from .pngio import write_gray8, write_gray16
 from .spec import validate_spec
@@ -54,7 +55,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
 
     # L1 surfacing: per-layer weightmaps derived by rule from slope/altitude.
     layers = list(s["layers"])
-    weights, _deriv = surfacing.weightmaps(height, biome, layers, float(s["seaLevel"]))
+    weights, deriv = surfacing.weightmaps(height, biome, layers, float(s["seaLevel"]))
     weight_files: Dict[str, str] = {}
     for layer in layers:
         wpath = out / f"{name}_Weight_{layer}.png"
@@ -72,6 +73,14 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "rule": "weights are a deterministic function of slope+altitude (no hand-paint)",
     }
 
+    # L2 scatter: foliage/prop rules + a baked point list, derived from the same
+    # derivatives the weightmaps use (so plants track the terrain), referencing
+    # pgap-3d-actor assets by role.
+    scatter_data = scatter_mod.scatter(height, deriv, weights, biome, s["scatter"], rng)
+    scatter_path = out / f"{name}.scatter.json"
+    scatter_path.write_text(json.dumps(scatter_data, indent=2))
+    paths["scatter"] = scatter_path
+
     sidecar = {
         "schemaVersion": "psl.landscape.import.v1",
         "name": name,
@@ -82,11 +91,16 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "seaLevel": s["seaLevel"],
         "layers": s["layers"],
         "materialSpec": material_spec,    # L1: layer order + colors + weightmaps
-        "scatter": s["scatter"],          # scatter rule emit lands in L2
+        "scatter": {                      # L2: foliage rules + baked points (sidecar file)
+            "density": s["scatter"]["density"],
+            "rules": scatter_data["rules"],
+            "counts": scatter_data["counts"],
+            "points": scatter_path.name,
+        },
         "water": WATER_BY_BIOME.get(biome, False),
         "skyProfile": SKY_PROFILE_BY_BIOME.get(biome, "clear_day"),
         "palette": s.get("palette", ""),
-        "pending": ["FoliageRule", "WaterPlane", "T_<layer> tiling textures"],
+        "pending": ["WaterPlane", "T_<layer> tiling textures"],
     }
     sidecar_path = out / f"{name}.landscape.import.json"
     sidecar_path.write_text(json.dumps(sidecar, indent=2))
@@ -102,10 +116,12 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "specHash": _spec_hash(s),
         "license": "procedurally generated original work",
         "files": {p.name: _sha1(p) for p in (
-            height_path, sidecar_path, *[paths[f"weight_{layer}"] for layer in layers])},
+            height_path, sidecar_path, scatter_path,
+            *[paths[f"weight_{layer}"] for layer in layers])},
         "roles": {
             "Heightmap": height_path.name,
             "LandscapeMaterialSpec": sidecar_path.name,
+            "FoliageRule": scatter_path.name,
             **{f"Weightmap:{layer}": weight_files[layer] for layer in layers},
         },
         "warnings": v["warnings"],
@@ -125,6 +141,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
             "roles": [
                 {"role": "Heightmap", "file": height_path.name},
                 {"role": "LandscapeMaterialSpec", "file": sidecar_path.name},
+                {"role": "FoliageRule", "file": scatter_path.name},
                 *[{"role": f"Weightmap:{layer}", "file": weight_files[layer]} for layer in layers],
             ],
             "sidecar": sidecar_path.name,

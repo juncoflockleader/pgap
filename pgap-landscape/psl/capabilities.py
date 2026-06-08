@@ -38,14 +38,14 @@ HANDOFF_ROLES = [
     "SkyProfile",
 ]
 
-IMPLEMENTED = ["Heightmap", "LandscapeMaterialSpec", "Weightmap:<layer>"]  # L0–L1
+IMPLEMENTED = ["Heightmap", "LandscapeMaterialSpec", "Weightmap:<layer>", "FoliageRule"]  # L0–L2
 
 
 def capabilities() -> Dict[str, Any]:
     return {
         "schemaVersion": CAPABILITIES_SCHEMA_VERSION,
         "generator": "psl",
-        "status": "L1 (heightmap + rule-based weightmaps + material spec)",
+        "status": "L2 (heightmap + weightmaps + material spec + scatter rules)",
         "biomes": list(BIOMES),
         "layersByBiome": {b: list(LAYERS_BY_BIOME[b]) for b in BIOMES},
         "scatterByBiome": {b: list(SCATTER_BY_BIOME[b]) for b in BIOMES},

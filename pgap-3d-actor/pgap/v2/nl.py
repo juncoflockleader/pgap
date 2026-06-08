@@ -183,6 +183,10 @@ def prompt_to_recipe(prompt: str, seed: int = 5, mode: str = "strict") -> dict:
     text = prompt.lower()
     name = _camel(prompt)
     coat = {"baseColor": _coat(text)}
+    from ..nl import _surface_word
+    surface = _surface_word(text)
+    if surface:
+        coat["surface"] = surface
     mult = _size_mult(text)
     warnings: list[str] = []
 

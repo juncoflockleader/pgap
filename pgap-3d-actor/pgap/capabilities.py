@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import palette
+from . import palette, texture
 from .animation import ARCHETYPE_CLIPS
 from .parts import KNOWN_SPECIES
 from .skeleton import EAR_STYLE_NAMES
@@ -46,6 +46,7 @@ def capability_report() -> dict:
         "traits": {k: list(v) for k, v in TRAIT_VOCAB.items()},
         "animationsByArchetype": {k: list(v) for k, v in ARCHETYPE_CLIPS.items()},
         "coatKeywords": list(palette.COAT_KEYWORDS),
+        "surfaces": list(texture.SURFACES),
         "proportionRanges": {k: list(v) for k, v in PROPORTION_RANGES.items()},
     }
 

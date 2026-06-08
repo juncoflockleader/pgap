@@ -33,6 +33,24 @@ _DEFAULT_COAT = {"quadruped": "warm golden", "biped": "tan", "prop": "grey stone
 _COLOR_WORDS = ("golden", "gold", "tan", "brown", "chocolate", "black",
                 "cream", "white", "grey", "gray", "stone", "granite", "wood", "wooden")
 
+# surface treatment keyword -> surface name (texture.SURFACES)
+_SURFACE_WORDS = (
+    ("scal", "scales"), ("feather", "feathers"), ("chitin", "chitin"),
+    ("carapace", "chitin"), ("insectoid", "chitin"), ("bark", "bark"),
+    ("furry", "fur"), ("fluffy", "fur"), ("fuzzy", "fur"), ("hairy", "fur"),
+    ("smooth", "smooth"), ("hairless", "smooth"), ("scaly", "scales"),
+)
+
+
+def _surface_word(text: str) -> str | None:
+    """Earliest-matching surface keyword in the prompt (None if absent)."""
+    best, best_pos = None, len(text) + 1
+    for kw, surface in _SURFACE_WORDS:
+        pos = text.find(kw)
+        if 0 <= pos < best_pos:
+            best, best_pos = surface, pos
+    return best
+
 
 def _first_match(text: str, table: dict) -> tuple[int, str | None, str | None]:
     best = (len(text) + 1, None, None)
@@ -77,6 +95,9 @@ def prompt_to_spec(prompt: str, seed: int = 12345) -> dict:
     if "darker ear" in text or "dark ear" in text:
         base_color += ", darker ears"
     spec["material"] = {"baseColor": base_color, "fur": archetype == "quadruped"}
+    surface = _surface_word(text)
+    if surface:
+        spec["material"]["surface"] = surface
 
     # Traits (quadruped).
     if archetype == "quadruped":

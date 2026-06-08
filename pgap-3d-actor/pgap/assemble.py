@@ -146,6 +146,14 @@ def assemble_gltf(
             },
             "doubleSided": True,
         }]
+        # Optional surface normal map (scales/feathers/fur/chitin/bark relief).
+        if textures.get("normal"):
+            nrm_bv = add_view(textures["normal"])
+            doc["images"].append({"bufferView": nrm_bv, "mimeType": "image/png"})
+            doc["textures"].append({"source": len(doc["images"]) - 1, "sampler": 0})
+            doc["materials"][0]["normalTexture"] = {
+                "index": len(doc["textures"]) - 1, "texCoord": 0,
+            }
         primitive["material"] = 0
 
     doc["meshes"] = [{"name": name, "primitives": [primitive]}]
@@ -337,6 +345,12 @@ def write_outputs(
         png_path.write_bytes(textures["baseColor"])
         files[png_path.name] = _sha1(textures["baseColor"])
         result["baseColor"] = str(png_path)
+
+    if textures and textures.get("normal"):
+        nrm_path = out / f"{spec.name}_Normal.png"
+        nrm_path.write_bytes(textures["normal"])
+        files[nrm_path.name] = _sha1(textures["normal"])
+        result["normal"] = str(nrm_path)
 
     if skel is not None:
         sidecar_bytes = _import_sidecar_bytes(spec, skel, anims)

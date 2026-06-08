@@ -1,0 +1,33 @@
+{
+  "_source": "OpenGameArt 'Dog barking mono' by Brandon Morris (CC0), analyzed by psap.analyze.analyze_vocal",
+  "dog_bark": {
+    "f0": 234.6,
+    "fpeak": 1422.6,
+    "f1": 1422.6,
+    "formants": [
+      [
+        700.8,
+        17.6,
+        1.0
+      ],
+      [
+        859.5,
+        8.76,
+        1.0
+      ],
+      [
+        1884.1,
+        10.2,
+        1.0
+      ],
+      [
+        3030.9,
+        6.21,
+        1.0
+      ]
+    ],
+    "noise": 0.0,
+    "duration_ms": 283.0,
+    "n_formants": 4
+  }
+}

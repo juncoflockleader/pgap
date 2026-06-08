@@ -117,6 +117,87 @@ def analyze_impact(samples: np.ndarray, sr: int, n_modes: int = 6) -> dict:
     }
 
 
+def _levinson(r: np.ndarray, order: int) -> np.ndarray:
+    """Levinson-Durbin recursion: autocorrelation -> LPC coefficients [1, a1..ap]."""
+    a = np.zeros(order + 1)
+    a[0] = 1.0
+    e = float(r[0])
+    if e <= 0:
+        return a
+    for i in range(1, order + 1):
+        acc = r[i] + sum(a[j] * r[i - j] for j in range(1, i))
+        k = -acc / e
+        anew = a.copy()
+        for j in range(1, i):
+            anew[j] = a[j] + k * a[i - j]
+        anew[i] = k
+        a = anew
+        e *= (1.0 - k * k)
+        if e <= 0:
+            break
+    return a
+
+
+def _lpc_formants(x: np.ndarray, sr: int, n_formants: int = 4) -> list[list[float]]:
+    """Estimate formants via LPC: roots of the LPC polynomial -> resonant peaks."""
+    x = x * np.hanning(x.size)
+    order = int(2 + sr / 1000)  # ~ 2 + 1 per kHz
+    full = np.correlate(x, x, "full")
+    r = full[x.size - 1: x.size - 1 + order + 1]
+    a = _levinson(r, order)
+    roots = [z for z in np.roots(a) if np.imag(z) > 1e-6]
+    out = []
+    for z in roots:
+        freq = float(np.arctan2(np.imag(z), np.real(z)) * sr / (2.0 * np.pi))
+        bw = float(-0.5 * sr / np.pi * np.log(abs(z) + 1e-12))
+        if 150.0 < freq < 5000.0 and bw < 700.0:
+            out.append([round(freq, 1), round(max(2.0, freq / max(bw, 1.0)), 2), 1.0])
+    out.sort(key=lambda f: f[0])
+    return out[:n_formants]
+
+
+def _autocorr_f0(frame: np.ndarray, sr: int, fmin: float = 70.0, fmax: float = 1400.0) -> float:
+    ac = np.correlate(frame, frame, "full")[frame.size - 1:]
+    if ac[0] <= 0:
+        return 0.0
+    lo, hi = int(sr / fmax), min(int(sr / fmin), ac.size - 1)
+    if hi <= lo:
+        return 0.0
+    lag = lo + int(np.argmax(ac[lo:hi]))
+    return sr / lag if ac[lag] / ac[0] > 0.3 else 0.0
+
+
+def analyze_vocal(samples: np.ndarray, sr: int) -> dict:
+    """Measure a voiced one-shot: pitch contour (f0/fpeak/f1) + formants + noise."""
+    x = np.asarray(samples, dtype=np.float64)
+    x = x[_onset(x, sr):]
+    x = x / (np.max(np.abs(x)) + 1e-9)
+
+    # pitch track over voiced frames
+    win, hop = 1024, 256
+    f0s = []
+    for i in range(0, max(1, x.size - win), hop):
+        f = _autocorr_f0(x[i:i + win], sr)
+        if f > 0:
+            f0s.append(f)
+    f0s = f0s or [220.0]
+    contour = {"f0": round(f0s[0], 1), "fpeak": round(max(f0s), 1), "f1": round(f0s[-1], 1)}
+
+    # formants from the loudest (most voiced) frame
+    p = int(np.argmax(np.abs(x)))
+    seg = x[max(0, p - win // 2): p + win // 2]
+    formants = _lpc_formants(seg, sr) if seg.size > 32 else []
+
+    # harmonic/noise: zero-crossing rate proxy for breathiness
+    zcr = float(np.mean(np.abs(np.diff(np.sign(x))) > 0))
+    noise = float(np.clip((zcr - 0.05) * 1.5, 0.0, 0.6))
+
+    return {
+        **contour, "formants": formants, "noise": round(noise, 3),
+        "duration_ms": round(x.size / sr * 1000.0, 1), "n_formants": len(formants),
+    }
+
+
 def _main(argv: list[str]) -> int:
     if not argv:
         print("usage: python -m psap.analyze <wav> [--material NAME] [--modes K]",

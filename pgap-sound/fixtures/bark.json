@@ -7,11 +7,12 @@
   "gain_dbfs": -1.0,
   "graph": {
     "preset": "bark",
-    "f0": 270, "fpeak": 400, "f1": 150,
+    "f0": 235, "fpeak": 360, "f1": 150,
     "mod_ratio": 1.0, "mod_index": 2.2,
     "growl": 0.5, "growl_hz": 75, "rough": 0.6,
     "jitter": 0.2, "drive": 3.0,
     "noise": 0.4, "noise_hp": 600, "noise_cut": 4200,
+    "formants": [[700, 8.0, 1.0], [860, 6.0, 0.8], [1884, 7.0, 0.6], [3031, 6.0, 0.4]],
     "env": {"attack": 2, "hold": 28, "decay": 160}
   }
 }

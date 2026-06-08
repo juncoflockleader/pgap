@@ -14,26 +14,34 @@ from . import dsp
 
 # preset -> {category, duration_ms, graph}
 VOCAL_PRESETS: dict[str, dict] = {
+    # f0 + formants MEASURED from a real CC0 dog bark (refs/vocals/) via
+    # psap.analyze.analyze_vocal — the low-formant cluster (700/860) is what makes
+    # it read as a dog and not a generic FM buzz.
     "bark": {"category": "vocal", "duration_ms": 240, "graph": {
-        "f0": 270.0, "fpeak": 400.0, "f1": 150.0, "mod_ratio": 1.0, "mod_index": 2.2,
+        "f0": 235.0, "fpeak": 360.0, "f1": 150.0, "mod_ratio": 1.0, "mod_index": 2.2,
         "growl": 0.5, "growl_hz": 75.0, "rough": 0.6, "jitter": 0.2, "drive": 3.0,
         "noise": 0.4, "noise_hp": 600.0, "noise_cut": 4200.0,
+        "formants": [[700, 8.0, 1.0], [860, 6.0, 0.8], [1884, 7.0, 0.6], [3031, 6.0, 0.4]],
         "env": {"attack": 2, "hold": 28, "decay": 160}}},
     "growl": {"category": "vocal", "duration_ms": 700, "graph": {
         "f0": 130.0, "f1": 105.0, "mod_ratio": 1.0, "mod_index": 4.0,
-        "growl": 0.6, "growl_hz": 30.0, "noise": 0.3, "noise_cut": 2500.0,
+        "growl": 0.6, "growl_hz": 30.0, "rough": 0.5, "noise": 0.3, "noise_cut": 2500.0,
+        "formants": [[350, 3.5, 1.0], [900, 5.0, 0.6], [2100, 6.0, 0.3]],
         "env": {"attack": 20, "hold": 420, "decay": 260}}},
     "roar": {"category": "vocal", "duration_ms": 1200, "graph": {
         "f0": 120.0, "fpeak": 95.0, "f1": 70.0, "mod_ratio": 1.0, "mod_index": 5.0,
         "growl": 0.6, "growl_hz": 26.0, "noise": 0.45, "noise_cut": 2200.0,
+        "formants": [[300, 3.0, 1.0], [750, 4.0, 0.7], [1900, 5.0, 0.4]],
         "env": {"attack": 40, "hold": 700, "decay": 460}}},
     "chirp": {"category": "vocal", "duration_ms": 160, "graph": {
         "f0": 1800.0, "fpeak": 2600.0, "f1": 1500.0, "mod_ratio": 3.0, "mod_index": 2.0,
         "growl": 0.0, "noise": 0.1, "noise_cut": 6000.0,
+        "formants": [[2200, 6.0, 1.0], [3600, 7.0, 0.6]],
         "env": {"attack": 3, "hold": 20, "decay": 130}}},
     "squeak": {"category": "vocal", "duration_ms": 140, "graph": {
         "f0": 1600.0, "fpeak": 2200.0, "f1": 1700.0, "mod_ratio": 2.0, "mod_index": 3.0,
         "growl": 0.0, "noise": 0.15, "noise_cut": 6000.0,
+        "formants": [[1900, 6.0, 1.0], [3200, 7.0, 0.5]],
         "env": {"attack": 2, "hold": 10, "decay": 125}}},
 }
 
@@ -88,6 +96,14 @@ def synth(g: dict, n: int, sr: int, rng) -> np.ndarray:
     if drive > 0.0:
         k = 1.0 + drive
         voice = np.tanh(k * voice) / np.tanh(k)
+
+    # Formant bank (source-filter): resonant peaks shape the voiced source into a
+    # vowel/animal timbre — what makes a bark read as a *voice* and not a buzz.
+    formants = g.get("formants")
+    if formants:
+        shaped = dsp.formant_bank(voice, sr, formants)
+        mix = float(g.get("formant_mix", 0.8))
+        voice = (1.0 - mix) * voice + mix * shaped
 
     noise_mix = float(g.get("noise", 0.0))
     if noise_mix > 0.0:

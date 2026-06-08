@@ -121,6 +121,40 @@ def biquad_highpass(x, sr: int, cutoff: float, q: float = 0.707):
     return _biquad(x, b0, b1, b2, a1, a2)
 
 
+def biquad_bandpass(x, sr: int, freq: float, q: float = 5.0):
+    """RBJ-cookbook bandpass (constant 0 dB peak gain) — one formant resonance."""
+    freq = float(np.clip(freq, 20.0, sr * 0.45))
+    q = max(0.1, float(q))
+    w0 = TWO_PI * freq / sr
+    cw, sw = np.cos(w0), np.sin(w0)
+    alpha = sw / (2.0 * q)
+    a0 = 1.0 + alpha
+    b0 = alpha / a0
+    b1 = 0.0
+    b2 = -alpha / a0
+    a1 = (-2.0 * cw) / a0
+    a2 = (1.0 - alpha) / a0
+    return _biquad(x, b0, b1, b2, a1, a2)
+
+
+def formant_bank(x, sr: int, formants):
+    """Sum parallel bandpass resonances (source-filter vocal shaping).
+
+    `formants` is a list of [freq, q, gain] (q and gain optional). The result is
+    normalized to the input's peak so it mixes cleanly with the dry source.
+    """
+    out = np.zeros_like(np.asarray(x, dtype=np.float64))
+    for f in formants:
+        freq = float(f[0])
+        q = float(f[1]) if len(f) > 1 else 6.0
+        gain = float(f[2]) if len(f) > 2 else 1.0
+        out += gain * biquad_bandpass(x, sr, freq, q)
+    peak = np.max(np.abs(out))
+    if peak > 1e-9:
+        out *= (np.max(np.abs(x)) + 1e-9) / peak
+    return out
+
+
 def bitcrush(x, bits: int = 6, downsample: int = 2):
     """Quantize to `bits` and sample-and-hold by `downsample` — retro/8-bit grit."""
     bits = int(np.clip(bits, 1, 16))

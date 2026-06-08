@@ -22,3 +22,12 @@ Re-derive any material with:
 ```bash
 python -m psap.analyze refs/impacts/wood_000.wav --material wood
 ```
+
+## vocals/
+
+`vocals/dog_bark.wav` — one isolated bark cut from **"Dog barking mono"** by
+Brandon Morris (OpenGameArt), dual-licensed **CC0** / OGA-BY 3.0 (CC0 applies; we
+credit the author regardless). `analyze_vocal` measured its pitch (f0 ≈ 235 Hz) and
+**formants** (~700 / 860 / 1884 / 3031 Hz) — see `vocals/measured_vocals.json`.
+Those formants are baked into `psap/vocal.py::VOCAL_PRESETS["bark"]`, shaped by the
+formant filter bank (`dsp.formant_bank`).

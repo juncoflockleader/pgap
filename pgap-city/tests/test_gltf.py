@@ -25,8 +25,8 @@ def test_box_is_valid_unit_gltf():
     idx = np.frombuffer(_decode(g, 2), dtype="<u2")
     assert len(pos) == 36 and len(idx) == 36          # 12 tris, flat-shaded
     assert idx.max() < len(pos)
-    assert np.allclose(pos.min(0), [-0.5, -0.5, 0.0])  # unit box, base at z=0
-    assert np.allclose(pos.max(0), [0.5, 0.5, 1.0])
+    assert np.allclose(pos.min(0), [-0.5, 0.0, -0.5])  # Y-up unit box, base at y=0
+    assert np.allclose(pos.max(0), [0.5, 1.0, 0.5])
 
 
 def test_normals_are_unit_and_outward():
@@ -34,7 +34,7 @@ def test_normals_are_unit_and_outward():
     pos = np.frombuffer(_decode(g, 0), dtype="<f4").reshape(-1, 3)
     nrm = np.frombuffer(_decode(g, 1), dtype="<f4").reshape(-1, 3)
     assert np.allclose(np.linalg.norm(nrm, axis=1), 1.0, atol=1e-3)
-    center = np.array([0.0, 0.0, 0.5])
+    center = np.array([0.0, 0.5, 0.0])
     # each vertex normal points away from the box center
     assert np.all(np.sum(nrm * (pos - center), axis=1) > 0)
 

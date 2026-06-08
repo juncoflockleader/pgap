@@ -17,22 +17,27 @@ from typing import Sequence
 
 import numpy as np
 
-# 8 corners of the unit box (base at z=0, XY-centered).
+# 8 corners of the unit box. glTF is Y-up, so the building's height is the Y axis
+# (base at y=0, top at y=1) and the footprint is X×Z, both centered in [-0.5, 0.5].
+# After the standard glTF->UE import (glTF Y -> UE Z), this lands upright with its
+# base on the ground, and a per-instance scale [width, depth, height] maps to UE
+# [X, Y, Z] cleanly.
 _CORNERS = np.array([
-    [-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.5, 0.5, 0.0], [-0.5, 0.5, 0.0],
-    [-0.5, -0.5, 1.0], [0.5, -0.5, 1.0], [0.5, 0.5, 1.0], [-0.5, 0.5, 1.0],
+    [-0.5, 0.0, -0.5], [0.5, 0.0, -0.5], [0.5, 0.0, 0.5], [-0.5, 0.0, 0.5],   # base (y=0)
+    [-0.5, 1.0, -0.5], [0.5, 1.0, -0.5], [0.5, 1.0, 0.5], [-0.5, 1.0, 0.5],   # top  (y=1)
 ], dtype=np.float64)
 
-# 6 faces as quads (corner indices); each becomes 2 triangles.
+# 6 faces as quads (corner indices); each becomes 2 triangles. Winding is corrected
+# to face outward at build time, so the exact vertex order here need not be perfect.
 _QUADS = [
-    [0, 1, 2, 3],   # bottom
+    [0, 1, 2, 3],   # base
     [4, 5, 6, 7],   # top
-    [0, 1, 5, 4],   # -Y
-    [1, 2, 6, 5],   # +X
-    [2, 3, 7, 6],   # +Y
-    [3, 0, 4, 7],   # -X
+    [0, 1, 5, 4],
+    [1, 2, 6, 5],
+    [2, 3, 7, 6],
+    [3, 0, 4, 7],
 ]
-_CENTER = np.array([0.0, 0.0, 0.5])
+_CENTER = np.array([0.0, 0.5, 0.0])
 
 
 def _box_arrays():
@@ -91,7 +96,7 @@ def box_gltf(color_rgb: Sequence[int], name: str = "Box") -> bytes:
         ],
         "accessors": [
             {"bufferView": 0, "componentType": 5126, "count": int(len(pos)), "type": "VEC3",
-             "min": [-0.5, -0.5, 0.0], "max": [0.5, 0.5, 1.0]},
+             "min": [-0.5, 0.0, -0.5], "max": [0.5, 1.0, 0.5]},
             {"bufferView": 1, "componentType": 5126, "count": int(len(nrm)), "type": "VEC3"},
             {"bufferView": 2, "componentType": 5123, "count": int(len(idx)), "type": "SCALAR"},
         ],

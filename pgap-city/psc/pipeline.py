@@ -64,8 +64,10 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         kits_meta.append({"id": kit, "mesh": mesh_path.name, "zone": zone,
                           "baseColor": list(color)})
     layout["kits"] = kits_meta
-    layout["instanceModel"] = ("SM_<kit>.gltf is a 1 m XY-centered box (base z=0); "
-                               "place at (x,y,z) cm, rotate yaw, scale by scale3 (m).")
+    layout["instanceModel"] = (
+        "SM_<kit>.gltf is a 1 m Y-up box (footprint X*Z centered, base at y=0) that "
+        "imports upright (base on ground). Per instance: place at (x,y,z) cm, rotate "
+        "yaw (deg, about up), scale by scale3 = [width, depth, height] in m.")
 
     layout_path = out / f"{name}.city.layout.json"
     layout_path.write_text(json.dumps(layout, indent=2))

@@ -113,7 +113,10 @@ keywords). The thumbnail mechanism.
 - the catalog generator (a script: build each template → render thumbnail → emit
   a gallery md).
 - one resolver feature *if* a new base needs it (most won't — sockets + mirror +
-  ring already cover bilateral, radial, and chained bodies).
+  ring already cover bilateral, radial, and chained bodies). **Added:** optional
+  per-attachment `rotation` (yaw/pitch/roll degrees) that pivots a module about its
+  socket — a byte-exact no-op at zero, Z-symmetric under mirror, validated in the
+  recipe grammar. Enables fanned necks (hydra), swept/angled limbs, tilted parts.
 
 ## Milestones
 
@@ -153,8 +156,7 @@ keywords). The thumbnail mechanism.
   `wyvern` no longer collide with sphinx/dragon), corpus-gated, and in the bestiary
   gallery; `test_presets` checks structure (wyvern 2 legs, hydra 3 heads, naga/
   basilisk legless). **Exit:** all generate + read as described; NL routes their
-  names. *Note:* the hydra's necks rise parallel (heads cluster) — a clean fan
-  needs per-attachment rotation in the assembler (future).
+  names. The hydra's three heads **fan out** via per-attachment rotation (below).
 - **L5 — Bestiary catalog.** ✅ **done** — `pgap.catalog` builds every template and
   renders a deterministic thumbnail with a new **headless software renderer**
   (`pgap.render` — pure-numpy z-buffer rasterizer, shades the mesh's own vertex

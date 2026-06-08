@@ -26,7 +26,7 @@ Auto-generated gallery of all **27** creature templates — built offline by the
 | <img src="bestiary/manticore.png" width="180"> | **manticore** | 41 · 10204 · 140 cm | chocolate · red | body, neck, head, eyes, jaws, mane, wing, leg, tail |
 | <img src="bestiary/wyvern.png" width="180"> | **wyvern** | 38 · 6532 · 150 cm | stone · amber | body, neck, head, horn, eyes, jaws, wing, leg, tail |
 | <img src="bestiary/pegasus.png" width="180"> | **pegasus** | 47 · 10392 · 160 cm | cream · blue | body, neck, head, eyes, jaws, ear, mane, wing, leg, hoof, tail |
-| <img src="bestiary/hydra.png" width="180"> | **hydra** | 47 · 8944 · 160 cm | stone · green | hydra_body, hydra_neck, head, eyes, jaws, leg, tail |
+| <img src="bestiary/hydra.png" width="180"> | **hydra** | 47 · 9576 · 160 cm | stone · green | hydra_body, hydra_neck, head, eyes, jaws, leg, tail |
 | <img src="bestiary/naga.png" width="180"> | **naga** | 20 · 4216 · 200 cm | golden · green | spine, neck, head, eyes, jaws, arm, tail |
 | <img src="bestiary/phoenix.png" width="180"> | **phoenix** | 31 · 5748 · 90 cm | golden · amber | avian_torso, neck, head, eyes, jaws, horn, wing, leg, tail |
 | <img src="bestiary/basilisk.png" width="180"> | **basilisk** | 17 · 3468 · 75 cm | stone · red | serpent_body, head, horn, eyes, jaws |

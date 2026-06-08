@@ -35,6 +35,26 @@ def _roty(a: float) -> np.ndarray:
     return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]])
 
 
+_Z_REFLECT = np.diag([1.0, 1.0, -1.0])
+
+
+def _euler(rotation) -> np.ndarray:
+    """(yaw, pitch, roll) in degrees → a 3×3 rotation about Y, Z, X (in that order).
+
+    Returns the exact identity when all angles are zero, so a default attachment is
+    a true no-op and existing creatures stay byte-identical."""
+    yaw, pitch, roll = (float(r) for r in rotation)
+    if yaw == 0.0 and pitch == 0.0 and roll == 0.0:
+        return _I3
+    cy, sy = np.cos(np.radians(yaw)), np.sin(np.radians(yaw))
+    cp, sp = np.cos(np.radians(pitch)), np.sin(np.radians(pitch))
+    cr, sr = np.cos(np.radians(roll)), np.sin(np.radians(roll))
+    ry = np.array([[cy, 0.0, sy], [0.0, 1.0, 0.0], [-sy, 0.0, cy]])     # yaw  (Y)
+    rz = np.array([[cp, -sp, 0.0], [sp, cp, 0.0], [0.0, 0.0, 1.0]])     # pitch (Z)
+    rx = np.array([[1.0, 0.0, 0.0], [0.0, cr, -sr], [0.0, sr, cr]])     # roll  (X)
+    return ry @ rz @ rx
+
+
 class _Placed:
     __slots__ = ("origin", "rot", "mirror", "module")
 
@@ -57,8 +77,10 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
         # (instance_id, origin, rot, mirror_flag, cross_parent_bone, phase)
         instances: list[tuple] = []
 
+        rl = _euler(att.rotation)  # per-attachment pivot about the socket (no-op if 0)
+
         if att.parent is None:
-            instances.append((att.id, np.zeros(3), _I3, False, None, 0))
+            instances.append((att.id, np.zeros(3), rl, False, None, 0))
         else:
             rep = att.parent if att.parent not in mirrored else f"{att.parent}_l"
             sock = placed[rep].module.sockets[att.parent_socket]
@@ -71,8 +93,10 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
                     offset = rk @ np.array([sock.ring_radius, 0.0, 0.0])
                     origin = p.origin + p.rot @ (base + offset)
                     cross = f"{att.parent}_{sock.host_bone}"
-                    instances.append((f"{att.id}_{k}", origin, p.rot @ rk, False, cross, k))
+                    instances.append((f"{att.id}_{k}", origin, p.rot @ rk @ rl, False, cross, k))
             elif att.mirror:
+                # right copy gets the Z-reflected rotation so the pair stays symmetric
+                rl_r = _Z_REFLECT @ rl @ _Z_REFLECT
                 for suffix, mir in (("_l", False), ("_r", True)):
                     parent_inst = att.parent if att.parent not in mirrored else f"{att.parent}_{'r' if mir else 'l'}"
                     p = placed[parent_inst]
@@ -81,12 +105,12 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
                         sp[2] *= -1.0
                     origin = p.origin + p.rot @ sp
                     cross = f"{parent_inst}_{sock.host_bone}"
-                    instances.append((f"{att.id}{suffix}", origin, p.rot, mir, cross, 0))
+                    instances.append((f"{att.id}{suffix}", origin, p.rot @ (rl_r if mir else rl), mir, cross, 0))
             else:
                 p = placed[att.parent]
                 origin = p.origin + p.rot @ base
                 cross = f"{att.parent}_{sock.host_bone}"
-                instances.append((att.id, origin, p.rot, False, cross, 0))
+                instances.append((att.id, origin, p.rot @ rl, False, cross, 0))
 
         for inst_id, origin, rot, mir, cross, phase in instances:
             placed[inst_id] = _Placed(origin, rot, mir, att.module)

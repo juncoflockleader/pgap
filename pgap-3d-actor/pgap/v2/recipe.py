@@ -70,6 +70,11 @@ def validate_recipe(data: dict[str, Any]) -> dict:
         if unknown:
             warnings.append(f"module {mid!r}: ignored unknown params {sorted(unknown)}")
 
+        rot = m.get("rotation")
+        if rot is not None and not (isinstance(rot, (list, tuple)) and len(rot) == 3
+                                    and all(isinstance(x, (int, float)) for x in rot)):
+            errors.append(f"module {mid!r}: 'rotation' must be [yaw, pitch, roll] degrees")
+
         attach = m.get("attach")
         if attach is None:
             roots += 1
@@ -112,8 +117,10 @@ def recipe_from_dict(data: dict[str, Any]) -> Recipe:
             attachments.append(Attachment(m["id"], module))
         else:
             pid, socket = _parse_attach(m["attach"])
+            rot = m.get("rotation") or (0.0, 0.0, 0.0)
             attachments.append(Attachment(m["id"], module, parent=pid,
-                                          parent_socket=socket, mirror=bool(m.get("mirror"))))
+                                          parent_socket=socket, mirror=bool(m.get("mirror")),
+                                          rotation=tuple(float(x) for x in rot)))
     return Recipe(name=str(data.get("name", "Creature")), attachments=attachments)
 
 
@@ -137,6 +144,7 @@ def capability_report() -> dict:
             "name": "str", "seed": "int", "heightCm": "number",
             "material": {"baseColor": "str", "eyeColor": "str?"},
             "modules": [{"id": "str", "kind": "str", "variant": "str?",
-                         "attach": "<parentId>.<socket>", "mirror": "bool?", "params": "object?"}],
+                         "attach": "<parentId>.<socket>", "mirror": "bool?", "params": "object?",
+                         "rotation": "[yaw,pitch,roll]?"}],
         },
     }

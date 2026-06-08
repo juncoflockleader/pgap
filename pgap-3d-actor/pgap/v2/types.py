@@ -68,6 +68,9 @@ class Attachment:
     parent: Optional[str] = None       # attachment id of the host, or None = root
     parent_socket: Optional[str] = None
     mirror: bool = False
+    rotation: tuple = (0.0, 0.0, 0.0)  # (yaw about Y, pitch about Z, roll about X), degrees
+    #   pivots the module about its socket; (0,0,0) is a no-op. On a mirrored
+    #   attachment the right copy gets the Z-reflected rotation so it stays symmetric.
 
 
 @dataclass(frozen=True)

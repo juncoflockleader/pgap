@@ -948,9 +948,11 @@ def pegasus_recipe() -> Recipe:
 def hydra_recipe() -> Recipe:
     """Three serpentine necks + draconic heads on a dragon body."""
     atts = [Attachment("body", hydra_body_module())]
+    yaws = {"c": 0.0, "l": -45.0, "r": 45.0}  # side necks pivot outward to fan the heads
     for s, sock in (("c", "neck_c"), ("l", "neck_l"), ("r", "neck_r")):
         atts += [
-            Attachment(f"neck_{s}", hydra_neck_module(), parent="body", parent_socket=sock),
+            Attachment(f"neck_{s}", hydra_neck_module(), parent="body", parent_socket=sock,
+                       rotation=(yaws[s], 0.0, 0.0)),
             Attachment(f"head_{s}", draconic_head_module(), parent=f"neck_{s}", parent_socket="top"),
             _eyes_for(f"head_{s}", "slit", radius=0.018, spacing=0.040, aid=f"eyes_{s}"),
             _jaws_for(f"head_{s}", radius=0.018, width=0.030, aid=f"jaws_{s}"),

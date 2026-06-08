@@ -27,19 +27,28 @@ _TEMPLATE_KEYWORDS = {
     "kraken": ["kraken", "octopus", "squid", "cephalopod"],
     "merfolk": ["mermaid", "merfolk", "merman", "merperson", "siren", "fish tail", "fish-tailed"],
     "cthulhu": ["cthulhu", "great old one", "tentacle face", "tentacled face", "facial tentacle"],
-    "sphinx": ["sphinx", "winged lion", "manticore"],
+    "sphinx": ["sphinx", "winged lion"],
     "unicorn": ["unicorn"],
     "stag": ["stag", "deer", "elk", "antlered"],
     "boar": ["boar", "warthog", "hog"],
     "horse": ["horse", "pony", "stallion", "mare", "equine"],
     "feline": ["lion", "tiger", "panther", "feline"],
-    "dragon": ["dragon", "wyvern", "drake", "wyrm"],
+    "dragon": ["dragon", "drake", "wyrm"],
     "serpent": ["snake", "serpent", "cobra", "viper", "python", "boa", "anaconda"],
     "avian": ["bird", "eagle", "hawk", "falcon", "owl", "raven", "crow", "parrot", "songbird"],
     "arachnid": ["spider", "arachnid", "tarantula", "widow"],
     "hexapod": ["insect", "ant", "beetle", "bug", "hexapod", "six-legged",
                 "six legs", "mantis", "grasshopper", "cricket", "roach"],
     "centaur": ["centaur"],
+    "griffin": ["griffin", "gryphon", "griffon"],
+    "manticore": ["manticore"],
+    "wyvern": ["wyvern", "wivern"],
+    "pegasus": ["pegasus", "winged horse"],
+    "hydra": ["hydra", "many-headed", "multi-headed", "many heads"],
+    "naga": ["naga", "lamia", "snake-tailed", "snake person"],
+    "phoenix": ["phoenix", "firebird", "phenix"],
+    "basilisk": ["basilisk", "cockatrice"],
+    "chimera": ["chimera", "chimaera"],
     "biped": ["humanoid", "human ", "person", "robot", "android", "warrior", "knight"],
 }
 
@@ -85,7 +94,9 @@ def _best_template(text: str):
     scores = {name: 0 for name in _TEMPLATE_KEYWORDS}
     for name, kws in _TEMPLATE_KEYWORDS.items():
         for kw in kws:
-            if kw in text:
+            # word-boundary match so short keys don't fire inside other words
+            # ("ant" must not match "m-ant-icore", "wyrm" not "wyrmling-ish", …)
+            if re.search(r"\b" + re.escape(kw) + r"\b", text):
                 scores[name] += len(kw.split())
     # heuristic combos for descriptive (un-named) prompts
     if "wing" in text and any(k in text for k in ("lion", "cat", "feline")):

@@ -33,6 +33,10 @@ _FLAVOR: dict[str, tuple] = {
     "horse": ("chocolate", "amber"), "feline": ("golden", "green"), "dragon": ("black", "red"),
     "serpent": ("golden", "amber"), "avian": ("cream", "amber"), "arachnid": ("black", "red"),
     "hexapod": ("chocolate", "green"), "centaur": ("tan", "blue"),
+    "griffin": ("golden", "amber"), "manticore": ("chocolate", "red"),
+    "wyvern": ("stone", "amber"), "pegasus": ("cream", "blue"), "hydra": ("stone", "green"),
+    "naga": ("golden", "green"), "phoenix": ("golden", "amber"), "basilisk": ("stone", "red"),
+    "chimera": ("golden", "amber"),
 }
 _DEFAULT_FLAVOR = ("tan", None)
 

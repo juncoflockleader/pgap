@@ -41,6 +41,8 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
     "hexapod_body": _single(lambda p: L.hexapod_body_module()),
     "insect_leg": _single(lambda p: L.insect_leg_module()),
     "centaur_torso": _single(lambda p: L.centaur_torso_module()),
+    "hydra_body": _single(lambda p: L.hydra_body_module()),
+    "hydra_neck": _single(lambda p: L.hydra_neck_module()),
     "neck": _single(lambda p: L.neck_module()),
     "dragon_neck": _single(lambda p: L.dragon_neck_module()),
     # head is the V3-M0 demonstration: one slot, three existing forms.
@@ -136,6 +138,15 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "arachnid": lambda **o: L.arachnid_recipe(legs=int(o.get("legs", 8))),
     "hexapod": lambda **o: L.hexapod_recipe(),
     "centaur": lambda **o: L.centaur_recipe(),
+    "griffin": lambda **o: L.griffin_recipe(),
+    "manticore": lambda **o: L.manticore_recipe(),
+    "wyvern": lambda **o: L.wyvern_recipe(),
+    "pegasus": lambda **o: L.pegasus_recipe(),
+    "hydra": lambda **o: L.hydra_recipe(),
+    "naga": lambda **o: L.naga_recipe(),
+    "phoenix": lambda **o: L.phoenix_recipe(),
+    "basilisk": lambda **o: L.basilisk_recipe(),
+    "chimera": lambda **o: L.chimera_recipe(),
 }
 
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
@@ -143,6 +154,8 @@ TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
     "unicorn": 160, "stag": 150, "boar": 90, "horse": 160, "feline": 100, "dragon": 140,
     "serpent": 70, "avian": 45, "arachnid": 35, "hexapod": 30, "centaur": 210,
+    "griffin": 130, "manticore": 140, "wyvern": 150, "pegasus": 160, "hydra": 160,
+    "naga": 200, "phoenix": 90, "basilisk": 75, "chimera": 140,
 }
 
 

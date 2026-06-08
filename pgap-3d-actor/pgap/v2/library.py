@@ -209,18 +209,20 @@ def jaws_module(radius: float = 0.013, width: float = 0.020, nose: bool = True) 
 
 
 def _eyes_for(parent: str, variant: str = "round", radius: float = 0.016,
-              spacing: float = 0.030) -> "Attachment":
+              spacing: float = 0.030, aid: str = "eyes") -> "Attachment":
     """A standard eyes attachment onto ``parent``'s ``eyes`` socket. Used by every
-    head-bearing preset so creatures actually have a face."""
-    return Attachment("eyes", eyes_module(variant, radius, spacing),
+    head-bearing preset so creatures actually have a face. ``aid`` overrides the
+    attachment id so multi-headed creatures (hydra) get unique ids."""
+    return Attachment(aid, eyes_module(variant, radius, spacing),
                       parent=parent, parent_socket="eyes")
 
 
 def _jaws_for(parent: str, radius: float = 0.013, width: float = 0.020,
-              nose: bool = True) -> "Attachment":
+              nose: bool = True, aid: str = "jaws") -> "Attachment":
     """A standard jaws (nose + mouth line) attachment onto ``parent``'s ``jaws``
-    socket — paired with :func:`_eyes_for` so head-bearing presets read as faces."""
-    return Attachment("jaws", jaws_module(radius, width, nose),
+    socket — paired with :func:`_eyes_for` so head-bearing presets read as faces.
+    ``aid`` overrides the attachment id (unique faces on multi-headed creatures)."""
+    return Attachment(aid, jaws_module(radius, width, nose),
                       parent=parent, parent_socket="jaws")
 
 
@@ -844,6 +846,176 @@ def centaur_torso_module() -> Module:
         "neck": Socket("neck", v(0, 0.38, 0), "spine_02"),
         "shoulder": Socket("shoulder", v(0, 0.34, 0.085), "spine_02", mirror=True),
     })
+
+
+def hydra_neck_module() -> Module:
+    """A tall S-neck (rises ~0.36, twice ``dragon_neck``) so a hydra's heads lift
+    well clear of the body and fan apart instead of bunching at the shoulders."""
+    return Module(kind="hydra_neck", bones=[
+        BoneSpec("neck_0", None, v(0, 0, 0), v(0.05, 0.12, 0), 0.060, 0.052, "neck"),
+        BoneSpec("neck_1", "neck_0", v(0.05, 0.12, 0), v(0.10, 0.24, 0), 0.052, 0.044, "neck"),
+        BoneSpec("neck_2", "neck_1", v(0.10, 0.24, 0), v(0.15, 0.36, 0), 0.044, 0.038, "neck"),
+    ], sockets={"top": Socket("top", v(0.15, 0.36, 0), "neck_2")})
+
+
+def hydra_body_module() -> Module:
+    """A dragon torso whose front carries *three* neck sockets (center + a raised
+    bilateral pair) so a hydra can grow three necks/heads from one body."""
+    bones = [
+        BoneSpec("spine0", None, v(0, 0, 0), v(0.25, 0.02, 0), 0.13, 0.13, "spine"),
+        BoneSpec("spine1", "spine0", v(0.25, 0.02, 0), v(0.50, 0.0, 0), 0.13, 0.11, "spine"),
+        BoneSpec("spine2", "spine1", v(0.50, 0.0, 0), v(0.70, 0.05, 0), 0.11, 0.09, "spine"),
+    ]
+    return Module(kind="hydra_body", bones=bones, sockets={
+        "neck_c": Socket("neck_c", v(0.70, 0.07, 0.0), "spine2"),
+        "neck_l": Socket("neck_l", v(0.64, 0.05, 0.11), "spine2"),
+        "neck_r": Socket("neck_r", v(0.64, 0.05, -0.11), "spine2"),
+        "shoulder": Socket("shoulder", v(0.58, -0.06, 0.10), "spine2", mirror=True),
+        "hip": Socket("hip", v(0.06, -0.06, 0.10), "spine0", mirror=True),
+        "tail": Socket("tail", v(-0.02, 0.02, 0), "spine0"),
+    })
+
+
+# --------------------------------------------------------------------------- #
+# L4 — named presets, each composed from the existing bases + parts.
+# --------------------------------------------------------------------------- #
+def griffin_recipe() -> Recipe:
+    """Eagle head + feathered wings + front talons on a lion body."""
+    return Recipe("Griffin", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
+        _jaws_for("head", nose=False),  # a beak
+        Attachment("wing", wing_feathered_module(), parent="body", parent_socket="wings", mirror=True),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("talon", claw_module(), parent="foreleg", parent_socket="tip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
+
+
+def manticore_recipe() -> Recipe:
+    """Human face + mane + bat wings + a spiked (serpent) tail on a lion body."""
+    return Recipe("Manticore", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
+        _jaws_for("head"),
+        Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
+        Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
+
+
+def wyvern_recipe() -> Recipe:
+    """A two-legged dragon: wings + a single pair of (hind) legs + a draconic head."""
+    return Recipe("Wyvern", [
+        Attachment("body", body_module()),
+        Attachment("neck", dragon_neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", draconic_head_module(), parent="neck", parent_socket="top"),
+        Attachment("horns", horn_bull_module(), parent="head", parent_socket="horns"),
+        _eyes_for("head", "slit", radius=0.020, spacing=0.045),
+        _jaws_for("head", radius=0.020, width=0.035),
+        Attachment("wing", wing_module(), parent="body", parent_socket="wings", mirror=True),
+        Attachment("leg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
+
+
+def pegasus_recipe() -> Recipe:
+    """A winged horse: feathered wings + hooves + mane."""
+    return Recipe("Pegasus", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
+        _jaws_for("head"),
+        Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
+        Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
+        Attachment("wing", wing_feathered_module(), parent="body", parent_socket="wings", mirror=True),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("forehoof", hoof_module(), parent="foreleg", parent_socket="tip", mirror=True),
+        Attachment("hindhoof", hoof_module(), parent="hindleg", parent_socket="tip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
+
+
+def hydra_recipe() -> Recipe:
+    """Three serpentine necks + draconic heads on a dragon body."""
+    atts = [Attachment("body", hydra_body_module())]
+    for s, sock in (("c", "neck_c"), ("l", "neck_l"), ("r", "neck_r")):
+        atts += [
+            Attachment(f"neck_{s}", hydra_neck_module(), parent="body", parent_socket=sock),
+            Attachment(f"head_{s}", draconic_head_module(), parent=f"neck_{s}", parent_socket="top"),
+            _eyes_for(f"head_{s}", "slit", radius=0.018, spacing=0.040, aid=f"eyes_{s}"),
+            _jaws_for(f"head_{s}", radius=0.018, width=0.030, aid=f"jaws_{s}"),
+        ]
+    atts += [
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ]
+    return Recipe("Hydra", atts)
+
+
+def naga_recipe() -> Recipe:
+    """A humanoid upper body on a long serpent tail (snake-tailed, no fin)."""
+    return Recipe("Naga", [
+        Attachment("spine", spine_module()),
+        Attachment("neck", neck_module(), parent="spine", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head", "slit"),
+        _jaws_for("head"),
+        Attachment("arm", arm_module(), parent="spine", parent_socket="shoulder", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="spine", parent_socket="base"),
+    ])
+
+
+def phoenix_recipe() -> Recipe:
+    """A grand bird: feathered wings, a crest, and a long plumed tail."""
+    return Recipe("Phoenix", [
+        Attachment("torso", avian_torso_module()),
+        Attachment("neck", neck_module(), parent="torso", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
+        _jaws_for("head", nose=False),  # beak
+        Attachment("crest", horn_unicorn_module(), parent="head", parent_socket="horns"),
+        Attachment("wing", wing_feathered_module(), parent="torso", parent_socket="wings", mirror=True),
+        Attachment("leg", leg_module(), parent="torso", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="torso", parent_socket="tail"),
+    ])
+
+
+def basilisk_recipe() -> Recipe:
+    """A serpent with a crest (crown) — the king of snakes."""
+    return Recipe("Basilisk", [
+        Attachment("body", serpent_body_module()),
+        Attachment("head", draconic_head_module(), parent="body", parent_socket="neck"),
+        Attachment("crest", horn_antler_module(), parent="head", parent_socket="horns"),
+        _eyes_for("head", "slit", radius=0.020, spacing=0.045),
+        _jaws_for("head", radius=0.020, width=0.035),
+    ])
+
+
+def chimera_recipe() -> Recipe:
+    """A lion body with a maned head, goat (ram) horns, and a serpent tail."""
+    return Recipe("Chimera", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
+        _jaws_for("head"),
+        Attachment("horns", horn_ram_module(), parent="head", parent_socket="horns"),
+        Attachment("mane", mane_module(), parent="neck", parent_socket="mane"),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
 
 
 def centaur_recipe() -> Recipe:

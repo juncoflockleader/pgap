@@ -25,7 +25,15 @@ complex.
 
 ### B. The content batch (the first big expansion)
 
-#### B0 — Flagship first part: **eyes** (the most important organ)
+#### B0 — Flagship first part: **eyes** (the most important organ) — ✅ done (dog)
+
+Status: **implemented for the dog** (v1) — two non-fused, dark, proud "bead" eyes
+(E0/E1), plus a **black nose, lower jaw, and mouth line** ("jaws"). Built on two
+new reusable kernel capabilities: `Primitive.fused=False` (a non-fused organ that
+sits proud instead of melting into the smooth-min body) and `Primitive.region`
+(color an organ independently of its bone). Remaining: variant shapes (almond/
+slit), generalizing to v2 heads (needs non-fused *bones* in the v2 assembler), and
+the expressive eye-bone rig (roadmap 3). Live-verified in UE 5.7.4.
 
 Eyes lead the batch. They're the highest-value addition — eyes are what make a head
 read as a *face*, and **creatures today have none** (the dog has a snout, cheeks,

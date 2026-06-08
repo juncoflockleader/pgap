@@ -1,6 +1,9 @@
 # Roadmap 1 — Surface treatments (scales / feathers / fur / chitin)
 
-Status: Planned (next). The highest fidelity-per-cost upgrade.
+Status: **Implemented** (S0–S2). `material.surface` ∈ smooth/fur/scales/feathers/
+chitin/bark drives a base-color pattern + a tangent-space normal map; the golden
+retriever defaults to `fur`, live-verified in UE 5.7.4. Per-region surfaces (S3)
+and a surface corpus sweep (S4) remain. The highest fidelity-per-cost upgrade.
 
 ## Motivation
 

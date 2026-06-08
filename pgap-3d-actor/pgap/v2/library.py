@@ -785,3 +785,81 @@ def arachnid_recipe(legs: int = 8) -> Recipe:
         Attachment("legs", spider_leg_module(), parent="body", parent_socket="legs_ring"),
         _eyes_for("body", radius=0.018, spacing=0.030),
     ])
+
+
+# --------------------------------------------------------------------------- #
+# More body-plan archetypes (hexapod / insect, centaur)
+# --------------------------------------------------------------------------- #
+def hexapod_body_module() -> Module:
+    """An insect body along +X: abdomen (rear) — thorax (mid, the root) — head
+    (front). Eyes/jaws on the head; three bilateral leg sockets (fore/mid/hind)
+    along the thorax underside; an optional wings socket on the thorax top."""
+    bones = [
+        BoneSpec("thorax", None, v(0.0, 0.0, 0.0), v(0.12, 0.0, 0.0), 0.060, 0.052, "body"),
+        BoneSpec("head", "thorax", v(0.12, 0.0, 0.0), v(0.22, 0.0, 0.0), 0.052, 0.042, "head"),
+        BoneSpec("abdomen", "thorax", v(0.0, 0.0, 0.0), v(-0.20, 0.03, 0.0), 0.070, 0.040, "body"),
+    ]
+    return Module(kind="hexapod_body", bones=bones, sockets={
+        "foreleg": Socket("foreleg", v(0.11, -0.02, 0.05), "thorax", mirror=True),
+        "midleg": Socket("midleg", v(0.05, -0.03, 0.05), "thorax", mirror=True),
+        "hindleg": Socket("hindleg", v(-0.01, -0.02, 0.05), "thorax", mirror=True),
+        "wings": Socket("wings", v(0.02, 0.06, 0.03), "thorax", mirror=True),
+        "eyes": Socket("eyes", v(0.205, 0.030, 0), "head"),
+        "jaws": Socket("jaws", v(0.215, -0.020, 0), "head"),
+    })
+
+
+def insect_leg_module() -> Module:
+    """A long bent insect leg authored out to the +Z side and down: the coxa/femur
+    reach out to a high knee, the tibia drops steeply to the foot. Thin so it reads
+    as a distinct leg, not part of the body. Mirror gives the right-side leg (three
+    pairs splay a hexapod well clear of the thorax)."""
+    return Module(kind="insect_leg", bones=[
+        BoneSpec("coxa", None, v(0, 0, 0), v(0.0, 0.03, 0.16), 0.020, 0.015, "leg"),
+        BoneSpec("femur", "coxa", v(0.0, 0.03, 0.16), v(0.0, 0.05, 0.32), 0.015, 0.011, "leg"),
+        BoneSpec("tibia", "femur", v(0.0, 0.05, 0.32), v(0.0, -0.24, 0.38), 0.012, 0.008, "leg"),
+    ], sockets={})
+
+
+def hexapod_recipe() -> Recipe:
+    return Recipe("Hexapod", [
+        Attachment("body", hexapod_body_module()),
+        _eyes_for("body", radius=0.014, spacing=0.024),
+        _jaws_for("body", radius=0.012, width=0.016),
+        Attachment("foreleg", insect_leg_module(), parent="body", parent_socket="foreleg", mirror=True),
+        Attachment("midleg", insect_leg_module(), parent="body", parent_socket="midleg", mirror=True),
+        Attachment("hindleg", insect_leg_module(), parent="body", parent_socket="hindleg", mirror=True),
+    ])
+
+
+def centaur_torso_module() -> Module:
+    """A tall humanoid upper body (a taller `spine`) that rises +Y from the front of
+    a quadruped body, so the human half clearly reads above the horse back. Exposes
+    a top `neck` and bilateral `shoulder`s for the arms."""
+    return Module(kind="centaur_torso", bones=[
+        BoneSpec("pelvis", None, v(0, 0, 0), v(0, 0.13, 0), 0.085, 0.080, "spine"),
+        BoneSpec("spine_01", "pelvis", v(0, 0.13, 0), v(0, 0.26, 0), 0.080, 0.070, "spine"),
+        BoneSpec("spine_02", "spine_01", v(0, 0.26, 0), v(0, 0.38, 0), 0.070, 0.058, "spine"),
+    ], sockets={
+        "neck": Socket("neck", v(0, 0.38, 0), "spine_02"),
+        "shoulder": Socket("shoulder", v(0, 0.34, 0.085), "spine_02", mirror=True),
+    })
+
+
+def centaur_recipe() -> Recipe:
+    """A quadruped body with a tall humanoid torso rising at the front: the vertical
+    `centaur_torso` plugs into the horizontal `body`'s neck socket and rises,
+    carrying the neck/head (+ eyes/jaws) and a pair of arms; the four legs and a
+    tail hang off the horse body as usual."""
+    return Recipe("Centaur", [
+        Attachment("body", body_module()),
+        Attachment("torso", centaur_torso_module(), parent="body", parent_socket="neck"),
+        Attachment("neck", neck_module(), parent="torso", parent_socket="neck"),
+        Attachment("head", head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head"),
+        _jaws_for("head"),
+        Attachment("arm", arm_module(), parent="torso", parent_socket="shoulder", mirror=True),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])

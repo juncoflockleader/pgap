@@ -131,12 +131,15 @@ keywords). The thumbnail mechanism.
     size ("slit-pupil eyes", "big eyes"); corpus + `test_v2_eyes` green. Remaining:
     the expressive eye-*bone* rig → roadmap 3 (iris color now ships via
     `material.eyeColor`).
-- **L2 — Body bases.** serpentine, hexapod, arachnid, avian, centaur. **Started:**
+- **L2 — Body bases.** ✅ **done** — serpentine, hexapod, arachnid, avian, centaur.
   `serpent` (legless cobra-ish chain), `avian` (torso + 2 legs + feathered wings +
-  tail), and `arachnid` (cephalothorax + abdomen + 8 splayed `spider_leg`s on a
-  ring) are implemented, NL-routed, and corpus-gated; live-verified in UE 5.7.4.
-  Remaining: hexapod, centaur. **Exit:** each builds a valid creature; a snake, a
-  spider, a bird generate.
+  tail), `arachnid` (cephalothorax + abdomen + 8 splayed `spider_leg`s on a ring),
+  `hexapod` (abdomen/thorax/head + 3 bilateral `insect_leg` pairs + eyes/jaws on the
+  head; optional wings socket), and `centaur` (the horizontal `body` with the
+  vertical biped `spine` plugged into its neck — a humanoid torso + arms over four
+  legs, no new module). All implemented, NL-routed, and corpus-gated; serpent/avian/
+  arachnid live-verified in UE 5.7.4. **Exit:** each builds a valid creature; a
+  snake, a spider, a bird, a bug, a centaur generate.
 - **L3 — Slots batch.** beak, frill, spikes, shell, gills, whiskers, mandibles,
   dorsal fin, stinger. **Exit:** each module builds + composes on a host.
 - **L4 — Presets batch.** griffin, manticore, wyvern, pegasus, hydra, naga,

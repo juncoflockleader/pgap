@@ -38,6 +38,9 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
     "avian_torso": _single(lambda p: L.avian_torso_module()),
     "arachnid_body": _single(lambda p: L.arachnid_body_module(legs=int(p.get("legs", 8)))),
     "spider_leg": _single(lambda p: L.spider_leg_module()),
+    "hexapod_body": _single(lambda p: L.hexapod_body_module()),
+    "insect_leg": _single(lambda p: L.insect_leg_module()),
+    "centaur_torso": _single(lambda p: L.centaur_torso_module()),
     "neck": _single(lambda p: L.neck_module()),
     "dragon_neck": _single(lambda p: L.dragon_neck_module()),
     # head is the V3-M0 demonstration: one slot, three existing forms.
@@ -131,13 +134,15 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "serpent": lambda **o: L.serpent_recipe(),
     "avian": lambda **o: L.avian_recipe(),
     "arachnid": lambda **o: L.arachnid_recipe(legs=int(o.get("legs", 8))),
+    "hexapod": lambda **o: L.hexapod_recipe(),
+    "centaur": lambda **o: L.centaur_recipe(),
 }
 
 TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "biped": 180, "beholder": 80, "kraken": 70,
     "octopus_dragon": 130, "sphinx": 120, "merfolk": 175, "cthulhu": 240,
     "unicorn": 160, "stag": 150, "boar": 90, "horse": 160, "feline": 100, "dragon": 140,
-    "serpent": 70, "avian": 45, "arachnid": 35,
+    "serpent": 70, "avian": 45, "arachnid": 35, "hexapod": 30, "centaur": 210,
 }
 
 

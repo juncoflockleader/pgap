@@ -37,6 +37,9 @@ _TEMPLATE_KEYWORDS = {
     "serpent": ["snake", "serpent", "cobra", "viper", "python", "boa", "anaconda"],
     "avian": ["bird", "eagle", "hawk", "falcon", "owl", "raven", "crow", "parrot", "songbird"],
     "arachnid": ["spider", "arachnid", "tarantula", "widow"],
+    "hexapod": ["insect", "ant", "beetle", "bug", "hexapod", "six-legged",
+                "six legs", "mantis", "grasshopper", "cricket", "roach"],
+    "centaur": ["centaur"],
     "biped": ["humanoid", "human ", "person", "robot", "android", "warrior", "knight"],
 }
 

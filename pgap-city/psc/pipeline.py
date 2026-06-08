@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from . import gltf, network, render
+from . import gltf, instancing, network, render
 from .pngio import write_rgb8
 from .render import ZONE_COLOR
 from .spec import validate_spec
@@ -78,6 +78,12 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     write_rgb8(str(plan_path), render.render_plan(layout))
     paths["plan"] = plan_path
 
+    # per-kit bulk-instancing payloads for unreal-mcp-rx editor_instances_place
+    # (import SM_<kit>, set mesh_path, send one HISM call per kit).
+    instancing_path = out / f"{name}.instances.json"
+    instancing_path.write_text(json.dumps(instancing.instancing_payloads(layout), indent=2))
+    paths["instancing"] = instancing_path
+
     style_spec = {
         "schemaVersion": "psc.style.material.v1",
         "cell": f"{era}x{culture}",
@@ -101,10 +107,11 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "specHash": _spec_hash(s),
         "license": "procedurally generated original work",
         "files": {p.name: _sha1(p) for p in
-                  (layout_path, style_path, plan_path, *kit_meshes.values())},
+                  (layout_path, style_path, plan_path, instancing_path, *kit_meshes.values())},
         "roles": {
             "CityLayout": layout_path.name,
             "StyleMaterialSpec": style_path.name,
+            "CityInstancing": instancing_path.name,
             **{f"BuildingKit:{kit}": kit_meshes[kit].name for kit in kit_ids},
         },
         "counts": {**layout["counts"], "kits": len(kit_ids)},
@@ -124,6 +131,7 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
             "roles": [
                 {"role": "CityLayout", "file": layout_path.name},
                 {"role": "StyleMaterialSpec", "file": style_path.name},
+                {"role": "CityInstancing", "file": instancing_path.name},
                 *[{"role": f"BuildingKit:{kit}", "file": kit_meshes[kit].name} for kit in kit_ids],
             ],
             "pending": manifest["pending"],

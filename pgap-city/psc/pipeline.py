@@ -35,6 +35,43 @@ def _spec_hash(normalized: Dict[str, Any]) -> str:
     return hashlib.sha1(canonical.encode("utf-8")).hexdigest()
 
 
+_M = 100.0  # metres -> cm
+
+
+def _sample_height_m(grid, ext, x_m: float, y_m: float) -> float:
+    """Bilinear height (metres) from a 2D ``grid`` of metres spanning ``ext`` [w,h]."""
+    rows, cols = len(grid), len(grid[0])
+    u = min(0.999999, max(0.0, x_m / ext[0])) * (cols - 1)
+    w = min(0.999999, max(0.0, y_m / ext[1])) * (rows - 1)
+    x0, y0 = int(u), int(w)
+    x1, y1 = min(cols - 1, x0 + 1), min(rows - 1, y0 + 1)
+    fx, fy = u - x0, w - y0
+    g = grid
+    top = g[y0][x0] * (1 - fx) + g[y0][x1] * fx
+    bot = g[y1][x0] * (1 - fx) + g[y1][x1] * fx
+    return float(top * (1 - fy) + bot * fy)
+
+
+def _apply_terrain(layout: Dict[str, Any], terrain) -> None:
+    """FR7: consume a pgap-landscape tile's extent/sea level (+ optional height grid)
+    so the city sits on real ground — set per-instance Z (and offset to the tile
+    origin). Flat at sea level if no height grid is supplied."""
+    if not terrain:
+        return
+    ox, oy = terrain.get("originM", [0.0, 0.0])
+    base_z = float(terrain.get("seaLevelM", 0.0)) * _M
+    grid, ext = terrain.get("heightGrid"), terrain.get("extentM")
+    layout["terrain"] = terrain
+    for coll in (layout["instances"], layout.get("road_instances", []),
+                 layout.get("prop_instances", [])):
+        for it in coll:
+            lx, ly = it["x"] / _M, it["y"] / _M          # city-local metres
+            z = base_z + (_sample_height_m(grid, ext, lx, ly) * _M if grid and ext else 0.0)
+            it["z"] = round(it.get("z", 0.0) + z, 1)
+            it["x"] = round(it["x"] + ox * _M, 1)
+            it["y"] = round(it["y"] + oy * _M, 1)
+
+
 def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False) -> Tuple[Dict[str, Any], Dict[str, Path]]:
     v = validate_spec(spec)
     if not v["ok"]:
@@ -46,9 +83,11 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
     era, culture = s["era"], s["culture"]
     profile = profile_for(era, culture)
 
-    layout = network.generate_layout(profile, s["sizeBlocks"], int(s["seed"]), float(s["density"]))
+    layout = network.generate_layout(profile, s["sizeBlocks"], int(s["seed"]),
+                                     float(s["density"]), landmarks=s.get("landmarks") or [])
     layout["name"] = name
     layout["cell"] = f"{era}x{culture}"
+    _apply_terrain(layout, s.get("terrain"))   # FR7: sit the city on a landscape tile
     kit_ids = sorted({inst["kit"] for inst in layout["instances"]})
 
     paths: Dict[str, Path] = {}

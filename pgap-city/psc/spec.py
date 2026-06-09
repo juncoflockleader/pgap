@@ -19,7 +19,8 @@ DEFAULTS: Dict[str, Any] = {
     "sizeBlocks": [4, 4],
     "density": None,          # None -> use the profile default
     "layout": "auto",         # auto -> the profile's streetNet
-    "landmarks": [],
+    "landmarks": [],          # named hero slots, flagged for individual placement
+    "terrain": None,          # optional pgap-landscape hook (extent/sea level/heights)
 }
 
 
@@ -58,5 +59,29 @@ def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
 
     if out.get("layout", "auto") == "auto":
         out["layout"] = prof["streetNet"]
+
+    lm = out.get("landmarks") or []
+    out["landmarks"] = [str(x) for x in lm if isinstance(x, str)][:8]
+    if isinstance(lm, list) and len(out["landmarks"]) < len(lm):
+        warnings.append("dropped non-string / surplus (>8) landmarks")
+
+    terr = out.get("terrain")
+    if terr is not None:
+        if not isinstance(terr, dict):
+            warnings.append("terrain ignored: must be an object")
+            out["terrain"] = None
+        else:
+            t = {}
+            if isinstance(terr.get("seaLevelM"), (int, float)):
+                t["seaLevelM"] = float(terr["seaLevelM"])
+            if isinstance(terr.get("extentM"), (list, tuple)) and len(terr["extentM"]) == 2:
+                t["extentM"] = [float(terr["extentM"][0]), float(terr["extentM"][1])]
+            if isinstance(terr.get("originM"), (list, tuple)) and len(terr["originM"]) == 2:
+                t["originM"] = [float(terr["originM"][0]), float(terr["originM"][1])]
+            if isinstance(terr.get("heightGrid"), list) and terr["heightGrid"]:
+                t["heightGrid"] = terr["heightGrid"]      # 2D rows of metres (optional)
+            if isinstance(terr.get("tile"), str):
+                t["tile"] = terr["tile"]
+            out["terrain"] = t or None
 
     return {"ok": not errors, "errors": errors, "warnings": warnings, "normalized": out}

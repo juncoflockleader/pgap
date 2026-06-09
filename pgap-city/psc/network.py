@@ -52,7 +52,8 @@ def _lines(block_sizes: List[float], sw: float):
     return [round(c, 3) for c in centers], spans, extent
 
 
-def generate_layout(profile: dict, size_blocks, seed: int, density: float) -> Dict[str, Any]:
+def generate_layout(profile: dict, size_blocks, seed: int, density: float,
+                    landmarks=()) -> Dict[str, Any]:
     rng = np.random.Generator(np.random.PCG64(int(seed)))
     cols, rows = int(size_blocks[0]), int(size_blocks[1])
     base = float(profile["blockSizeM"])
@@ -112,8 +113,27 @@ def generate_layout(profile: dict, size_blocks, seed: int, density: float) -> Di
                     instances.append(_inst(profile, cxm, cym, lw * 0.85, ld * 0.85,
                                            _floors(cxm, cym), fh, zone, rng))
 
+    # landmarks: flag the most-central buildings as individually-placed hero towers.
+    placed = []
+    if landmarks and instances:
+        cxc, cyc = cx0 * M, cy0 * M
+        order = sorted(range(len(instances)),
+                       key=lambda k: (instances[k]["x"] - cxc) ** 2 + (instances[k]["y"] - cyc) ** 2)
+        for name, k in zip(list(landmarks)[:len(instances)], order):
+            it = instances[k]
+            it["landmark"] = True
+            it["landmarkName"] = str(name)
+            it["floors"] = int(max(it["floors"] * 1.8, fmax)) + 3   # always a hero tower
+            it["height_m"] = round(it["floors"] * fh, 2)
+            it["footprint_m"] = [round(it["footprint_m"][0] * 1.12, 2),
+                                 round(it["footprint_m"][1] * 1.12, 2)]
+            it["scale3"] = [it["footprint_m"][0], it["footprint_m"][1], it["height_m"]]
+            placed.append({"name": str(name), "x": it["x"], "y": it["y"],
+                           "height_m": it["height_m"], "kit": it["kit"]})
+
     layout = _finish(profile, [cols, rows], base, street, streets, blocks, instances,
                      props, xc, yc, extent_x, extent_y, rng, density)
+    layout["landmarks"] = placed
     return layout
 
 

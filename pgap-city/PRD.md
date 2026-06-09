@@ -1,6 +1,15 @@
 # PRD: pgap-city — Procedural City Pipeline (psc)
 
-Status: Draft v1 (planning).
+Status: **v1 implemented.** All four cells generate end-to-end — per-style street
+networks, skinned building kits, roads, prop scatter, landmarks, a terrain hook, NL
+`--describe`, fail-closed validation, a capability report, and the `--handoff`
+bundle. FR1–FR10 and milestones C0–C5 are done (see §10). Two deliberate, documented
+deviations: buildings are **skinned box proxies** — facade detail (windows/doors/
+roof) is *texture*, not per-window geometry, rather than the 3d-actor module-graph
+*geometry* assembler in FR2/§5 (kept offline/deterministic; geometric assembly is a
+future refinement); and the **organic/curved** street nets are realized as irregular
+*axis* grids (+ megablocks), not true splines (PRD open question §14/#3–4).
+
 Part of the `pgap` monorepo. Sibling of `pgap-3d-actor`, `pgap-sound`, and
 `pgap-landscape`; shares their architecture, determinism guarantees, and
 `unreal-mcp-rx` handoff.
@@ -203,19 +212,21 @@ city spec (JSON: {era, culture}, seed, size, density, layout, landmarks)
 
 ## 10. Milestones (phased)
 
-- **C0 — scaffold + spec + style registry + one kit.** Package, CLI,
-  spec/validator, `styles` registry, building assembler producing the
-  **modern × american** kit. Determinism test.
-- **C1 — layout grammar + instances.** Grid network → blocks → lots → instance
-  list + `city.layout.json` + material spec. Bridge proves import + HISM
-  instancing on american.
-- **C2 — modern × japan.** Fine grid + alleys, vertical signage, power-pole props.
-- **C3 — futuristic × cyberpunk.** Megablock kit, neon/holo signage, emissive
-  palette, organic-dense layout.
-- **C4 — futuristic × steampunk.** Brass/iron kit, pipes/gears ornament, smokestacks
-  + airship masts, curved-industrial layout.
-- **C5 — composition.** Terrain hook: drop a city onto a `pgap-landscape` tile;
-  full `--handoff` for all four cells.
+- **C0 — scaffold + spec + style registry + one kit.** ✅ Package, CLI,
+  spec/validator, `styles` registry, the **modern × american** kit. Determinism test.
+- **C1 — layout grammar + instances.** ✅ Network → blocks → lots → instance list +
+  `city.layout.json` + `StyleMaterialSpec` + per-kit HISM `instances.json`.
+- **C2 — modern × japan.** ✅ Fine grid (small blocks, narrow streets, dense), white-
+  panel facade, vending/sign/pole props (signage emissive).
+- **C3 — futuristic × cyberpunk.** ✅ Organic jittered grid + **megablock** towers,
+  dark facade with **neon-emissive lit windows**, neon/holo sign props.
+- **C4 — futuristic × steampunk.** ✅ Curved-industrial (jittered larger blocks),
+  soot-brick + brass facade, gas-lamp/airship-mast/pipe props.
+- **C5 — composition.** ✅ Terrain hook (sit the city on a `pgap-landscape` tile's
+  extent/sea-level/heights) + `--handoff` for all four cells with the full role set
+  (BuildingKit, CityLayout, CityInstancing, StyleMaterialSpec, RoadNetwork, PropKit).
+  *Pending the engine side:* the bridge's bulk-HISM + road/material/lighting "last
+  mile" and the live PIE proof lane.
 
 ## 11. Determinism, provenance, licensing
 

@@ -5,16 +5,18 @@ Deterministic, offline **cities**: a modular building kit + a city layout graph
 to import and bulk-instance (HISM). Sibling of `pgap-3d-actor` / `pgap-sound` /
 `pgap-landscape`; shares their architecture, determinism, and engine handoff.
 
-Status: **C2 — roads + props.** Style registry for the four v1 cells + spec +
-fail-closed validator + capability report + a deterministic grid **layout**, with:
+Status: **v1 complete (C0–C5).** For each of the four cells: a **per-style street
+network** (uniform grid / fine grid / organic + megablocks / jittered industrial);
 **skinned building kits** (a synthesized facade texture — wall + window grid +
-ground floor + parapet, base-color + normal, optional emissive lit windows — on the
-walls and a roof texture on top, embedded in `SM_<kit>.gltf`); a **road network**
-(a textured asphalt slab kit, HISM-instanced per street segment); and a **prop
-scatter** (per-kind proxy meshes — lamp/sign/tree/car, emissive where lit —
-instanced at intersections + along sidewalks). The whole textured, populated
-skyline is a handful of kits + one HISM call each. Design: [PRD.md](PRD.md).
-Boundary: repo-root `SPLIT.md`.
+ground floor + parapet, base-color + normal, emissive lit windows — on the walls
+and a roof texture on top, embedded in `SM_<kit>.gltf`); a **road network** (a
+textured asphalt slab kit, HISM-instanced per street segment); a **prop scatter**
+(per-kind proxy meshes — lamp/sign/tree/car, emissive where lit); **landmark** hero
+towers; an optional **terrain hook** (sit the city on a `pgap-landscape` tile); NL
+**`--describe`**; a fail-closed validator + capability report; and the `--handoff`
+role bundle. The whole textured, populated skyline is a handful of kits + one HISM
+call each. Two documented deviations (facade detail is texture not geometry; organic
+roads are irregular axis grids) — see [PRD.md](PRD.md). Boundary: repo-root `SPLIT.md`.
 
 v1 cells (era × culture/style):
 **futuristic×steampunk, futuristic×cyberpunk, modern×american, modern×japan.**
@@ -25,6 +27,7 @@ v1 cells (era × culture/style):
 # from the repo root, via the wrapper:
 python pgap.py city --capabilities
 python pgap.py city --era modern --culture american --out out
+python pgap.py city --describe "a rain-soaked cyberpunk downtown" --handoff --out out
 python pgap.py city --spec pgap-city/fixtures/american.json --handoff --out out
 ```
 

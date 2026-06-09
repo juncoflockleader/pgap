@@ -13,13 +13,17 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from . import gltf, instancing, network, render
-from .pngio import write_rgb8
+import zlib
+
+import numpy as np
+
+from . import facade, gltf, instancing, network, render
+from .pngio import encode_rgb8, write_rgb8
 from .render import ZONE_COLOR
 from .spec import validate_spec
-from .styles import MODULE_KINDS, profile_for
+from .styles import MODULE_KINDS, facade_for, profile_for
 
-GENERATOR_VERSION = "0.1.0"
+GENERATOR_VERSION = "0.2.0"  # C1: skinned building kits (facade + roof textures)
 
 
 def _sha1(path: Path) -> str:
@@ -49,25 +53,58 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
 
     paths: Dict[str, Path] = {}
 
-    # C0 building kit: one unit-box mesh (SM_<kit>.gltf) per variant, zone-colored.
-    # Instances HISM it with location (x,y,z) cm + yaw + scale3 (m). The kit is tiny
-    # (a few meshes); the skyline is the transform list.
+    # C1 building kit: one *skinned* box mesh (SM_<kit>.gltf) per variant — a facade
+    # texture (wall + window grid + ground floor + parapet) on the sides and a roof
+    # texture on top, embedded in the glTF. Instances HISM it with location (x,y,z)
+    # cm + yaw + scale3 (m); a few skinned meshes build the whole textured skyline.
+    fstyle = facade_for(profile)
+    bay_m = float(fstyle["bay_m"])
+    texture_paths: list[Path] = []
     kit_meshes: Dict[str, Path] = {}
     kits_meta = []
     for kit in kit_ids:
         zone = kit.rsplit("_", 1)[-1]
-        color = ZONE_COLOR.get(zone, (150, 150, 150))
+        insts = [i for i in layout["instances"] if i["kit"] == kit]
+        widths = [float(i["footprint_m"][0]) for i in insts] or [40.0]
+        floors = [int(i["floors"]) for i in insts] or [3]
+        cols = int(min(8, max(1, round(float(np.median(widths)) / bay_m))))
+        rows = int(min(14, max(1, round(float(np.median(floors))))))
+        krng = np.random.default_rng((int(s["seed"]) ^ zlib.crc32(kit.encode())) & 0xFFFFFFFF)
+        wall_base, wall_nrm, wall_emis = facade.synth_facade(fstyle, cols, rows, krng)
+        roof_base, roof_nrm = facade.synth_roof(fstyle, krng)
+
+        # write the skin PNGs (inspection + handoff) and embed them in the kit glTF
+        def _png(suffix: str, arr) -> Path:
+            p = out / f"SM_{kit}_{suffix}.png"
+            write_rgb8(str(p), arr)
+            texture_paths.append(p)
+            return p
+        _png("BaseColor", wall_base)
+        _png("Normal", wall_nrm)
+        _png("Roof", roof_base)
+        if wall_emis is not None:
+            _png("Emissive", wall_emis)
+
         mesh_path = out / f"SM_{kit}.gltf"
-        mesh_path.write_bytes(gltf.box_gltf(list(color), name=f"SM_{kit}"))
+        mesh_path.write_bytes(gltf.building_gltf(
+            encode_rgb8(wall_base), encode_rgb8(wall_nrm),
+            encode_rgb8(roof_base), encode_rgb8(roof_nrm),
+            wall_emissive=encode_rgb8(wall_emis) if wall_emis is not None else None,
+            roughness=float(profile.get("roughness", 0.8)), name=f"SM_{kit}"))
         kit_meshes[kit] = mesh_path
         paths[f"kit_{kit}"] = mesh_path
         kits_meta.append({"id": kit, "mesh": mesh_path.name, "zone": zone,
-                          "baseColor": list(color)})
+                          "baseColor": list(ZONE_COLOR.get(zone, (150, 150, 150))),
+                          "facade": {"cols": cols, "rows": rows,
+                                     "emissive": wall_emis is not None}})
     layout["kits"] = kits_meta
     layout["instanceModel"] = (
-        "SM_<kit>.gltf is a 1 m Y-up box (footprint X*Z centered, base at y=0) that "
-        "imports upright (base on ground). Per instance: place at (x,y,z) cm, rotate "
-        "yaw (deg, about up), scale by scale3 = [width, depth, height] in m.")
+        "SM_<kit>.gltf is a 1 m Y-up box skinned with an embedded facade texture "
+        "(walls: base-color + normal, optional emissive) + a roof texture; it imports "
+        "upright (base on ground). Per instance: place at (x,y,z) cm, rotate yaw (deg, "
+        "about up), scale by scale3 = [width, depth, height] in m. Window scale is the "
+        "kit's representative size; per-instance-uniform windows want a UE "
+        "world-aligned/triplanar facade material (handoff upgrade).")
 
     layout_path = out / f"{name}.city.layout.json"
     layout_path.write_text(json.dumps(layout, indent=2))
@@ -107,7 +144,8 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "specHash": _spec_hash(s),
         "license": "procedurally generated original work",
         "files": {p.name: _sha1(p) for p in
-                  (layout_path, style_path, plan_path, instancing_path, *kit_meshes.values())},
+                  (layout_path, style_path, plan_path, instancing_path,
+                   *kit_meshes.values(), *texture_paths)},
         "roles": {
             "CityLayout": layout_path.name,
             "StyleMaterialSpec": style_path.name,

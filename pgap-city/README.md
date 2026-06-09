@@ -5,11 +5,13 @@ Deterministic, offline **cities**: a modular building kit + a city layout graph
 to import and bulk-instance (HISM). Sibling of `pgap-3d-actor` / `pgap-sound` /
 `pgap-landscape`; shares their architecture, determinism, and engine handoff.
 
-Status: **scaffold (C0)** — style registry for the four v1 cells + spec +
-fail-closed validator + capability report + a deterministic grid **layout**
-(instance transforms). Building-kit glTF assembly (reusing the pgap-3d-actor
-module engine), roads, and prop meshes are C1+. Design: [PRD.md](PRD.md). Boundary
-with the engine: repo-root `SPLIT.md`.
+Status: **C1 — skinned building kits.** Style registry for the four v1 cells + spec
++ fail-closed validator + capability report + a deterministic grid **layout**
+(instance transforms), and each building kit is now **skinned**: a synthesized
+facade texture (wall + window grid + ground floor + parapet, base-color + normal,
+optional emissive lit windows) on the walls and a roof texture on top, embedded in
+`SM_<kit>.gltf` — so the HISM skyline reads as real buildings, per cell. Roads and
+prop meshes are C2+. Design: [PRD.md](PRD.md). Boundary: repo-root `SPLIT.md`.
 
 v1 cells (era × culture/style):
 **futuristic×steampunk, futuristic×cyberpunk, modern×american, modern×japan.**
@@ -23,10 +25,16 @@ python pgap.py city --era modern --culture american --out out
 python pgap.py city --spec pgap-city/fixtures/american.json --handoff --out out
 ```
 
-Output (C0): `<Name>.city.layout.json` (streets/blocks/lots/instances/props) +
-`StyleMaterialSpec.json` + `manifest.json`. `--handoff` also writes the
-`unreal-mcp-rx` source bundle (`CityLayout` + `StyleMaterialSpec` roles; the
-`BuildingKit` / `RoadNetwork` / `PropScatter` roles land in C1+).
+Output: `<Name>.city.layout.json` (streets/blocks/lots/instances/props) +
+`StyleMaterialSpec.json` + per-kit `SM_<kit>.gltf` (skinned, textures embedded) +
+`SM_<kit>_BaseColor/Normal/Roof[/Emissive].png` (inspection) + `<Name>.instances.json`
+(HISM) + `<Name>_Plan.png` + `manifest.json`. `--handoff` also writes the
+`unreal-mcp-rx` source bundle (`CityLayout` + `StyleMaterialSpec` + `BuildingKit:*`
+roles; `RoadNetwork` / `PropScatter` land in C2+).
+
+Per-instance window scale uses the kit's representative size; pixel-uniform windows
+across every instance size want a UE world-aligned/triplanar facade material (a
+documented handoff upgrade).
 
 ## The split
 

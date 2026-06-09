@@ -20,6 +20,7 @@ from .spec import CULTURES, ERAS, validate_spec
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="psc", description="pgap-city — procedural modular cities")
     p.add_argument("--spec", help="path to a city spec JSON")
+    p.add_argument("--describe", help="natural-language prompt -> city spec")
     p.add_argument("--era", choices=ERAS, help="era (when not using --spec)")
     p.add_argument("--culture", choices=CULTURES, help="culture/style (when not using --spec)")
     p.add_argument("--name", help="output city name")
@@ -40,10 +41,17 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.spec:
         spec = json.loads(Path(args.spec).read_text())
+    elif args.describe:
+        from .nl import prompt_to_spec
+        res = prompt_to_spec(args.describe, seed=args.seed if args.seed is not None else 0)
+        for w in res["warnings"]:
+            print(f"warning: {w}", file=sys.stderr)
+        spec = res["spec"]
+        print(f"describe -> {spec['era']}x{spec['culture']} {spec['sizeBlocks']}", file=sys.stderr)
     elif args.era and args.culture:
         spec = {"era": args.era, "culture": args.culture}
     else:
-        print("provide --spec or --era/--culture (or --capabilities)", file=sys.stderr)
+        print("provide --spec, --describe, or --era/--culture (or --capabilities)", file=sys.stderr)
         return 2
 
     if args.name:

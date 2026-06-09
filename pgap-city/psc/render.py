@@ -23,9 +23,13 @@ PROP = (240, 214, 78)     # prop dot
 
 
 def render_plan(layout: Dict[str, Any], size_px: int = 768, margin_px: int = 12) -> np.ndarray:
-    cols, rows = layout["sizeBlocks"]
-    pitch = float(layout["blockSizeM"]) + float(layout["streetWidthM"])
-    span_m = max(cols, rows) * pitch + float(layout["streetWidthM"])
+    extent = layout.get("extentM")
+    if extent:
+        span_m = max(extent)
+    else:
+        cols, rows = layout["sizeBlocks"]
+        pitch = float(layout["blockSizeM"]) + float(layout["streetWidthM"])
+        span_m = max(cols, rows) * pitch + float(layout["streetWidthM"])
     inner = max(16, size_px - 2 * margin_px)
     scale = inner / span_m
 
@@ -33,16 +37,17 @@ def render_plan(layout: Dict[str, Any], size_px: int = 768, margin_px: int = 12)
         return margin_px + int(round(m * scale))
 
     img = np.full((size_px, size_px, 3), GROUND, dtype=np.uint8)
-    sw = max(1, int(round(float(layout["streetWidthM"]) * scale)))
 
-    # streets (grid bands)
+    # streets (bands, per-segment width + extent)
     for st in layout["streets"]:
+        sw = max(1, int(round(float(st.get("width_m", layout["streetWidthM"])) * scale)))
+        a, b = px(st.get("from_m", 0.0)), px(st.get("to_m", span_m))
         if st["axis"] == "v":
             x = px(st["x_m"])
-            img[:, max(0, x - sw // 2): x + sw - sw // 2] = STREET
+            img[max(0, a):b, max(0, x - sw // 2): x + sw - sw // 2] = STREET
         else:
             y = px(st["y_m"])
-            img[max(0, y - sw // 2): y + sw - sw // 2, :] = STREET
+            img[max(0, y - sw // 2): y + sw - sw // 2, max(0, a):b] = STREET
 
     # building footprints, brightness ∝ height
     hmax = max((i["height_m"] for i in layout["instances"]), default=1.0) or 1.0

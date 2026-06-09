@@ -109,6 +109,9 @@ pgap output is plain glTF, so the bridge is swappable per engine.
 | [DESIGN.md](DESIGN.md) | Per-stage algorithms & data structures |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Pipeline, working model, why no LLM / lightweight |
 | [AGENTS.md](AGENTS.md) | **How an AI agent drives pgap** (capabilities, schemas, recipes) |
+| [docs/agent-cookbook.md](docs/agent-cookbook.md) | Copy-paste recipes for *using* the library |
+| [docs/AUTHORING.md](docs/AUTHORING.md) | **How to extend the library** (add a variant / slot / body / preset) |
+| [docs/BESTIARY.md](docs/BESTIARY.md) | Auto-generated gallery of every creature template |
 | [docs/milestones/](docs/milestones/) | M0–M7 implementation plans + exit criteria |
 | [docs/design/v2-modular-creatures.md](docs/design/v2-modular-creatures.md) | Composable chimeras |
 | [docs/design/v3-part-variants.md](docs/design/v3-part-variants.md) | Part variants & library |

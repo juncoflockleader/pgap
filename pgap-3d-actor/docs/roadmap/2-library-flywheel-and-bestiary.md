@@ -1,6 +1,9 @@
 # Roadmap 2 — Library flywheel + bestiary
 
-Status: Planned (after surface treatments). Growth by breadth.
+Status: **Largely complete.** L0 (authoring guide), L1 (eyes), L2 (body bases),
+L3 (slots), L4 (presets), L5 (bestiary catalog) are done, plus an assembler
+per-attachment rotation enhancement. L6 (corpus sweep) is satisfied on an ongoing
+basis — `test_v3_corpus` auto-gates every kind/variant/template. Growth by breadth.
 
 ## Motivation
 
@@ -15,9 +18,9 @@ complex.
 
 ### A. The flywheel (make growth cheap + safe)
 
-- **Module-authoring guide** — a short, concrete "how to add a kind / variant /
-  template" doc + a checklist (author the module, give it sockets, register it,
-  add a corpus entry, add NL keywords).
+- **Module-authoring guide** — ✅ [docs/AUTHORING.md](../AUTHORING.md): a short,
+  concrete "how to add a kind / variant / template" doc + a checklist (author the
+  module, give it sockets, register it, add a corpus entry, add NL keywords).
 - **The corpus is the gate.** `test_v3_corpus` already builds every kind/variant/
   template; any new part must pass it (valid, watertight, within budget,
   deterministic). That's the entire contribution contract — a new part is a tiny,
@@ -120,8 +123,11 @@ keywords). The thumbnail mechanism.
 
 ## Milestones
 
-- **L0 — Authoring guide + checklist.** **Exit:** a contributor can add a part end
-  to end following the doc; the corpus gates it.
+- **L0 — Authoring guide + checklist.** ✅ **done** — [docs/AUTHORING.md](../AUTHORING.md):
+  the frame/conventions, four worked recipes (variant / slot / body base / preset),
+  per-attachment rotation, the corpus contract, and a copy-paste checklist. Its
+  worked examples are API-verified to build watertight. **Exit:** a contributor can
+  add a part end to end following the doc; the corpus gates it. ✔
 - **L1 — Eyes (flagship organ, do first).** The lead concrete part (see B0):
   - *E0 — Painted eyes.* An `eyes` decal in the head base-color (iris + pupil +
     catchlight) at a head-socket position. **Exit:** the **dog has visible eyes**;
@@ -170,8 +176,11 @@ keywords). The thumbnail mechanism.
   `python -m pgap.catalog` or `--catalog`. The gallery doubles as an at-a-glance
   visual regression. `test_catalog` gates it. **Exit:** the gallery renders every
   template. ✔
-- **L6 — Corpus sweep.** all new bases/slots/variants/presets in the corpus;
-  sample variants to keep runtime bounded. **Exit:** green.
+- **L6 — Corpus sweep.** ✅ **ongoing/green** — `test_v3_corpus` iterates every kind
+  + variant (isolation), every template (valid + within budget + deterministic);
+  `test_slots`/`test_presets`/`test_archetypes_v2`/`test_rotation` add structure
+  checks. New content is gated the moment it's registered — no separate sweep needed.
+  **Exit:** green.
 
 ## Risks & decisions
 

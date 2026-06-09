@@ -1,10 +1,13 @@
-"""Modular animation (V2-M3).
+"""Modular animation (V2-M3 + V4 faces).
 
 Each module *kind* contributes motion for its own bones; a named clip is the sum
-of every instance's contribution. Tracks are joint rotations (same convention as
-v1 — applied about each joint's head). Frequencies are integer cycle-counts over
-the clip duration so the clip loops seamlessly; ring instances are de-phased by
-their index so radial copies (tentacles, eyestalks) move out of unison.
+of every instance's contribution. Animators are **clip-aware**: body modules move
+in ``idle`` (tail-wag, wing-flap, sway), while the face rig drives ``mouth_open``
+(a maw head's ``jaw`` bone rotates open/closed — bark/roar) and ``eye_look`` (the
+``eyes`` sclera bones rotate so the pupils riding them gaze side to side). Tracks
+are joint rotations (applied about each joint's head). Frequencies are integer
+cycle-counts over the clip duration so clips loop seamlessly; ring instances are
+de-phased by index so radial copies move out of unison.
 
 Deterministic, analytic. Frame: +X fwd, +Y up, +Z left.
 """
@@ -46,9 +49,11 @@ def _w(cycles: float) -> float:
     return 2.0 * np.pi * cycles / _DURATION
 
 
-# --- per-module animators: (inst, t) -> list[Channel] ---------------------- #
-def _chain_anim(inst, t):
+# --- per-module animators: (inst, t, clip) -> list[Channel] ---------------- #
+def _chain_anim(inst, t, clip):
     """Tentacle / tail: a travelling wave down the segments, rising to the tip."""
+    if clip != "idle":
+        return []
     names = inst["local_bones"]
     n = max(1, len(names) - 1)
     w = _w(2)
@@ -60,7 +65,9 @@ def _chain_anim(inst, t):
     return chans
 
 
-def _eyestalk_anim(inst, t):
+def _eyestalk_anim(inst, t, clip):
+    if clip != "idle":
+        return []
     w = _w(1)
     phase = inst["phase"] * 0.9
     chans = []
@@ -71,14 +78,36 @@ def _eyestalk_anim(inst, t):
     return chans
 
 
-def _wing_anim(inst, t):
+def _wing_anim(inst, t, clip):
+    if clip != "idle":
+        return []
     return [_rot(f"{inst['id']}_arm", _X, np.deg2rad(16.0) * np.sin(_w(3) * t))]
 
 
-def _spine_anim(inst, t):
+def _spine_anim(inst, t, clip):
+    if clip != "idle":
+        return []
     names = inst["local_bones"]
     mid = names[len(names) // 2]
     return [_rot(f"{inst['id']}_{mid}", _Z, np.deg2rad(1.5) * np.sin(_w(1) * t))]
+
+
+def _head_anim(inst, t, clip):
+    """V4: a maw head's lower ``jaw`` rotates open then closed (bark / roar)."""
+    if clip != "mouth_open" or "jaw" not in inst["local_bones"]:
+        return []
+    # 0 → open → closed over the clip; about -Z drops the chin (tail at +X) down.
+    angle = np.deg2rad(24.0) * (0.5 - 0.5 * np.cos(_w(2) * t))
+    return [_rot(f"{inst['id']}_jaw", _Z, -angle)]
+
+
+def _eyes_anim(inst, t, clip):
+    """V4: the sclera bones rotate (pupils ride them) so the gaze sweeps side to side."""
+    if clip != "eye_look":
+        return []
+    angle = np.deg2rad(18.0) * np.sin(_w(1) * t)
+    return [_rot(f"{inst['id']}_{ln}", _Y, angle)
+            for ln in inst["local_bones"] if ln in ("eye_l", "eye_r")]
 
 
 _ANIMATORS = {
@@ -88,11 +117,15 @@ _ANIMATORS = {
     "wing": _wing_anim,
     "spine": _spine_anim,
     "body": _spine_anim,
+    "head": _head_anim,
+    "eyes": _eyes_anim,
 }
 
 
-def animate_recipe(recipe, spec, clips=("idle",)) -> list:
-    """Build AnimClips for a recipe by summing per-module contributions."""
+def animate_recipe(recipe, spec, clips=("idle", "mouth_open", "eye_look")) -> list:
+    """Build AnimClips for a recipe by summing per-module contributions. A clip is
+    emitted only if some module contributes to it, so faceless/jawless creatures
+    simply don't carry ``eye_look``/``mouth_open``."""
     _, meta = assemble_with_meta(recipe, spec)
     t = _times()
     out = []
@@ -101,7 +134,7 @@ def animate_recipe(recipe, spec, clips=("idle",)) -> list:
         for inst in meta:
             animator = _ANIMATORS.get(inst["kind"])
             if animator is not None:
-                channels.extend(animator(inst, t))
+                channels.extend(animator(inst, t, clip_name))
         if channels:
             out.append(AnimClip(clip_name, t, channels))
     return out

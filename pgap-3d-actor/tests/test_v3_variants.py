@@ -11,7 +11,7 @@ from pgap.v2.registry import build_module, load_template, TEMPLATE_REGISTRY, var
 
 
 def test_head_kind_has_three_variants():
-    assert variant_names("head") == ["humanoid", "draconic", "cephalopod"]
+    assert variant_names("head") == ["humanoid", "draconic", "cephalopod", "maw"]
     assert variant_names("wing")[0] == "bat"  # bat is the default; more added in V3-M1
 
 
@@ -66,7 +66,7 @@ def test_omitted_variant_uses_default():
 
 def test_capability_report_lists_variants():
     rep = capability_report()
-    assert rep["modules"]["head"]["variants"] == ["humanoid", "draconic", "cephalopod"]
+    assert rep["modules"]["head"]["variants"] == ["humanoid", "draconic", "cephalopod", "maw"]
     assert rep["modules"]["head"]["defaultVariant"] == "humanoid"
     assert rep["schemaVersion"].endswith("v2")  # bumped for variants
 

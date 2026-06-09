@@ -40,6 +40,7 @@ _TEMPLATE_KEYWORDS = {
     "hexapod": ["insect", "ant", "beetle", "bug", "hexapod", "six-legged",
                 "six legs", "mantis", "grasshopper", "cricket", "roach"],
     "centaur": ["centaur"],
+    "wolf": ["wolf", "werewolf", "direwolf", "hound", "jackal"],
     "griffin": ["griffin", "gryphon", "griffon"],
     "manticore": ["manticore"],
     "wyvern": ["wyvern", "wivern"],
@@ -135,6 +136,10 @@ def _compose_free(text: str, name: str) -> dict:
             head_variant = "draconic"
         if "cthulhu" in text or ("tentacle" in text and ("face" in text or "mouth" in text)):
             head_variant = "cephalopod"
+        # V4: a maw head (hinged jaw, can bark/roar) for snarling/open-mouthed beasts
+        if any(k in text for k in ("maw", "snarl", "snarling", "barking", "roaring",
+                                   "gaping", "open-mouthed", "open mouth", "wolf", "hound")):
+            head_variant = "maw"
         modules.append({"id": "head", "kind": "head", "variant": head_variant, "attach": "neck.top"})
         # eyes: every face gets a pair; keywords pick shape + size (else a sensible
         # default — slit for reptilian heads, round otherwise).
@@ -146,14 +151,18 @@ def _compose_free(text: str, name: str) -> dict:
         elif "round eye" in text:
             eye_variant = "round"
         eye_radius = 0.016
-        if any(k in text for k in ("big eye", "large eye", "huge eye", "googly", "wide eye", "bug eye")):
+        if any(k in text for k in ("big eye", "big-eyed", "large eye", "huge eye",
+                                   "googly", "wide eye", "wide-eyed", "bug eye")):
             eye_radius = 0.024
         elif any(k in text for k in ("small eye", "beady", "tiny eye")):
             eye_radius = 0.012
         modules.append({"id": "eyes", "kind": "eyes", "variant": eye_variant,
                         "attach": "head.eyes", "params": {"radius": eye_radius}})
-        # the mouth: a beak, insect mandibles, or a nose + mouth-line jaws (the default).
-        if any(k in text for k in ("beak", "beaked")):
+        # the mouth: the maw head has its own jaw+nose; otherwise a beak, insect
+        # mandibles, or a nose + mouth-line jaws (the default).
+        if head_variant == "maw":
+            pass
+        elif any(k in text for k in ("beak", "beaked")):
             modules.append({"id": "beak", "kind": "beak", "attach": "head.jaws"})
         elif any(k in text for k in ("mandible", "pincer", "mandibles")):
             modules.append({"id": "mandibles", "kind": "mandibles", "attach": "head.jaws"})

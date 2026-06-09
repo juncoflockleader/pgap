@@ -51,11 +51,15 @@ def test_fused_flag_on_bone_reaches_the_kernel():
 def test_eyes_module_bones_are_non_fused_and_tagged():
     for variant in ("round", "almond", "slit"):
         mod = eyes_module(variant)
-        assert len(mod.bones) == 2, variant            # a mirrored pair
+        assert len(mod.bones) == 4, variant            # sclera + pupil, mirrored
         assert all(not b.fused for b in mod.bones), variant
-        assert all(b.region == "eyes" for b in mod.bones), variant
+        sclera = [b for b in mod.bones if b.name.startswith("eye_")]
+        pupils = [b for b in mod.bones if b.name.startswith("pupil_")]
+        assert len(sclera) == 2 and len(pupils) == 2, variant
+        assert all(b.region == "eyes" for b in sclera), variant
+        assert all(b.region == "pupil" for b in pupils), variant
         # one eye each side of the midline (z mirror)
-        zs = sorted(b.head[2] for b in mod.bones)
+        zs = sorted(b.head[2] for b in sclera)
         assert zs[0] < 0 < zs[1], variant
 
 

@@ -52,6 +52,7 @@ MODULE_REGISTRY: dict[str, ModuleKind] = {
             "humanoid": lambda p: L.head_module(),
             "draconic": lambda p: L.draconic_head_module(),
             "cephalopod": lambda p: L.cephalopod_head_module(),
+            "maw": lambda p: L.maw_head_module(),   # V4: hinged jaw (mouth_open)
         },
     ),
     "arm": _single(lambda p: L.arm_module()),
@@ -148,6 +149,7 @@ TEMPLATE_REGISTRY: dict[str, Callable] = {
     "arachnid": lambda **o: L.arachnid_recipe(legs=int(o.get("legs", 8))),
     "hexapod": lambda **o: L.hexapod_recipe(),
     "centaur": lambda **o: L.centaur_recipe(),
+    "wolf": lambda **o: L.wolf_recipe(),
     "griffin": lambda **o: L.griffin_recipe(),
     "manticore": lambda **o: L.manticore_recipe(),
     "wyvern": lambda **o: L.wyvern_recipe(),
@@ -165,7 +167,7 @@ TEMPLATE_HEIGHT_CM: dict[str, float] = {
     "unicorn": 160, "stag": 150, "boar": 90, "horse": 160, "feline": 100, "dragon": 140,
     "serpent": 70, "avian": 45, "arachnid": 35, "hexapod": 30, "centaur": 210,
     "griffin": 130, "manticore": 140, "wyvern": 150, "pegasus": 160, "hydra": 160,
-    "naga": 200, "phoenix": 90, "basilisk": 75, "chimera": 140,
+    "naga": 200, "phoenix": 90, "basilisk": 75, "chimera": 140, "wolf": 90,
 }
 
 

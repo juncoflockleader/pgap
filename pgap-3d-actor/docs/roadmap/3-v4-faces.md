@@ -1,7 +1,13 @@
 # Roadmap 3 — v4: Faces
 
-Status: Planned (after surfaces + library). Highest value, **highest
-uncertainty** — do it last, keep it lightweight.
+Status: **Implemented (lightweight, geometry path).** Appearance (F0) is met by the
+roadmap-2 **geometry** face — eyes (+ iris), nose, mouth, beak/mandibles — rather
+than a face texture (a deliberate deviation: the geometry faces already read well
+in the bestiary, so the trickiest piece, face-UV, was not needed). The new V4 work
+is the **expression rig**: a `maw` head variant with a hinged `jaw`, pupilled eyes,
+and `mouth_open` / `eye_look` clips. F1–F4 done; the clips import as valid playable
+AnimSequences on the wolf skeleton in UE 5.7.4 (0 issues), and the jaw-open / pupil
+deformation is verified numerically (`test_faces`).
 
 ## Motivation
 
@@ -56,17 +62,25 @@ already exists; modular animation (jaw/eye rotation clips); `texture.py` +
 
 ## Milestones
 
-- **F0 — Face UV + basic face texture.** A face region on the head; paint eyes +
-  a mouth. **Exit:** a head reads as having a face in a viewer.
-- **F1 — Face rig.** A head/face variant with `jaw` + `eye_l/r` driving mouth +
-  eye geometry; weights valid; rest pose identity. **Exit:** the face rig skins
-  cleanly.
-- **F2 — Expression clips.** `mouth_open`, `eye_look` via the modular animator.
-  **Exit:** a creature barks (jaw opens) in UE.
-- **F3 — Face variants + NL.** face/eye/mouth variants (big eyes, fanged, beaked,
-  expressionless); "an angry big-eyed beast" routes. **Exit:** variant-aware faces.
-- **F4 — Face corpus.** every face variant builds valid + deterministic; rig
-  weights valid. **Exit:** green.
+- **F0 — Face appearance.** ✅ **done via geometry (roadmap 2)** — eyes (+ iris),
+  nose, mouth line, beak/mandibles read as a face in the bestiary; the planned
+  *texture* face-region was unnecessary (kept it geometry, on-brand). **Exit:** ✔
+- **F1 — Face rig.** ✅ **done** — a `maw` head variant (skull + snout + a hinged
+  `jaw` bone) and pupilled eyes (`eyes_module` gains a `pupil` riding each sclera).
+  Rest pose is identity; weights valid. **Exit:** the face rig skins cleanly. ✔
+- **F2 — Expression clips.** ✅ **done** — the clip-aware modular animator emits
+  `mouth_open` (the jaw rotates open/closed — bark/roar) and `eye_look` (the eyes
+  rotate, pupils swing — gaze). `test_faces` verifies the jaw drops + the pupil
+  swings by posing the skinned mesh. **Exit:** a creature barks (jaw opens) in UE —
+  the `wolf`'s `mouth_open`/`eye_look`/`idle` import as valid playable AnimSequences
+  on its skeleton in UE 5.7.4 (0 issues). (A posed in-engine screenshot is blocked
+  by the bridge's instance-edit guard; the jaw-open deformation is proven in tests.)
+- **F3 — Face variants + NL.** ✅ **done** — eye variants (round/almond/slit) +
+  size + iris color; the `maw` head; NL routes "a wolf"/"snarling beast" → maw, and
+  "an angry big-eyed beast" → big eyes. **Exit:** variant-aware faces. ✔
+- **F4 — Face corpus.** ✅ **done** — the `maw` variant + `wolf` template are
+  corpus-gated (valid + deterministic); `test_faces` checks the rig deforms.
+  **Exit:** green. ✔
 
 ## Risks & decisions (be honest)
 

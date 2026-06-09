@@ -143,49 +143,56 @@ def eyestalk_module(eye_radius: float = 0.05) -> Module:
 
 
 def _eye_pair(segments) -> list:
-    """Author a LEFT eye (z>0); emit it (_l) plus a Z-mirrored twin (_r). Every
-    bone is non-fused (a proud bead, not melted in) and tagged region ``eyes`` so
-    paint colors it the dark iris independent of the head coat. Mirrors ``_bilateral``
-    but for the eye organ; used by :func:`eyes_module`."""
+    """Author a LEFT eye (z>0); emit it (_l) plus a Z-mirrored twin (_r). Segments
+    are ``(name, parent, head, tail, rh, rt, region)``; every eye bone is non-fused
+    (a proud bead) and region-tagged so paint colors it independently of the coat.
+    The ``eye`` (sclera) bone is the gaze pivot; a ``pupil`` child rides it so
+    rotating the eye swings the pupil (V4 ``eye_look``)."""
     out = []
     for side, sign in (("l", 1.0), ("r", -1.0)):
-        for nm, par, h, t, rh, rt in segments:
+        for nm, par, h, t, rh, rt, region in segments:
             hh, tt = h.copy(), t.copy()
             hh[2] *= sign
             tt[2] *= sign
             out.append(BoneSpec(f"{nm}_{side}", (f"{par}_{side}" if par else None),
-                                hh, tt, rh, rt, "eye", fused=False, region="eyes"))
+                                hh, tt, rh, rt, "eye", fused=False, region=region))
     return out
 
 
 def eyes_module(variant: str = "round", radius: float = 0.016,
                 spacing: float = 0.030) -> Module:
-    """A mirrored pair of proud eyeballs for a head's ``eyes`` socket.
+    """A mirrored pair of proud eyeballs (+ pupils) for a head's ``eyes`` socket.
 
     Authored in the head's local frame (+X forward, +Y up, +Z = left side): the
     socket sits at the front-upper face, and each eye sits ``spacing`` to its side,
     nudged slightly forward so the bead pokes proud of the skull. ``variant`` sets
     the bead shape; ``radius``/``spacing`` scale it to the head.
 
-    Variants: ``round`` (a sphere — the default), ``almond`` (a horizontal capsule,
-    wider than tall), ``slit`` (a narrow vertical capsule — reptilian). Pupil/iris
-    detail is a texture-side upgrade (roadmap 1); here the dark ``eyes`` region
-    reads as the pupil-forward eye from every angle.
+    Each eye is an ``eye`` (sclera, region ``eyes`` — the dark/iris bead) plus a
+    smaller dark ``pupil`` child on its front face (region ``pupil``). The pupil
+    rides the eye bone, so the V4 ``eye_look`` clip rotates the eye and the pupil
+    swings — a readable gaze on iris-colored eyes (and harmless on dark ones).
+
+    Variants: ``round`` (a sphere), ``almond`` (a horizontal capsule), ``slit`` (a
+    narrow vertical capsule — reptilian).
     """
     fwd = 0.004  # nudge toward +X so the bead sits on the front of the face
     if variant == "round":
-        seg = [("eye", None, v(fwd, 0.0, spacing), v(fwd + 0.002, 0.0, spacing),
-                radius, radius)]
+        sclera = ("eye", None, v(fwd, 0.0, spacing), v(fwd + 0.002, 0.0, spacing),
+                  radius, radius, "eyes")
     elif variant == "almond":
         e = radius * 0.85
-        seg = [("eye", None, v(fwd - radius, 0.0, spacing), v(fwd + radius, 0.0, spacing),
-                e, e)]
+        sclera = ("eye", None, v(fwd - radius, 0.0, spacing), v(fwd + radius, 0.0, spacing),
+                  e, e, "eyes")
     elif variant == "slit":
         e = radius * 0.80
-        seg = [("eye", None, v(fwd, -radius, spacing), v(fwd, radius, spacing), e, e)]
+        sclera = ("eye", None, v(fwd, -radius, spacing), v(fwd, radius, spacing), e, e, "eyes")
     else:
         raise ValueError(f"unknown eyes variant {variant!r}")
-    return Module(kind="eyes", bones=_eye_pair(seg), sockets={})
+    pr = radius * 0.5
+    px = fwd + radius * 0.7  # the pupil sits on the front of the eyeball
+    pupil = ("pupil", "eye", v(px, 0.0, spacing), v(px + 0.001, 0.0, spacing), pr, pr, "pupil")
+    return Module(kind="eyes", bones=_eye_pair([sclera, pupil]), sockets={})
 
 
 def jaws_module(radius: float = 0.013, width: float = 0.020, nose: bool = True) -> Module:
@@ -306,6 +313,25 @@ def draconic_head_module() -> Module:
             "cheeks": Socket("cheeks", v(0.18, -0.010, 0), "snout"),
         },
     )
+
+
+def maw_head_module() -> Module:
+    """A snouted head with a **hinged lower jaw** — the V4 face rig. The upper skull
+    + snout are one fixed piece; the ``jaw`` bone (a sibling, hinged under the skull)
+    carries the lower jaw and rotates open for the ``mouth_open`` clip (bark/roar).
+    A built-in proud nose; an ``eyes`` socket for the pupilled eyes."""
+    return Module(kind="head", bones=[
+        BoneSpec("skull", None, v(0, 0, 0), v(0.09, 0.0, 0), 0.072, 0.062, "head"),
+        BoneSpec("snout", "skull", v(0.09, 0.0, 0), v(0.20, 0.015, 0), 0.050, 0.026, "snout"),
+        BoneSpec("jaw", None, v(0.03, -0.035, 0), v(0.205, -0.045, 0), 0.044, 0.020, "jaw"),
+        BoneSpec("nose", "snout", v(0.20, 0.03, 0), v(0.205, 0.03, 0), 0.024, 0.024, "nose",
+                 fused=False, region="nose"),
+    ], sockets={
+        "eyes": Socket("eyes", v(0.085, 0.050, 0), "skull"),
+        "horns": Socket("horns", v(0.0, 0.06, 0), "skull"),
+        "ears": Socket("ears", v(-0.02, 0.055, 0), "skull"),
+        "cheeks": Socket("cheeks", v(0.16, -0.01, 0), "snout"),
+    })
 
 
 def wing_module() -> Module:
@@ -941,6 +967,20 @@ def centaur_torso_module() -> Module:
         "neck": Socket("neck", v(0, 0.38, 0), "spine_02"),
         "shoulder": Socket("shoulder", v(0, 0.34, 0.085), "spine_02", mirror=True),
     })
+
+
+def wolf_recipe() -> Recipe:
+    """A four-legged beast with the V4 maw head — the bark/roar reference creature."""
+    return Recipe("Wolf", [
+        Attachment("body", body_module()),
+        Attachment("neck", neck_module(), parent="body", parent_socket="neck"),
+        Attachment("head", maw_head_module(), parent="neck", parent_socket="top"),
+        _eyes_for("head", radius=0.014, spacing=0.030),
+        Attachment("ears", ear_pointy_module(), parent="head", parent_socket="ears"),
+        Attachment("foreleg", leg_module(), parent="body", parent_socket="shoulder", mirror=True),
+        Attachment("hindleg", leg_module(), parent="body", parent_socket="hip", mirror=True),
+        Attachment("tail", serpent_tail_module(), parent="body", parent_socket="tail"),
+    ])
 
 
 def hydra_neck_module() -> Module:

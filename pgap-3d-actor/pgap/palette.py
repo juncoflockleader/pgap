@@ -56,6 +56,10 @@ _WOOD = {  # props: barrel wood
     "nose": (0.08, 0.05, 0.03), "mouth": (0.12, 0.08, 0.05),
 }
 
+# The pupil is the darkest point of the eye on every coat (reuse the nose black).
+for _coat_pal in (_GOLDEN, _BROWN, _BLACK, _CREAM, _STONE, _WOOD):
+    _coat_pal["pupil"] = _coat_pal["nose"]
+
 # Coat color keywords (NOT modifiers like "dark"/"light", which qualify regions).
 _COATS = (
     (("golden", "gold", "yellow", "tan"), _GOLDEN),

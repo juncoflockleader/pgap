@@ -68,9 +68,10 @@ def _head_with_jaws(head_variant, **params):
 
 
 def test_jaws_socket_on_every_head_variant():
+    # the maw head carries its own hinged jaw (V4), so it has no jaws socket.
     sizes = {"humanoid": {}, "draconic": {"radius": 0.020, "width": 0.035},
              "cephalopod": {"radius": 0.016, "width": 0.028}}
-    for hv in MODULE_REGISTRY["head"].variants:
+    for hv in sizes:
         skel, mesh = _head_with_jaws(hv, **sizes[hv])
         nose = _region_verts(skel, mesh, "jaws_nose")
         mouth = _region_verts(skel, mesh, "jaws_mouth")

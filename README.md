@@ -17,7 +17,7 @@ engine handoff), and a single wrapper CLI.
 |---|---|---|---|
 | **`3d-actor`** | [pgap-3d-actor/](pgap-3d-actor/) | rigged / skinned / animated / textured creatures (glTF) | **Implemented** (v1+v2+v3, live-verified in UE 5.7) |
 | **`sound`** | [pgap-sound/](pgap-sound/) | SFX / UI / creature vocals / impacts / ambient loops (WAV) — *not music, not voice* | **Implemented** (MVP + impacts + ambient + FX bus + variant adjectives + seeded variance) |
-| **`gear`** | [pgap-gear/](pgap-gear/) | weapons / apparel / armor / accessories | Planned |
+| **`gear`** | [pgap-gear/](pgap-gear/) | weapons / apparel / armor / accessories | Implemented (rigid) |
 
 ## Usage
 

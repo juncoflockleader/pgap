@@ -14,7 +14,7 @@ pgap/
   pgap.py            # wrapper CLI: routes a mode to its sub-pipeline
   pgap-3d-actor/     # rigged/skinned/animated/textured creatures (glTF) — IMPLEMENTED
   pgap-sound/        # SFX/impacts/ambient/creature vocals (WAV) — PRD stage
-  pgap-gear/         # weapons/apparel/armor/accessories — placeholder
+  pgap-gear/         # weapons/apparel/armor/accessories (pgear) — IMPLEMENTED (rigid)
   pgap-landscape/    # biome terrain (heightmap+layers) — PRD + scaffold
   pgap-city/         # modular building kits + city layouts — PRD + scaffold
   README.md  AGENTS.md  CLAUDE.md  SPLIT.md
@@ -63,4 +63,4 @@ Read it before designing any engine handoff.
 - **3d-actor:** see [pgap-3d-actor/CLAUDE.md](pgap-3d-actor/CLAUDE.md),
   [pgap-3d-actor/PRD.md](pgap-3d-actor/PRD.md), and `pgap-3d-actor/docs/`.
 - **sound:** see [pgap-sound/PRD.md](pgap-sound/PRD.md).
-- **gear:** placeholder — [pgap-gear/README.md](pgap-gear/README.md).
+- **gear:** rigid weapons + shields — [pgap-gear/PRD.md](pgap-gear/PRD.md), [pgap-gear/README.md](pgap-gear/README.md).

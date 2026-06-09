@@ -1,0 +1,8 @@
+{
+  "name": "IronLongsword",
+  "template": "sword",
+  "variant": "straight",
+  "material": "steel blade, leather grip, bronze guard",
+  "size": "normal",
+  "seed": 7
+}

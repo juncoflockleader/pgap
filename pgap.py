@@ -10,7 +10,7 @@ Modes:
   sound      SFX / impacts / ambient / stylized creature vocals     (implemented)
   landscape  biome terrain: heightmap + layers + scatter            (scaffold)
   city       modular building kits + city layouts                   (scaffold)
-  gear       weapons / apparel / armor / accessories                (planned)
+  gear       weapons / apparel / armor / accessories                (implemented)
 
 Usage:
   python pgap.py <mode> [args...]
@@ -42,7 +42,7 @@ PIPELINES: dict[str, dict] = {
                   "desc": "biome terrain: heightmap + layers + scatter"},
     "city":     {"dir": "pgap-city", "module": "psc.cli", "ready": True,
                  "desc": "modular building kits + city layouts"},
-    "gear":     {"dir": "pgap-gear", "module": "pgear.cli", "ready": False,
+    "gear":     {"dir": "pgap-gear", "module": "pgear.cli", "ready": True,
                  "desc": "weapons / apparel / armor / accessories"},
 }
 

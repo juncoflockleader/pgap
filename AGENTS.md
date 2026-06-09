@@ -17,7 +17,7 @@ python pgap.py <mode> [args...]
 |---|---|---|---|
 | `3d-actor` | a creature / character / prop (rigged, animated, textured glTF) | ready | [pgap-3d-actor/AGENTS.md](pgap-3d-actor/AGENTS.md) |
 | `sound` | a sound effect / UI blip / stylized creature vocal (WAV) | ready (MVP) | [pgap-sound/README.md](pgap-sound/README.md) · `pgap.py sound --capabilities` |
-| `gear` | a weapon / apparel / armor / accessory | planned | — |
+| `gear` | a weapon / shield (rigid static mesh) | implemented | pgear |
 
 `python pgap.py --help` lists modes; an unready mode prints a pointer to its PRD.
 
@@ -55,4 +55,4 @@ Read the mode's own `AGENTS.md` / `PRD.md` for its schemas and examples:
 - **3d-actor:** v1 spec (archetype/traits/animations) and v2/v3 recipe (modules +
   variants + sockets). See [pgap-3d-actor/AGENTS.md](pgap-3d-actor/AGENTS.md) and
   [pgap-3d-actor/docs/agent-cookbook.md](pgap-3d-actor/docs/agent-cookbook.md).
-- **sound / gear:** PRD-stage; consult their PRDs once implemented.
+- **sound / gear:** implemented; consult their PRDs.

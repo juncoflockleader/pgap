@@ -21,7 +21,7 @@ The bridge-side counterpart to this doc lives in `unreal-mcp-rx` at
 | **sound** | WAV + `SoundWave` sidecar + manifest | import as `SoundWave`; wire onto actor/Blueprint; proof |
 | **landscape** | 16-bit heightmap, per-layer weightmaps, tiling layer textures, scatter rules, `landscape.import.json` | create ULandscape; import heightmap; LayerInfo + paint weightmaps; layer-blend material; foliage scatter; water; sky/lighting/post; PIE proof |
 | **city** | modular building kit (glTF), `city.layout.json` (streets→blocks→lots→instances + props), style material spec | import kit; bulk HISM/ISM-instance the layout; landmarks as actors; roads; per-style materials/lighting; optional compose-onto-landscape; PIE proof |
-| **gear** *(planned)* | weapon/apparel/armor meshes + sidecar | import; attach/equip; materials; proof |
+| **gear** | weapon/shield static meshes + import sidecar | import; attach/equip at grip socket; materials; proof |
 
 Determinism, dependency-light (pure Python + numpy), stylized-not-photoreal, and
 fail-closed validation are pgap invariants for **all** rows (see `CLAUDE.md`).

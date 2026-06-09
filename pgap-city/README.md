@@ -5,13 +5,16 @@ Deterministic, offline **cities**: a modular building kit + a city layout graph
 to import and bulk-instance (HISM). Sibling of `pgap-3d-actor` / `pgap-sound` /
 `pgap-landscape`; shares their architecture, determinism, and engine handoff.
 
-Status: **C1 — skinned building kits.** Style registry for the four v1 cells + spec
-+ fail-closed validator + capability report + a deterministic grid **layout**
-(instance transforms), and each building kit is now **skinned**: a synthesized
-facade texture (wall + window grid + ground floor + parapet, base-color + normal,
-optional emissive lit windows) on the walls and a roof texture on top, embedded in
-`SM_<kit>.gltf` — so the HISM skyline reads as real buildings, per cell. Roads and
-prop meshes are C2+. Design: [PRD.md](PRD.md). Boundary: repo-root `SPLIT.md`.
+Status: **C2 — roads + props.** Style registry for the four v1 cells + spec +
+fail-closed validator + capability report + a deterministic grid **layout**, with:
+**skinned building kits** (a synthesized facade texture — wall + window grid +
+ground floor + parapet, base-color + normal, optional emissive lit windows — on the
+walls and a roof texture on top, embedded in `SM_<kit>.gltf`); a **road network**
+(a textured asphalt slab kit, HISM-instanced per street segment); and a **prop
+scatter** (per-kind proxy meshes — lamp/sign/tree/car, emissive where lit —
+instanced at intersections + along sidewalks). The whole textured, populated
+skyline is a handful of kits + one HISM call each. Design: [PRD.md](PRD.md).
+Boundary: repo-root `SPLIT.md`.
 
 v1 cells (era × culture/style):
 **futuristic×steampunk, futuristic×cyberpunk, modern×american, modern×japan.**
@@ -28,9 +31,9 @@ python pgap.py city --spec pgap-city/fixtures/american.json --handoff --out out
 Output: `<Name>.city.layout.json` (streets/blocks/lots/instances/props) +
 `StyleMaterialSpec.json` + per-kit `SM_<kit>.gltf` (skinned, textures embedded) +
 `SM_<kit>_BaseColor/Normal/Roof[/Emissive].png` (inspection) + `<Name>.instances.json`
-(HISM) + `<Name>_Plan.png` + `manifest.json`. `--handoff` also writes the
-`unreal-mcp-rx` source bundle (`CityLayout` + `StyleMaterialSpec` + `BuildingKit:*`
-roles; `RoadNetwork` / `PropScatter` land in C2+).
+(HISM, covering buildings + roads + props) + `<Name>_Plan.png` + `manifest.json`.
+`--handoff` also writes the `unreal-mcp-rx` source bundle with `CityLayout`,
+`StyleMaterialSpec`, `BuildingKit:*`, `RoadNetwork`, and `PropKit:*` roles.
 
 Per-instance window scale uses the kit's representative size; pixel-uniform windows
 across every instance size want a UE world-aligned/triplanar facade material (a

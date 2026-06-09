@@ -20,10 +20,13 @@ def test_groups_all_instances_by_kit():
     layout = _layout()
     bundle = instancing_payloads(layout)
     assert bundle["tool"] == "editor_instances_place"
-    assert bundle["totalInstances"] == len(layout["instances"])
-    assert sum(k["count"] for k in bundle["kits"]) == len(layout["instances"])
+    # buildings + roads + props are all grouped into per-kit HISM payloads
+    all_inst = (layout["instances"] + layout.get("road_instances", [])
+                + layout.get("prop_instances", []))
+    assert bundle["totalInstances"] == len(all_inst)
+    assert sum(k["count"] for k in bundle["kits"]) == len(all_inst)
     # one group per distinct kit, mesh file named for it
-    kit_ids = {inst["kit"] for inst in layout["instances"]}
+    kit_ids = {inst["kit"] for inst in all_inst}
     assert {k["kit"] for k in bundle["kits"]} == kit_ids
     for k in bundle["kits"]:
         assert k["meshFile"] == f"SM_{k['kit']}.gltf"

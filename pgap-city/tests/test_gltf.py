@@ -52,12 +52,15 @@ def test_pipeline_emits_one_mesh_per_kit(tmp_path):
     m, paths = generate({"name": "C", "era": "modern", "culture": "american",
                          "seed": 5, "sizeBlocks": [4, 4]}, tmp_path, handoff=True)
     layout = json.loads(paths["layout"].read_text())
-    kit_ids = {k["id"] for k in layout["kits"]}
-    assert kit_ids and m["counts"]["kits"] == len(kit_ids)
-    for kit in kit_ids:
+    kit_ids = {k["id"] for k in layout["kits"]}                       # buildings + road + props
+    building_kits = {k["id"] for k in layout["kits"] if k.get("zone") not in ("road", "prop")}
+    assert building_kits and m["counts"]["kits"] == len(building_kits)
+    for kit in kit_ids:                                              # every kit has its mesh
         assert (tmp_path / f"SM_{kit}.gltf").exists()
-        assert f"BuildingKit:{kit}" in m["roles"]
         assert f"SM_{kit}.gltf" in m["files"]
+    for kit in building_kits:
+        assert f"BuildingKit:{kit}" in m["roles"]
+    assert "RoadNetwork" in m["roles"] and any(r.startswith("PropKit:") for r in m["roles"])
     # every instance references a real kit + carries a 3-axis HISM scale
     for inst in layout["instances"]:
         assert inst["kit"] in kit_ids

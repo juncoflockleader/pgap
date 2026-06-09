@@ -190,6 +190,88 @@ def building_gltf(wall_base: bytes, wall_normal: bytes, roof_base: bytes,
     return json.dumps(gltf, indent=2).encode("utf-8")
 
 
+def _part_box(cx, cz, y0, sx, sy, sz):
+    """A box part: footprint sx×sz centered at (cx,cz), spanning y0..y0+sy. Returns
+    (pos[36,3], nrm[36,3]) flat-shaded, outward winding."""
+    pos, nrm = [], []
+    for quad in _QUADS:
+        for tri in [(quad[0], quad[1], quad[2]), (quad[0], quad[2], quad[3])]:
+            vs = []
+            for i in tri:
+                c = _CORNERS[i]
+                vs.append(np.array([cx + c[0] * sx, y0 + c[1] * sy, cz + c[2] * sz]))
+            n = np.cross(vs[1] - vs[0], vs[2] - vs[0])
+            if np.dot(n, (vs[0] + vs[1] + vs[2]) / 3.0 - np.array([cx, y0 + sy / 2, cz])) < 0:
+                vs = [vs[0], vs[2], vs[1]]
+                n = np.cross(vs[1] - vs[0], vs[2] - vs[0])
+            n = n / (np.linalg.norm(n) + 1e-12)
+            pos.extend(vs)
+            nrm.extend([n, n, n])
+    return np.array(pos, dtype=np.float32), np.array(nrm, dtype=np.float32)
+
+
+def prop_gltf(parts: list, name: str = "Prop") -> bytes:
+    """A small multi-box prop proxy. ``parts`` is a list of dicts: cx,cz,y0,sx,sy,sz
+    (metres, Y-up, base at y0) + color (rgb 0..255) + optional emissive (rgb 0..255).
+    One primitive/material per part; self-contained. Deterministic."""
+    pos_all, nrm_all, prims, mats = [], [], [], []
+    idx_arrays = []
+    cursor = 0
+    for p in parts:
+        pos, nrm = _part_box(p["cx"], p["cz"], p["y0"], p["sx"], p["sy"], p["sz"])
+        idx_arrays.append(np.arange(cursor, cursor + len(pos), dtype=np.uint16))
+        cursor += len(pos)
+        pos_all.append(pos); nrm_all.append(nrm)
+        c = [round(float(x) / 255.0, 4) for x in p["color"]]
+        mat = {"name": f"{name}_{len(mats)}", "pbrMetallicRoughness": {
+            "baseColorFactor": [c[0], c[1], c[2], 1.0],
+            "metallicFactor": float(p.get("metallic", 0.0)),
+            "roughnessFactor": float(p.get("roughness", 0.8))}}
+        if p.get("emissive"):
+            e = [round(float(x) / 255.0, 4) for x in p["emissive"]]
+            mat["emissiveFactor"] = e
+        mats.append(mat)
+
+    pos = np.concatenate(pos_all); nrm = np.concatenate(nrm_all)
+    blob = bytearray()
+    views = []
+
+    def add(data, target=None):
+        data = data + b"\x00" * (-len(data) % 4)
+        off = len(blob); blob.extend(data)
+        views.append({"buffer": 0, "byteOffset": off, "byteLength": len(data),
+                      **({"target": target} if target else {})})
+        return len(views) - 1
+
+    v_pos = add(pos.tobytes(), 34962)
+    v_nrm = add(nrm.tobytes(), 34962)
+    accessors = [
+        {"bufferView": v_pos, "componentType": 5126, "count": int(len(pos)), "type": "VEC3",
+         "min": [float(pos[:, 0].min()), float(pos[:, 1].min()), float(pos[:, 2].min())],
+         "max": [float(pos[:, 0].max()), float(pos[:, 1].max()), float(pos[:, 2].max())]},
+        {"bufferView": v_nrm, "componentType": 5126, "count": int(len(nrm)), "type": "VEC3"},
+    ]
+    primitives = []
+    for i, idx in enumerate(idx_arrays):
+        v_idx = add(idx.tobytes(), 34963)
+        a_idx = len(accessors)
+        accessors.append({"bufferView": v_idx, "componentType": 5123,
+                          "count": int(len(idx)), "type": "SCALAR"})
+        primitives.append({"attributes": {"POSITION": 0, "NORMAL": 1},
+                           "indices": a_idx, "material": i})
+
+    uri = "data:application/octet-stream;base64," + base64.b64encode(bytes(blob)).decode("ascii")
+    gltf = {
+        "asset": {"version": "2.0", "generator": "pgap-city psc"},
+        "scene": 0, "scenes": [{"nodes": [0]}], "nodes": [{"mesh": 0, "name": name}],
+        "meshes": [{"name": name, "primitives": primitives}],
+        "materials": mats,
+        "buffers": [{"byteLength": len(blob), "uri": uri}],
+        "bufferViews": views, "accessors": accessors,
+    }
+    return json.dumps(gltf, indent=2).encode("utf-8")
+
+
 def box_gltf(color_rgb: Sequence[int], name: str = "Box") -> bytes:
     """A unit-box glTF (.gltf bytes) with baseColor = color_rgb (sRGB 0..255)."""
     pos, nrm, idx = _box_arrays()

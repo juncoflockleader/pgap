@@ -25,9 +25,11 @@ def _transform(inst: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def instancing_payloads(layout: Dict[str, Any]) -> Dict[str, Any]:
-    """Build the per-kit `editor_instances_place` payload bundle for a layout."""
+    """Build the per-kit `editor_instances_place` payload bundle for a layout —
+    buildings, roads, and props (all share kit + location/yaw/scale3)."""
     by_kit: Dict[str, List[Dict[str, Any]]] = {}
-    for inst in layout["instances"]:
+    for inst in (layout["instances"] + layout.get("road_instances", [])
+                 + layout.get("prop_instances", [])):
         by_kit.setdefault(inst["kit"], []).append(_transform(inst))
 
     kits = []

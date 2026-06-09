@@ -65,11 +65,11 @@ def test_pipeline_emits_skinned_kits(tmp_path):
     spec = {"name": "Skin", "era": "modern", "culture": "american",
             "seed": 7, "sizeBlocks": [3, 3]}
     manifest, paths = generate(spec, tmp_path)
-    kit_gltfs = list(tmp_path.glob("SM_*.gltf"))
-    assert kit_gltfs
-    for p in kit_gltfs:
-        g = json.loads(p.read_text())
-        assert g["images"] and g["textures"]                # textures embedded
+    building_meshes = [v for k, v in manifest["roles"].items() if k.startswith("BuildingKit")]
+    assert building_meshes
+    for name in building_meshes:                            # building kits carry textures
+        g = json.loads((tmp_path / name).read_text())
+        assert g["images"] and g["textures"]
     # the skin PNGs are written and tracked in the manifest
     base_pngs = list(tmp_path.glob("SM_*_BaseColor.png"))
     assert base_pngs

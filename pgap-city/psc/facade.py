@@ -87,6 +87,26 @@ def synth_facade(fstyle: dict, cols: int, rows: int, rng,
     return base_u, nrm, emis
 
 
+def synth_road(fstyle: dict, rng, px: int = 64,
+               line=(235, 200, 60)) -> Tuple[np.ndarray, np.ndarray]:
+    """A road-surface skin (base_rgb, normal): asphalt with a center line (along the
+    length) + lane-edge lines. Tinted dark for dark-walled cells. Used as the road
+    kit's top texture; U runs along the road length, V across its width."""
+    wall = np.array(fstyle["wall"], float)
+    asphalt = np.clip(np.array([52., 52., 58.]) * 0.7 + wall * 0.18, 18, 120)
+    base = np.clip(asphalt[None, None, :] + (rng.random((px, px)) - 0.5)[..., None] * 18.0, 0, 255)
+    line = np.array(line, float)
+    cl = int(px * 0.5)
+    base[cl - max(1, px // 64):cl + max(1, px // 64), :] = line          # center line (along U)
+    e = max(1, px // 22)
+    base[:e, :] = (220, 220, 226)                                        # lane edges (white)
+    base[-e:, :] = (220, 220, 226)
+    height = np.full((px, px), 0.5)
+    height[:e, :] = 0.65                                                 # slight curb relief
+    height[-e:, :] = 0.65
+    return base.astype(np.uint8), _height_to_normal(height, 1.2)
+
+
 def synth_roof(fstyle: dict, rng, px: int = 64) -> Tuple[np.ndarray, np.ndarray]:
     """A simple roof skin (base_rgb, normal): the roof color with subtle panelling."""
     roof = np.array(fstyle["roof"], float)

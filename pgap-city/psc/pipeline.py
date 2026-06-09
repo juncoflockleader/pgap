@@ -17,7 +17,7 @@ import zlib
 
 import numpy as np
 
-from . import facade, gltf, instancing, network, render
+from . import facade, gltf, instancing, network, props, render
 from .pngio import encode_rgb8, write_rgb8
 from .render import ZONE_COLOR
 from .spec import validate_spec
@@ -97,6 +97,35 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
                           "baseColor": list(ZONE_COLOR.get(zone, (150, 150, 150))),
                           "facade": {"cols": cols, "rows": rows,
                                      "emissive": wall_emis is not None}})
+    # Road kit: one textured slab (road surface on top, dark curb on the sides),
+    # reusing the building skinner. HISM-instanced per street segment.
+    road_path = None
+    if layout.get("road_instances"):
+        rrng = np.random.default_rng((int(s["seed"]) ^ zlib.crc32(b"road")) & 0xFFFFFFFF)
+        line = (220, 220, 226) if (era == "futuristic" or culture == "japan") else (235, 200, 60)
+        road_base, road_nrm = facade.synth_road(fstyle, rrng, line=line)
+        curb = np.full((8, 8, 3), (30, 30, 34), dtype=np.uint8)
+        curb_n = np.full((8, 8, 3), (128, 128, 255), dtype=np.uint8)
+        rp = out / "SM_road_Surface.png"
+        write_rgb8(str(rp), road_base)
+        texture_paths.append(rp)
+        road_path = out / "SM_road.gltf"
+        road_path.write_bytes(gltf.building_gltf(
+            encode_rgb8(curb), encode_rgb8(curb_n), encode_rgb8(road_base),
+            encode_rgb8(road_nrm), roughness=0.96, name="SM_road"))
+        paths["kit_road"] = road_path
+        kits_meta.append({"id": "road", "mesh": road_path.name, "zone": "road"})
+
+    # Prop kits: one small proxy mesh per distinct prop kind used in the scatter.
+    prop_paths: Dict[str, Path] = {}
+    for pk in sorted({i["kit"] for i in layout.get("prop_instances", [])}):
+        kind = pk[len("prop_"):]
+        pp = out / f"SM_{pk}.gltf"
+        pp.write_bytes(gltf.prop_gltf(props.prop_parts(kind, fstyle), name=f"SM_{pk}"))
+        prop_paths[pk] = pp
+        paths[f"kit_{pk}"] = pp
+        kits_meta.append({"id": pk, "mesh": pp.name, "zone": "prop", "kind": kind})
+
     layout["kits"] = kits_meta
     layout["instanceModel"] = (
         "SM_<kit>.gltf is a 1 m Y-up box skinned with an embedded facade texture "
@@ -145,15 +174,19 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
         "license": "procedurally generated original work",
         "files": {p.name: _sha1(p) for p in
                   (layout_path, style_path, plan_path, instancing_path,
-                   *kit_meshes.values(), *texture_paths)},
+                   *kit_meshes.values(), *texture_paths,
+                   *( [road_path] if road_path else [] ), *prop_paths.values())},
         "roles": {
             "CityLayout": layout_path.name,
             "StyleMaterialSpec": style_path.name,
             "CityInstancing": instancing_path.name,
             **{f"BuildingKit:{kit}": kit_meshes[kit].name for kit in kit_ids},
+            **({"RoadNetwork": road_path.name} if road_path else {}),
+            **{f"PropKit:{pk[len('prop_'):]}": prop_paths[pk].name for pk in sorted(prop_paths)},
         },
-        "counts": {**layout["counts"], "kits": len(kit_ids)},
-        "pending": ["RoadNetwork", "PropScatter"],
+        "counts": {**layout["counts"], "kits": len(kit_ids),
+                   "propKits": len(prop_paths), "roadKit": int(road_path is not None)},
+        "pending": [],
         "warnings": v["warnings"],
     }
     manifest_path = out / "manifest.json"
@@ -171,6 +204,9 @@ def generate(spec: Dict[str, Any], out_dir: str | Path, *, handoff: bool = False
                 {"role": "StyleMaterialSpec", "file": style_path.name},
                 {"role": "CityInstancing", "file": instancing_path.name},
                 *[{"role": f"BuildingKit:{kit}", "file": kit_meshes[kit].name} for kit in kit_ids],
+                *([{"role": "RoadNetwork", "file": road_path.name}] if road_path else []),
+                *[{"role": f"PropKit:{pk[len('prop_'):]}", "file": prop_paths[pk].name}
+                  for pk in sorted(prop_paths)],
             ],
             "pending": manifest["pending"],
         }

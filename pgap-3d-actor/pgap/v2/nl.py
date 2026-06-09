@@ -83,6 +83,24 @@ def _eye_color(text: str) -> str | None:
     return None
 
 
+_GIRTH_PARTS = ("leg", "legs", "arm", "arms", "neck", "tail", "body", "torso", "wing", "wings")
+
+
+def _build_girth(text: str) -> float:
+    """Global build (thickness): >1 stocky, <1 lean. Orthogonal to size. An adjective
+    used on a specific part ('chubby legs') is left to per-part girth, not the whole."""
+    def standalone(words):
+        return any(w in text and not any(f"{w} {p}" in text for p in _GIRTH_PARTS)
+                   for w in words)
+    if standalone(("chubby", "stocky", "heavyset", "portly", "rotund",
+                   "plump", "burly", "obese", "thickset")):
+        return 1.35
+    if standalone(("slim", "lanky", "skinny", "lean", "scrawny",
+                   "gaunt", "spindly", "wiry", "emaciated")):
+        return 0.7
+    return 1.0
+
+
 def _size_mult(text: str) -> float:
     if any(k in text for k in ("giant", "huge", "colossal", "massive", "great")):
         return 1.6
@@ -258,6 +276,32 @@ def _compose_free(text: str, name: str) -> dict:
 _BASE_HEIGHT = {"orb": 80.0, "body": 130.0, "spine": 180.0}
 
 
+_PART_GIRTH_IDS = {
+    "legs": ("leg", "foreleg", "hindleg"), "leg": ("leg", "foreleg", "hindleg"),
+    "arms": ("arm",), "arm": ("arm",), "neck": ("neck",), "tail": ("tail",),
+    "body": ("body", "torso", "spine"), "torso": ("body", "torso", "spine"),
+    "wings": ("wing",), "wings ": ("wing",),
+}
+_FAT_ADJ = ("chubby", "thick", "stocky", "beefy", "muscular", "meaty", "fat")
+_SLIM_ADJ = ("slim", "slender", "skinny", "thin", "spindly", "scrawny")
+
+
+def _apply_part_girth(text: str, modules: list) -> None:
+    """P1: '<adj> <part>' (e.g. 'chubby legs', 'slim neck') → a girth param on that
+    part's module(s). Mutates the composed module list in place."""
+    byid = {m["id"]: m for m in modules}
+    for word, ids in _PART_GIRTH_IDS.items():
+        if any(f"{a} {word}" in text for a in _FAT_ADJ):
+            g = 1.4
+        elif any(f"{a} {word}" in text for a in _SLIM_ADJ):
+            g = 0.65
+        else:
+            continue
+        for mid in ids:
+            if mid in byid:
+                byid[mid].setdefault("params", {})["girth"] = g
+
+
 def prompt_to_recipe(prompt: str, seed: int = 5, mode: str = "strict") -> dict:
     """Infer a creature from a prompt. Returns a dict with ``ok`` and, when ok,
     a built ``recipe`` plus name/seed/heightCm/material for generation."""
@@ -272,17 +316,19 @@ def prompt_to_recipe(prompt: str, seed: int = 5, mode: str = "strict") -> dict:
     if iris:
         coat["eyeColor"] = iris
     mult = _size_mult(text)
+    girth = _build_girth(text)
     warnings: list[str] = []
 
     if mode == "free":
         composed = _compose_free(text, name)
+        _apply_part_girth(text, composed["modules"])
         report = validate_recipe(composed)
         if report["ok"] and len(composed["modules"]) >= 2:
             base_kind = composed["modules"][0]["kind"]
             return {"ok": True, "mode": "free", "name": name,
                     "recipe": recipe_from_dict(composed), "recipe_dict": composed,
                     "seed": seed, "heightCm": _BASE_HEIGHT.get(base_kind, 120.0) * mult,
-                    "material": coat, "warnings": report["warnings"]}
+                    "girth": girth, "material": coat, "warnings": report["warnings"]}
         warnings.append("free composition did not validate; falling back to nearest template")
 
     template, score = _best_template(text)
@@ -292,5 +338,5 @@ def prompt_to_recipe(prompt: str, seed: int = 5, mode: str = "strict") -> dict:
                            f"try naming one of the templates or use --free with features"]}
     return {"ok": True, "mode": "strict", "name": name, "template": template,
             "recipe": load_template(template), "seed": seed,
-            "heightCm": TEMPLATE_HEIGHT_CM[template] * mult, "material": coat,
-            "warnings": warnings}
+            "heightCm": TEMPLATE_HEIGHT_CM[template] * mult, "girth": girth,
+            "material": coat, "warnings": warnings}

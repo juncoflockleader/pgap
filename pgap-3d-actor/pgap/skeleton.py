@@ -160,6 +160,7 @@ def _assemble_bones(templates: list[_Tmpl], spec: Spec, ear: dict | None) -> lis
             built[t.name] = (head, head + vec)
 
     global_scale = float(spec.proportions["heightCm"]) / REF_HEIGHT_CM
+    girth = spec.girth  # scales radius only; ground clamp uses the base radius
     min_y = min(
         min(built[t.name][0][1] - t.radius_head, built[t.name][1][1] - t.radius_tail)
         for t in templates
@@ -180,8 +181,8 @@ def _assemble_bones(templates: list[_Tmpl], spec: Spec, ear: dict | None) -> lis
             Bone(
                 name=t.name, parent=t.parent,
                 head=head.astype(_F), tail=tail.astype(_F),
-                radius_head=float(r_head * global_scale),
-                radius_tail=float(r_tail * global_scale),
+                radius_head=float(r_head * global_scale * girth),
+                radius_tail=float(r_tail * global_scale * girth),
             )
         )
     return bones

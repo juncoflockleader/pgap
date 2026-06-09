@@ -189,13 +189,25 @@ def variant_names(kind: str) -> list:
     return list(MODULE_REGISTRY[canon].variants)
 
 
+def _with_girth(module: Module, girth: float) -> Module:
+    """Scale every bone's radius by ``girth`` (thickness only) — applied centrally so
+    a per-part ``girth`` param works on *any* module without each author repeating it."""
+    from dataclasses import replace
+    g = min(2.0, max(0.4, float(girth)))
+    bones = [replace(b, radius_head=b.radius_head * g, radius_tail=b.radius_tail * g)
+             for b in module.bones]
+    return replace(module, bones=bones)
+
+
 def build_module(kind: str, variant: str | None = None, params: dict | None = None) -> Module:
     canon, forced = resolve_kind(kind)
     mk = MODULE_REGISTRY[canon]
     v = forced or variant or mk.default
     if v not in mk.variants:
         raise KeyError(f"unknown variant {v!r} for kind {canon!r}; have {list(mk.variants)}")
-    return mk.variants[v](params or {})
+    module = mk.variants[v](params or {})
+    girth = float((params or {}).get("girth", 1.0))
+    return _with_girth(module, girth) if girth != 1.0 else module
 
 
 def load_template(name: str, overrides: dict | None = None) -> Recipe:

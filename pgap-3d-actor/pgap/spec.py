@@ -23,6 +23,7 @@ DEFAULT_PROPORTIONS = {
     "neck": 1.0,
     "tail": 1.0,
     "heightCm": 60.0,
+    "girth": 1.0,  # build: scales part *thickness* (radius), orthogonal to heightCm
 }
 DEFAULT_TRAITS = {
     "ears": "floppy",
@@ -112,6 +113,14 @@ class Spec:
             material=material,
             extra=extra,
         )
+
+    @property
+    def girth(self) -> float:
+        """Build multiplier on part *thickness* (radius only), clamped to a safe
+        range so smooth-min neither swallows slim parts nor over-fuses chubby ones.
+        Orthogonal to ``heightCm`` (size) — the rig, weights, and clips are
+        untouched; only the SDF surface gets thicker/thinner."""
+        return min(1.6, max(0.6, float(self.proportions.get("girth", 1.0))))
 
     @staticmethod
     def load(path: str | Path) -> "Spec":

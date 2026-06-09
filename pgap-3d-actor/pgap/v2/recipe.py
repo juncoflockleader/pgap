@@ -66,7 +66,8 @@ def validate_recipe(data: dict[str, Any]) -> dict:
             errors.append(f"module {mid!r}: unknown variant {variant!r} for {kind!r} "
                           f"(have {variant_names(kind)})")
 
-        unknown = set(m.get("params") or {}) - set(MODULE_REGISTRY[canon].params)
+        # 'girth' is a universal per-part param (thickness), accepted on every kind.
+        unknown = set(m.get("params") or {}) - set(MODULE_REGISTRY[canon].params) - {"girth"}
         if unknown:
             warnings.append(f"module {mid!r}: ignored unknown params {sorted(unknown)}")
 
@@ -139,6 +140,7 @@ def capability_report() -> dict:
     return {
         "schemaVersion": "pgap.v2.capabilities.v2",
         "modules": modules,
+        "universalParams": ["girth"],  # thickness multiplier accepted on every module
         "templates": list(TEMPLATE_REGISTRY),
         "recipeSchema": {
             "name": "str", "seed": "int", "heightCm": "number",

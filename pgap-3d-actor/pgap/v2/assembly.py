@@ -129,8 +129,11 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
                             b.radius_head, b.radius_tail, b.group,
                             getattr(b, "fused", True), getattr(b, "region", None)))
 
-    # Uniform height scale + ground clamp (matches v1 convention).
+    # Uniform height scale + ground clamp (matches v1 convention). Girth scales the
+    # emitted *radius* only (not the clamp), so bone positions/weights/clips are
+    # byte-identical across builds — girth is purely the SDF surface thickness.
     g = float(spec.proportions["heightCm"]) / _REF_HEIGHT_CM
+    girth = spec.girth
     min_y = min(min(h[1] - rh, t[1] - rt) for _, _, h, t, rh, rt, _, _, _ in raw) * g
 
     bones: list[Bone] = []
@@ -141,7 +144,7 @@ def assemble_with_meta(recipe: Recipe, spec: Spec):
         tail[1] -= min_y
         bones.append(
             Bone(name=name, parent=parent, head=head.astype(_F), tail=tail.astype(_F),
-                 radius_head=float(rh * g), radius_tail=float(rt * g),
+                 radius_head=float(rh * g * girth), radius_tail=float(rt * g * girth),
                  fused=fused, region=region)
         )
     return bones, meta

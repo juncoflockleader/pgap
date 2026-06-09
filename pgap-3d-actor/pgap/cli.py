@@ -44,14 +44,15 @@ def run(spec_path: str, out_dir: str) -> dict:
 
 
 def generate_v2(recipe, *, name: str, seed: int, height: float, material: dict,
-                tri_budget: int, out_dir: str) -> dict:
+                tri_budget: int, out_dir: str, girth: float = 1.0) -> dict:
     """Build + write a v2 modular creature from a recipe."""
     from .v2.animate import animate_recipe
     from .v2.assembly import build_actor as v2_build_actor
 
     spec = Spec.from_dict({
         "name": name, "archetype": "biped", "species": name.lower(), "seed": seed,
-        "triBudget": tri_budget, "proportions": {"heightCm": height}, "material": material,
+        "triBudget": tri_budget, "proportions": {"heightCm": height, "girth": girth},
+        "material": material,
     })
     rng = make_rng(spec.seed)
     skel, mesh = v2_build_actor(recipe, spec, rng)  # no RNG draws here
@@ -150,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         r = generate_v2(res["recipe"], name=res["name"], seed=res["seed"],
                         height=res["heightCm"], material=res["material"],
-                        tri_budget=11000, out_dir=args.out)
+                        girth=res.get("girth", 1.0), tri_budget=11000, out_dir=args.out)
         print(f"describe → {res['mode']}: {res.get('template', 'composed recipe')}")
         _print_result(r)
         return 0
@@ -173,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
             seed=int(data.get("seed", args.seed if args.seed is not None else 5)),
             height=float(data.get("heightCm", 100.0)),
             material=data.get("material") or {"baseColor": "stone"},
+            girth=float(data.get("girth", 1.0)),
             tri_budget=int(data.get("triBudget", 10000)), out_dir=args.out,
         )
         print(f"recipe → {r['archetype']} (free)")

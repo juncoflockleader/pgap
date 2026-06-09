@@ -1,8 +1,12 @@
 # Roadmap 4 — Part proportions (slim ↔ chubby)
 
-A `girth` (a.k.a. "build") control that scales a part's **thickness independently of
-its length** — make a creature lanky or stocky, a neck slim, legs chubby — without
-touching the rig, the animations, or the topology.
+Status: **P0 + P1 done** (P2 optional/deferred). A `girth` ("build") control scales a
+part's **thickness independently of its length** — lanky or stocky, slim neck, chubby
+legs — without touching the rig, the animations, or the topology. `girth` is a clamped
+spec/proportions field *and* a universal per-part `params` key; the rig, weights
+scheme, and clips are untouched (verified byte-identical for bones + clips), only the
+SDF surface thickens. NL routes global build (`stocky`/`lanky`) and per-part
+(`chubby legs`, `slim neck`). `test_proportions` gates it.
 
 This is the cheapest expressive axis in the whole system: girth is the **native
 knob** of the geometry. Listed after 1–3 by priority, but it's small enough to land
@@ -37,21 +41,21 @@ It's low-risk because radius is what the marching-cubes field already consumes:
 
 ## Milestones
 
-- **P0 — Global girth.** A `girth` float (default 1.0) on the spec/recipe; apply it
-  to radius only where bones are emitted (`radius = r * g * girth` in
-  `v2/assembly.py`, and the v1 equivalent in `skeleton.py::_assemble_bones`). NL
-  words: `chubby`/`stocky`/`heavyset` (>1), `slim`/`lanky`/`skinny`/`lean` (<1).
-  **Exit:** one creature renders visibly stockier/leaner at fixed height;
-  deterministic; rig + clips unchanged; a fixture-SHA + "rig identical" test.
-- **P1 — Per-part girth.** Honor a `girth` param on every module (one multiplier
-  over its `BoneSpec` radii, applied centrally at bone-emit so authors don't repeat
-  it). Expose on the recipe attachment `params` and in NL ("chubby legs", "slim
-  neck"). **Exit:** a recipe sets different girth on two parts of one creature; the
-  variant corpus gains a girth row.
-- **P2 — Profile shaping (optional).** Head-vs-tail taper presets and an optional
-  mid-bulge (belly, biceps) by perturbing `radius_head` vs `radius_tail` or adding a
-  midpoint blob. **Exit:** a "pot-belly" and a "tapered" preset read as such. Mostly
-  taste/tuning, not architecture.
+- **P0 — Global girth.** ✅ **done** — a clamped (0.6–1.6) `girth` in
+  `spec.proportions` (with a `Spec.girth` accessor), applied to **radius only** at
+  bone-emit in both `v2/assembly.py` and `skeleton.py` (the ground clamp keeps the
+  base radius, so bone positions are *byte-identical*). NL: `stocky`/`chubby`/… (>1),
+  `lanky`/`slim`/… (<1). **Exit:** ✔ — a biped renders visibly stockier/leaner at
+  fixed height; deterministic; bones + clips byte-identical (`test_proportions`).
+- **P1 — Per-part girth.** ✅ **done** — `girth` is a universal per-part `params` key,
+  applied centrally in `registry.build_module` (one multiplier over a module's
+  `BoneSpec` radii) so no author repeats it; accepted by the grammar on every kind
+  and surfaced in the capability report (`universalParams`). NL: `chubby legs`,
+  `slim neck` set per-part girth without making the whole creature stocky. **Exit:**
+  ✔ — a recipe sets different girth on two parts; `test_proportions` covers it.
+- **P2 — Profile shaping (optional).** ⏸ **deferred** (taste/tuning, not
+  architecture) — head-vs-tail taper presets + an optional mid-bulge (belly,
+  biceps). Can land opportunistically later.
 
 ## Risks / decisions
 

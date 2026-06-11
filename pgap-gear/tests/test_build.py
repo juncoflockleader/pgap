@@ -6,6 +6,7 @@ import numpy as np
 
 from pgear import gltf, materials, render
 from pgear.geom import MeshBuilder
+from pgear.items import _blade
 from pgear.registry import TEMPLATES
 
 
@@ -38,6 +39,16 @@ def test_socket_grip_present():
     for name in TEMPLATES:
         _, sockets = _mesh(name)
         assert "grip" in sockets
+
+
+def test_curved_blade_segments_share_boundaries():
+    mb = MeshBuilder()
+    _blade(mb, {"metal": "steel"}, 0.0, 1.0, 0.10, 0.02, curve=0.18)
+    pos, _, _, _ = mb.build()
+    ys = sorted({round(float(y), 6) for y in pos[:, 1]})
+    for y in ys[1:-1]:
+        xs = sorted({round(float(p[0]), 6) for p in pos if round(float(p[1]), 6) == y})
+        assert len(xs) == 2
 
 
 def test_gltf_is_multi_material_and_valid():

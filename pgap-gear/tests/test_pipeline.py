@@ -21,6 +21,9 @@ def test_bad_variant_warns_and_defaults():
 def test_material_keywords_resolve_slots():
     m = resolve_materials("a curved obsidian blade with a gold guard", "steel", "leather", "bronze")
     assert m["metal"] == "obsidian" and m["accent"] == "gold"
+    m = resolve_materials("black steel claws with black leather wraps and glintstone", "steel", "leather", "bronze")
+    assert m["metal"] == "dark_steel" and m["grip"] == "leather_black"
+    assert m["accent"] == "crystal"
     assert resolve_materials("", "steel", "leather", "bronze")["metal"] == "steel"  # default
 
 

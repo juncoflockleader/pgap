@@ -77,15 +77,30 @@ gear spec ({template, variant, material, size, seed})  — or a prompt via nl
 | template | variants | category |
 |---|---|---|
 | sword / greatsword / dagger | straight, curved, leaf | weapon |
-| axe | battle, double | weapon |
+| katana | uchigatana, wakizashi, great, nodachi | weapon |
+| thrusting_sword | rapier, estoc, heavy, stitcher | weapon |
+| twinblade | balanced, peeler, leaf, ornate | weapon |
+| axe | battle, double, crescent, cleaver | weapon |
+| hammer | warhammer, club, pick, spiked, great | weapon |
 | spear | leaf, pike | weapon |
+| halberd | axe, glaive, bill, crescent, banner | weapon |
+| reaper | scythe, grave, halo, winged | weapon |
 | mace | flanged, round | weapon |
+| flail | spiked, chainlink, round | weapon |
 | staff | gem, ornament | weapon |
+| sacred_seal | finger, order, clawmark, spiral | catalyst |
 | bow | recurve, longbow | weapon |
-| shield | round, kite, heater | armor |
+| greatbow | great, golem, horn | weapon |
+| crossbow | light, heavy, repeating, pulley | weapon |
+| torch | flame, ghostflame, sentry, wire | tool |
+| claw | hook, talon, beast | weapon |
+| fist | caestus, spiked, katar | weapon |
+| perfume_bottle | round, faceted, fire, lightning, poison | tool |
+| shield | round, kite, heater, buckler, great, tower, palisade, thrusting | armor |
 
-Material slots: **metal** (steel/iron/bronze/gold/silver/obsidian/bone), **grip**
-(leather/wood/cloth/wire), **accent** (gold/bronze/silver/gems), **wood**.
+Material slots: **metal** (steel/iron/bronze/gold/silver/obsidian/bone/dark steel/
+verdigris/crystal), **grip** (leather/wood/cloth/wire), **accent**
+(gold/bronze/silver/gems/crystal/flame/holy), **wood**.
 
 ## 5. Inputs & outputs
 
@@ -114,8 +129,11 @@ GearPreview roles).
 - **G0 — kit + weapons.** ✅ Geom kernel, item recipes, registry, multi-material
   glTF, preview render, spec/validator, NL, capabilities, CLI, manifest/handoff,
   tests. Nine templates (sword/greatsword/dagger/axe/spear/mace/staff/bow/shield).
-- **G1 — breadth & detail.** More variants (katana/rapier/halberd), per-part jitter,
-  fullers/serrations, gem accents, a fixture corpus per template.
+- **G1 — breadth & detail.** ✅ Elden Ring-inspired rigid breadth pass:
+  katana/rapier-like thrusting swords/halberds/reapers/twinblades/flails/greatbows/
+  crossbows/torches/claws/fists/seals/perfume bottles and expanded shield classes.
+  Remaining detail work: per-part jitter, fullers/serrations, richer gem accents,
+  and a fixture corpus per template.
 - **G2 — worn apparel/armor.** Skinned pieces (helm/cuirass/cloak) attached to a
   `pgap-3d-actor` skeleton — the deformable path.
 - **G3 — engine proof lane.** Bridge imports + materials + socket-equip + PIE proof.

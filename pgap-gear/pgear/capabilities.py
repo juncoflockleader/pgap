@@ -15,7 +15,7 @@ def capabilities() -> Dict[str, Any]:
     return {
         "schemaVersion": SCHEMA_VERSION,
         "generator": "pgear",
-        "status": "v1 (rigid gear kit: weapons + shields, static meshes)",
+        "status": "v1 (rigid gear kit: weapons, shields, catalysts, and held tools)",
         "templates": {n: {"variants": t["variants"], "category": t["category"]}
                       for n, t in TEMPLATES.items()},
         "sizes": list(SIZE_SCALE),

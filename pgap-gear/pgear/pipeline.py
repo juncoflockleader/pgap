@@ -30,7 +30,8 @@ def build_mesh(s: Dict[str, Any]):
     """Normalized spec -> (pos, nrm, idx, tri_mat, sockets, material_slots, template)."""
     t = TEMPLATES[s["template"]]
     mats = materials.resolve_materials(s["material"], t["mats"]["metal"],
-                                       t["mats"]["grip"], t["mats"]["accent"])
+                                       t["mats"]["grip"], t["mats"]["accent"],
+                                       t["mats"].get("wood", "wood"))
     scale = SIZE_SCALE[s["size"]] * t["scale"]
     mb = MeshBuilder()
     sockets = t["fn"](mb, mats, scale, s["variant"])

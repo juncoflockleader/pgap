@@ -58,22 +58,30 @@ class MeshBuilder:
         self._tris.append((b, b + 1, b + 2))
         self._tri_mat.append(mat)
 
-    # --- primitives (centered on X/Z at cx,cz; span y0..y1 along the length) ----
-    def frustum(self, y0, y1, w0, t0, w1, t1, mat, cx=0.0, cz=0.0) -> None:
-        """A tapered box from (w0×t0) at y0 to (w1×t1) at y1. A degenerate top
-        (w1=t1=0) makes a pointed tip (blade/spear)."""
-        ctr = np.array([cx, (y0 + y1) / 2.0, cz])
-        a = [(cx - w0 / 2, y0, cz - t0 / 2), (cx + w0 / 2, y0, cz - t0 / 2),
-             (cx + w0 / 2, y0, cz + t0 / 2), (cx - w0 / 2, y0, cz + t0 / 2)]
+    # --- primitives (span y0..y1 along the length; centered on X/Z by default) ---
+    def frustum(self, y0, y1, w0, t0, w1, t1, mat, cx=0.0, cz=0.0,
+                cx1=None, cz1=None) -> None:
+        """A tapered box from (w0×t0) at y0 to (w1×t1) at y1.
+
+        ``cx``/``cz`` set the bottom center. ``cx1``/``cz1`` optionally set the
+        top center, allowing curved blades to join segment-to-segment without
+        lateral steps. A degenerate top (w1=t1=0) makes a pointed tip.
+        """
+        cx0, cz0 = cx, cz
+        cx1 = cx0 if cx1 is None else cx1
+        cz1 = cz0 if cz1 is None else cz1
+        ctr = np.array([(cx0 + cx1) / 2.0, (y0 + y1) / 2.0, (cz0 + cz1) / 2.0])
+        a = [(cx0 - w0 / 2, y0, cz0 - t0 / 2), (cx0 + w0 / 2, y0, cz0 - t0 / 2),
+             (cx0 + w0 / 2, y0, cz0 + t0 / 2), (cx0 - w0 / 2, y0, cz0 + t0 / 2)]
         tip = (w1 <= 1e-6 and t1 <= 1e-6)
         if tip:
-            apex = (cx, y1, cz)
+            apex = (cx1, y1, cz1)
             self._quad(a[3], a[2], a[1], a[0], mat, ctr)            # bottom cap
             for i in range(4):
                 self._tri(a[i], a[(i + 1) % 4], apex, mat, ctr)     # 4 side triangles
             return
-        b = [(cx - w1 / 2, y1, cz - t1 / 2), (cx + w1 / 2, y1, cz - t1 / 2),
-             (cx + w1 / 2, y1, cz + t1 / 2), (cx - w1 / 2, y1, cz + t1 / 2)]
+        b = [(cx1 - w1 / 2, y1, cz1 - t1 / 2), (cx1 + w1 / 2, y1, cz1 - t1 / 2),
+             (cx1 + w1 / 2, y1, cz1 + t1 / 2), (cx1 - w1 / 2, y1, cz1 + t1 / 2)]
         self._quad(a[3], a[2], a[1], a[0], mat, ctr)                # bottom
         self._quad(b[0], b[1], b[2], b[3], mat, ctr)               # top
         for i in range(4):

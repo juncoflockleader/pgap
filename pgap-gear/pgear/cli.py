@@ -20,7 +20,7 @@ from .spec import SIZES, validate_spec
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="pgear", description="pgap-gear — procedural gear (weapons + shields)")
+    p = argparse.ArgumentParser(prog="pgear", description="pgap-gear — procedural rigid gear")
     p.add_argument("--spec", help="path to a gear spec JSON")
     p.add_argument("--describe", help="natural-language prompt -> gear spec")
     p.add_argument("--gear", choices=template_names(), help="template (when not using --spec/--describe)")
